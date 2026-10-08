@@ -31,12 +31,22 @@
     },
 
     init() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        if (tabParam === 'pulang') {
+            this.switchTab('pulang');
+        } else if (tabParam === 'datang') {
+            this.switchTab('datang');
+        }
+
         this.updateClock();
         setInterval(() => this.updateClock(), 1000);
         
-        // Start live camera
+        // Start live camera if on datang tab
         this.$nextTick(() => {
-            this.startCamera();
+            if (this.activeTab === 'datang') {
+                this.startCamera();
+            }
             if (window.lucide) lucide.createIcons();
         });
     },

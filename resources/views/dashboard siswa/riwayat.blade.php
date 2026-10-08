@@ -593,9 +593,9 @@
                         <h4 class="font-extrabold text-sm text-slate-900">Log Presensi Terbaru</h4>
                         <p class="text-[11px] text-slate-500">Histori kehadiran tercatat di sistem</p>
                     </div>
-                    <a href="{{ route('scan') }}" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] rounded-xl flex items-center space-x-1.5 transition-all shadow-xs">
-                        <i data-lucide="scan" class="w-3.5 h-3.5"></i>
-                        <span>Scan Sekarang</span>
+                    <a href="{{ route('presensi') }}" title="Buka Presensi Absen Datang & Pulang" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] rounded-xl flex items-center space-x-1.5 transition-all shadow-xs active:scale-95 shrink-0">
+                        <i data-lucide="scan-face" class="w-3.5 h-3.5"></i>
+                        <span>Absen Datang & Pulang</span>
                     </a>
                 </div>
 
