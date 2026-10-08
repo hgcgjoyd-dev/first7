@@ -30,9 +30,19 @@
     init() {
         this.updateClock();
         setInterval(() => this.updateClock(), 1000);
-        const saved = localStorage.getItem('presensi_status_today');
-        if (saved === 'telat' || saved === 'tepat' || saved === 'belum') {
-            this.statusAbsen = saved;
+
+        const hasDbRecord = {{ !empty($presensiHariIni) ? 'true' : 'false' }};
+        if (hasDbRecord) {
+            this.statusAbsen = '{{ $initialStatus }}';
+        } else {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const savedDate = localStorage.getItem('presensi_date_today');
+            const savedStatus = localStorage.getItem('presensi_status_today');
+            if (savedDate === todayStr && (savedStatus === 'tepat' || savedStatus === 'telat')) {
+                this.statusAbsen = savedStatus;
+            } else {
+                this.statusAbsen = 'belum';
+            }
         }
     },
 
@@ -42,17 +52,6 @@
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const seconds = String(now.getSeconds()).padStart(2, '0');
         this.liveClock = `${hours}:${minutes}:${seconds}`;
-    },
-
-    toggleStatus() {
-        if (this.statusAbsen === 'belum') {
-            this.statusAbsen = 'tepat';
-        } else if (this.statusAbsen === 'tepat') {
-            this.statusAbsen = 'telat';
-        } else {
-            this.statusAbsen = 'belum';
-        }
-        localStorage.setItem('presensi_status_today', this.statusAbsen);
     },
 
     getGreeting() {
@@ -90,15 +89,13 @@
             <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-0.5">{{ $siswa->nama ?? 'Wahyu Pratama' }}</h1>
             
             <div class="flex flex-wrap items-center gap-2 mt-4">
-                <!-- Status Absen Pill (Clickable & Real-Time Sync) -->
-                <button @click="toggleStatus()" 
-                        title="Status Presensi: Klik untuk tes simulasi status"
-                        class="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-bold transition-all backdrop-blur-md shadow-xs cursor-pointer active:scale-95"
-                        :class="{
-                            'bg-rose-500/95 text-white hover:bg-rose-600': statusAbsen === 'belum',
-                            'bg-emerald-500/95 text-white hover:bg-emerald-600': statusAbsen === 'tepat',
-                            'bg-amber-500/95 text-white hover:bg-amber-600': statusAbsen === 'telat'
-                        }">
+                <!-- Status Absen Badge (Otomatis & Tidak Dapat Diubah Manual) -->
+                <div class="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-bold transition-all backdrop-blur-md shadow-xs select-none"
+                     :class="{
+                         'bg-rose-500/95 text-white': statusAbsen === 'belum',
+                         'bg-emerald-500/95 text-white': statusAbsen === 'tepat',
+                         'bg-amber-500/95 text-white': statusAbsen === 'telat'
+                     }">
                     <span class="w-2 h-2 rounded-full mr-1.5" 
                           :class="{
                               'bg-white animate-pulse': statusAbsen === 'belum',
@@ -108,7 +105,7 @@
                     <span x-text="statusAbsen === 'belum' ? 'Belum Absen' : (statusAbsen === 'tepat' ? 'Sudah Absen (Tepat)' : 'Sudah Absen (Telat)')">
                         Belum Absen
                     </span>
-                </button>
+                </div>
 
                 <!-- Live Time Pill (Mengikuti Jam Sekarang) -->
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md">

@@ -159,6 +159,8 @@
         this.datangResultType = isLate ? 'telat' : 'tepat';
 
         // 3. Simpan status ke localStorage agar otomatis tersinkron ke dashboard
+        const todayDateStr = new Date().toISOString().slice(0, 10);
+        localStorage.setItem('presensi_date_today', todayDateStr);
         localStorage.setItem('presensi_status_today', this.datangResultType);
         localStorage.setItem('presensi_jam_today', this.recordedTime);
         if (this.capturedPhoto) {
