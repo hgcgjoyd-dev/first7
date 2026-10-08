@@ -60,23 +60,52 @@
         
         <!-- Showcase Main Visual Box -->
         <div class="relative w-full rounded-3xl sm:rounded-[36px] overflow-hidden bg-slate-900 border border-slate-200/80 shadow-soft group aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto lg:h-[460px]">
-            <!-- Slides -->
-            <template x-for="(slide, index) in slides" :key="index">
-                <div x-show="activeSlide === index"
-                     x-transition:enter="transition ease-out duration-500"
-                     x-transition:enter-start="opacity-0 scale-105"
-                     x-transition:enter-end="opacity-100 scale-100"
-                     x-transition:leave="transition ease-in duration-300"
-                     x-transition:leave-start="opacity-100 scale-100"
-                     x-transition:leave-end="opacity-0 scale-95"
-                     class="absolute inset-0 w-full h-full">
-                    <img :src="slide.src" 
-                         :alt="slide.title" 
-                         class="w-full h-full object-cover">
-                    <!-- Premium Gradient Overlay for readable text and contrast -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-black/20"></div>
-                </div>
-            </template>
+            <!-- Slide 0: Gedung Teaching Factory (images.png) -->
+            <div x-show="activeSlide === 0"
+                 x-transition:enter="transition ease-out duration-500"
+                 x-transition:enter-start="opacity-0 scale-105"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="absolute inset-0 w-full h-full">
+                <img src="{{ asset('images/images.png') }}" 
+                     alt="Gedung Teaching Factory" 
+                     class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-black/20"></div>
+            </div>
+
+            <!-- Slide 1: Gedung Lab Industri & TeFa (images2.png) -->
+            <div x-show="activeSlide === 1"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-500"
+                 x-transition:enter-start="opacity-0 scale-105"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="absolute inset-0 w-full h-full">
+                <img src="{{ asset('images/images2.png') }}" 
+                     alt="Gedung Lab Industri & TeFa" 
+                     class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-black/20"></div>
+            </div>
+
+            <!-- Slide 2: Area Kampus & Ruang Teori (images3.png) -->
+            <div x-show="activeSlide === 2"
+                 x-cloak
+                 x-transition:enter="transition ease-out duration-500"
+                 x-transition:enter-start="opacity-0 scale-105"
+                 x-transition:enter-end="opacity-100 scale-100"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 scale-100"
+                 x-transition:leave-end="opacity-0 scale-95"
+                 class="absolute inset-0 w-full h-full">
+                <img src="{{ asset('images/images3.png') }}" 
+                     alt="Area Kampus & Ruang Teori" 
+                     class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-black/20"></div>
+            </div>
 
             <!-- Top Floating Header inside photo card -->
             <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-20">
@@ -87,7 +116,7 @@
                 
                 <!-- Slide Counter Pill -->
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-black/50 text-white backdrop-blur-md border border-white/20">
-                    <span x-text="activeSlide + 1"></span>/<span x-text="slides.length"></span>
+                    <span x-text="activeSlide + 1">1</span>/<span>3</span>
                 </span>
             </div>
 
@@ -95,12 +124,15 @@
             <div class="absolute bottom-0 left-0 right-0 p-5 sm:p-7 z-20 text-white">
                 <span class="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-extrabold tracking-wider uppercase bg-blue-600 text-white mb-2 shadow-xs"
                       x-text="slides[activeSlide].badge">
+                    Teaching Factory Modern
                 </span>
                 <h3 class="text-xl sm:text-2xl font-black tracking-tight leading-tight text-white drop-shadow-sm" 
                     x-text="slides[activeSlide].title">
+                    Gedung Teaching Factory
                 </h3>
                 <p class="text-xs sm:text-sm text-slate-200 mt-1 line-clamp-2 max-w-lg leading-relaxed"
                    x-text="slides[activeSlide].desc">
+                    Pusat Kejuruan Axioo Class Program & PLN Icon Plus dengan standar industri teknologi terdepan.
                 </p>
 
                 <!-- Navigation Controls & Indicators -->
@@ -135,16 +167,30 @@
 
         <!-- 3 Quick Photo Thumbnails below slider (Interactive & Responsive) -->
         <div class="grid grid-cols-3 gap-2.5 sm:gap-3">
-            <template x-for="(slide, i) in slides" :key="i">
-                <button @click="setSlide(i)" 
-                        class="group relative rounded-2xl overflow-hidden border-2 transition-all text-left bg-slate-900 cursor-pointer aspect-[16/9]"
-                        :class="activeSlide === i ? 'border-blue-600 shadow-md ring-2 ring-blue-500/30' : 'border-transparent opacity-65 hover:opacity-100'">
-                    <img :src="slide.src" :alt="slide.title" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-2 flex flex-col justify-end">
-                        <span class="text-[10px] sm:text-[11px] font-bold text-white truncate" x-text="slide.title"></span>
-                    </div>
-                </button>
-            </template>
+            <button @click="setSlide(0)" 
+                    class="group relative rounded-2xl overflow-hidden border-2 transition-all text-left bg-slate-900 cursor-pointer aspect-[16/9]"
+                    :class="activeSlide === 0 ? 'border-blue-600 shadow-md ring-2 ring-blue-500/30' : 'border-transparent opacity-65 hover:opacity-100'">
+                <img src="{{ asset('images/images.png') }}" alt="Gedung Teaching Factory" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-2 flex flex-col justify-end">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-white truncate">Teaching Factory</span>
+                </div>
+            </button>
+            <button @click="setSlide(1)" 
+                    class="group relative rounded-2xl overflow-hidden border-2 transition-all text-left bg-slate-900 cursor-pointer aspect-[16/9]"
+                    :class="activeSlide === 1 ? 'border-blue-600 shadow-md ring-2 ring-blue-500/30' : 'border-transparent opacity-65 hover:opacity-100'">
+                <img src="{{ asset('images/images2.png') }}" alt="Gedung Lab Industri" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-2 flex flex-col justify-end">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-white truncate">Lab Industri</span>
+                </div>
+            </button>
+            <button @click="setSlide(2)" 
+                    class="group relative rounded-2xl overflow-hidden border-2 transition-all text-left bg-slate-900 cursor-pointer aspect-[16/9]"
+                    :class="activeSlide === 2 ? 'border-blue-600 shadow-md ring-2 ring-blue-500/30' : 'border-transparent opacity-65 hover:opacity-100'">
+                <img src="{{ asset('images/images3.png') }}" alt="Area Kampus & Lapangan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-2 flex flex-col justify-end">
+                    <span class="text-[10px] sm:text-[11px] font-bold text-white truncate">Area Kampus</span>
+                </div>
+            </button>
         </div>
     </div>
 

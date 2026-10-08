@@ -277,17 +277,10 @@
                     </nav>
                 </div>
 
-                <!-- School Info Card with Campus Photo & Logo PNG -->
-                <div class="bg-gradient-to-br from-blue-900 to-indigo-950 rounded-3xl p-5 text-white shadow-soft overflow-hidden">
-                    <div class="relative rounded-2xl overflow-hidden mb-3 aspect-[16/9] border border-white/15 shadow-sm group">
-                        <img src="{{ asset('images/images.png') }}" alt="Gedung SMK TI Bali Global Badung" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent"></div>
-                        <span class="absolute bottom-2 left-2 text-[10px] font-bold bg-blue-600/90 text-white px-2 py-0.5 rounded-md backdrop-blur-xs">
-                            Gedung Teaching Factory
-                        </span>
-                    </div>
-                    <div class="bg-white/95 rounded-2xl p-2 mb-3 flex items-center justify-center">
-                        <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 w-auto object-contain">
+                <!-- School Info Card with Logo PNG -->
+                <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
+                    <div class="bg-white rounded-2xl p-2.5 mb-3 flex items-center justify-center">
+                        <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 w-auto object-contain">
                     </div>
                     <p class="text-xs text-blue-100/90 leading-relaxed">
                         Presensi dibuka 06:30 - 07:15 WITA. Keterlambatan dicatat otomatis dan mengirim notifikasi WhatsApp ke orang tua/wali.
