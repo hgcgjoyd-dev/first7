@@ -372,7 +372,7 @@ class KesiswaanController extends Controller
     public function izin()
     {
         $siswa = $this->getActiveSiswa();
-        return view('izin.index', compact('siswa'));
+        return view('dashboard siswa.izin', compact('siswa'));
     }
 
     /**
@@ -461,7 +461,7 @@ class KesiswaanController extends Controller
             }
         } catch (Throwable $e) {}
 
-        return view('riwayat.index', compact('siswa', 'daftarPresensi', 'daftarIzin', 'persenHadir', 'totalIzin'));
+        return view('dashboard siswa.riwayat', compact('siswa', 'daftarPresensi', 'daftarIzin', 'persenHadir', 'totalIzin'));
     }
 
     /**
@@ -478,7 +478,7 @@ class KesiswaanController extends Controller
             }
         } catch (Throwable $e) {}
 
-        return view('mapel.index', compact('siswa', 'daftarMapel'));
+        return view('dashboard siswa.mapel', compact('siswa', 'daftarMapel'));
     }
 
     /**
@@ -497,7 +497,7 @@ class KesiswaanController extends Controller
             }
         } catch (Throwable $e) {}
 
-        return view('bk.index', compact('siswa', 'daftarBk'));
+        return view('dashboard siswa.bk', compact('siswa', 'daftarBk'));
     }
 
     /**
@@ -523,7 +523,7 @@ class KesiswaanController extends Controller
             }
         } catch (Throwable $e) {}
 
-        return view('piket.index', compact('siswa', 'daftarPiket', 'piketHariIni'));
+        return view('dashboard siswa.piket', compact('siswa', 'daftarPiket', 'piketHariIni'));
     }
 
     /**
