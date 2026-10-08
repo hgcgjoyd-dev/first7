@@ -2,6 +2,15 @@
 
 use Illuminate\Support\Facades\Route;
 
+<<<<<<< HEAD
+=======
+/*
+|--------------------------------------------------------------------------
+| Web Routes - Sistem Presensi & Kesiswaan SMK TI Bali Global Badung
+| Alur: Halaman Awal (Landing) -> Login / Scan -> Dashboard Siswa
+|--------------------------------------------------------------------------
+*/
+>>>>>>> ee7f29c746d6ef789a75d3048bcf5f64db53f7f8
 
 // 1. Alur Pertama: Halaman Awal Gateway (Landing)
 Route::get('/', function () {
