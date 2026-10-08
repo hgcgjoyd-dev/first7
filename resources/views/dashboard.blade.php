@@ -168,7 +168,7 @@
             
             <h2 class="text-2xl sm:text-3xl font-black mb-2">Absen Disini</h2>
             <p class="text-xs sm:text-sm text-blue-100 mb-6 font-medium">
-                Posisikan diri di area kampus sekolah SMK TI Bali Global Badung lalu klik tombol sidik jari di bawah ini.
+                Posisikan diri di area kampus sekolah SMK TI Bali Global Badung lalu klik tombol scan di bawah ini.
             </p>
 
             <!-- Arrow Down Indicator -->
@@ -176,11 +176,11 @@
                 <i data-lucide="arrow-down" class="w-5 h-5 mx-auto"></i>
             </div>
 
-            <!-- Fingerprint Pulse Button: Click navigates to /presensi -->
-            <a href="{{ route('presensi') }}" title="Mulai Presensi Biometrik" class="relative group block">
+            <!-- Scan Button: Click navigates to /presensi -->
+            <a href="{{ route('presensi') }}" title="Mulai Presensi Biometrik & Scan" class="relative group block">
                 <div class="absolute -inset-4 bg-white/25 rounded-full blur-xl group-hover:bg-white/40 transition-all animate-pulse-ring"></div>
                 <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-2xl relative z-10 group-hover:scale-105 active:scale-95 transition-all">
-                    <i data-lucide="fingerprint" class="w-12 h-12 sm:w-14 sm:h-14"></i>
+                    <i data-lucide="scan" class="w-12 h-12 sm:w-14 sm:h-14"></i>
                 </div>
             </a>
 

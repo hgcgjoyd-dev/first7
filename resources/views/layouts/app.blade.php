@@ -303,19 +303,10 @@
                         </a>
                     </nav>
 
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-6 mb-3 px-3">Gerbang Masuk</p>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-6 mb-3 px-3">Akun Siswa</p>
                     <nav class="space-y-1.5">
-                        <a href="{{ route('landing') }}" 
-                           class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold transition-all text-slate-600 hover:bg-slate-50">
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="home" class="w-4 h-4"></i>
-                                <span>Halaman Awal Gateway</span>
-                            </div>
-                            <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-50"></i>
-                        </a>
-
                         <a href="{{ route('logout') }}" 
-                           class="w-full flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-semibold transition-all text-rose-600 hover:bg-rose-50">
+                           class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-rose-600 hover:bg-rose-50">
                             <div class="flex items-center space-x-3">
                                 <i data-lucide="log-out" class="w-4 h-4"></i>
                                 <span>Keluar / Ganti Akun</span>
@@ -362,7 +353,7 @@
                 <a href="{{ route('presensi') }}" 
                    title="Presensi Absen"
                    class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all ring-4 ring-white">
-                    <i data-lucide="fingerprint" class="w-7 h-7"></i>
+                    <i data-lucide="scan" class="w-7 h-7"></i>
                 </a>
             </div>
 
