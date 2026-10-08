@@ -332,7 +332,9 @@ class KesiswaanController extends Controller
                     ]);
                 }
             } else {
-                $statusKehadiran = Carbon::now()->hour >= 8 ? 'Terlambat' : 'Hadir';
+                $now = Carbon::now();
+                $isLate = ($now->hour > 7) || ($now->hour === 7 && $now->minute > 5);
+                $statusKehadiran = $isLate ? 'Terlambat' : 'Hadir';
                 if ($presensi) {
                     $presensi->update([
                         'jam_masuk'  => $presensi->jam_masuk ?: $nowTime,
