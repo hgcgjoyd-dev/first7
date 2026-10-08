@@ -270,7 +270,7 @@ class KesiswaanController extends Controller
             }
         } catch (Throwable $e) {}
 
-        return view('dashboard', compact(
+        return view('dashboard siswa.dashboard', compact(
             'siswa',
             'presensiHariIni',
             'persenHadir',
@@ -297,7 +297,7 @@ class KesiswaanController extends Controller
             }
         } catch (Throwable $e) {}
 
-        return view('presensi.index', compact('siswa', 'presensiHariIni'));
+        return view('dashboard siswa.presensi', compact('siswa', 'presensiHariIni'));
     }
 
     /**
