@@ -132,12 +132,7 @@
 
             <!-- Left: Brand Logo PNG (Sudah berisi tulisan SMK TI Bali Global Badung) -->
             <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
-<<<<<<< HEAD:resources/views/dashboard siswa/app.blade.php
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-11 sm:h-13 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
-=======
                 <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-11 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
-
->>>>>>> 09071e5 (Perbaiki error penulisan):resources/views/layouts/app.blade.php
                 <div class="border-l border-slate-200 pl-3 hidden sm:block">
                     <p class="text-[11px] font-semibold text-slate-500 leading-tight">Presensi & Kesiswaan</p>
                     <p class="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Portal Resmi Siswa</p>
