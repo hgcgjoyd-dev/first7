@@ -210,15 +210,12 @@
                     </div>
                 </div>
 
-                <!-- User Profile Link -->
-                <a href="{{ route('profil') }}" class="flex items-center space-x-2.5 p-1 rounded-xl hover:bg-slate-100 transition-colors text-left pl-2 border-l border-slate-200">
-                    <div class="w-9 h-9 rounded-full bg-linear-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                <!-- User Profile Link Button (Pojok Kanan Atas) -->
+                <a href="{{ route('profil') }}" 
+                   title="Buka Profil Siswa" 
+                   class="p-1 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center pl-2 border-l border-slate-200 group">
+                    <div class="w-9 h-9 rounded-full bg-linear-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
                         <i data-lucide="graduation-cap" class="w-5 h-5"></i>
-                    </div>
-
-                    <div class="hidden sm:block">
-                        <p class="text-xs font-bold text-slate-900 leading-tight">Wahyu Pratama</p>
-                        <p class="text-[10px] text-slate-500">XI PPLG 1 • 2026042</p>
                     </div>
                 </a>
 
