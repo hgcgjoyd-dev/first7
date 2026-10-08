@@ -339,12 +339,12 @@
                 <span>Beranda</span>
             </a>
 
-            <!-- 2. Floating Center Scan Button -->
+            <!-- 2. Floating Center Presensi Button -->
             <div class="relative -top-5">
-                <a href="{{ route('scan') }}" 
-                   title="Scan Kartu Pelajar"
+                <a href="{{ route('presensi') }}" 
+                   title="Presensi Masuk & Pulang"
                    class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all ring-4 ring-white">
-                    <i data-lucide="scan" class="w-7 h-7"></i>
+                    <i data-lucide="scan-face" class="w-7 h-7"></i>
                 </a>
             </div>
 
