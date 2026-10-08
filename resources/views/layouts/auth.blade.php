@@ -49,10 +49,14 @@
 
     <!-- Top Simple Nav -->
     <div class="max-w-xl mx-auto w-full flex items-center justify-between pb-4">
-        <a href="{{ route('dashboard') }}" class="flex items-center space-x-2 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors">
-            <i data-lucide="arrow-left" class="w-4 h-4"></i>
-            <span>Kembali ke Dashboard</span>
-        </a>
+        @if(!request()->routeIs('landing') && request()->path() !== '/')
+            <a href="{{ route('landing') }}" class="flex items-center space-x-2 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span>Kembali ke Halaman Awal</span>
+            </a>
+        @else
+            <div></div>
+        @endif
         <div class="flex items-center space-x-2 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold text-emerald-700 border border-emerald-200">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
             <span>SERVER ONLINE</span>
