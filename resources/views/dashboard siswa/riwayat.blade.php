@@ -331,14 +331,9 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- 2. MAIN RESPONSIVE CONTENT GRID (Mobile: 1 Column, Desktop: 12 Columns)   -->
+    <!-- 2. MAIN CONTENT CONTAINER (Matching Reference Screenshot 1-to-1)          -->
     <!-- ========================================================================= -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-
-        <!-- ===================================================================== -->
-        <!-- LEFT COLUMN (lg:col-span-8) - Matching Reference Screenshot 1-to-1    -->
-        <!-- ===================================================================== -->
-        <div class="lg:col-span-7 xl:col-span-8 space-y-4">
+    <div class="max-w-3xl mx-auto space-y-4">
 
             <!-- ================================================================= -->
             <!-- CARD 1: QUICK SUMMARY 2-COLUMN (Hadir 95% | Izin 3 Hari)          -->
@@ -578,107 +573,6 @@
                     </div>
                 </div>
             </div>
-
-        </div>
-
-        <!-- ===================================================================== -->
-        <!-- RIGHT COLUMN (lg:col-span-4) - DESKTOP SIDEBAR WIDGETS                -->
-        <!-- ===================================================================== -->
-        <div class="lg:col-span-5 xl:col-span-4 space-y-5">
-
-            <!-- TABEL CATATAN PRESENSI HARIAN -->
-            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-soft space-y-4">
-                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <div>
-                        <h4 class="font-extrabold text-sm text-slate-900">Log Presensi Terbaru</h4>
-                        <p class="text-[11px] text-slate-500">Histori kehadiran tercatat di sistem</p>
-                    </div>
-                    <a href="{{ route('presensi') }}" title="Buka Presensi Absen Datang & Pulang" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] rounded-xl flex items-center space-x-1.5 transition-all shadow-xs active:scale-95 shrink-0">
-                        <i data-lucide="scan-face" class="w-3.5 h-3.5"></i>
-                        <span>Absen Datang & Pulang</span>
-                    </a>
-                </div>
-
-                @if(count($daftarPresensi) > 0)
-                    <div class="divide-y divide-slate-100 text-xs">
-                        @foreach(array_slice($daftarPresensi->toArray(), 0, 5) as $p)
-                            <div class="py-3 flex items-center justify-between">
-                                <div>
-                                    <p class="font-bold text-slate-900">{{ \Carbon\Carbon::parse($p['tanggal'])->translatedFormat('d M Y') }}</p>
-                                    <p class="text-[11px] text-slate-500 mt-0.5">
-                                        Masuk: <span class="font-semibold text-slate-700">{{ $p['jam_masuk'] ? substr($p['jam_masuk'], 0, 5) . ' WITA' : '-' }}</span>
-                                    </p>
-                                </div>
-                                <div>
-                                    @if($p['status'] === 'Hadir')
-                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">Hadir</span>
-                                    @elseif($p['status'] === 'Terlambat')
-                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800">Terlambat</span>
-                                    @else
-                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800">{{ $p['status'] }}</span>
-                                    @endif
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="space-y-2 text-xs">
-                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                            <div>
-                                <p class="font-bold text-slate-900">8 Oktober 2026</p>
-                                <p class="text-[11px] text-slate-500">Masuk: 07.10 WITA</p>
-                            </div>
-                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">Hadir</span>
-                        </div>
-                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                            <div>
-                                <p class="font-bold text-slate-900">7 Oktober 2026</p>
-                                <p class="text-[11px] text-slate-500">Masuk: 07.05 WITA</p>
-                            </div>
-                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">Hadir</span>
-                        </div>
-                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
-                            <div>
-                                <p class="font-bold text-slate-900">6 Oktober 2026</p>
-                                <p class="text-[11px] text-slate-500">Masuk: 07.12 WITA</p>
-                            </div>
-                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">Hadir</span>
-                        </div>
-                    </div>
-                @endif
-
-                <div class="pt-2">
-                    <a href="{{ route('izin') }}" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all">
-                        <i data-lucide="file-plus" class="w-4 h-4 text-blue-600"></i>
-                        <span>Ajukan Surat Izin / Sakit</span>
-                    </a>
-                </div>
-            </div>
-
-            <!-- ATURAN JAM PRESENSI SEKOLAH -->
-            <div class="bg-gradient-to-br from-slate-900 to-blue-950 text-white rounded-3xl p-5 sm:p-6 shadow-soft space-y-3.5">
-                <div class="flex items-center space-x-2 text-blue-300 text-xs font-bold uppercase tracking-wider">
-                    <i data-lucide="clock" class="w-4 h-4"></i>
-                    <span>Ketentuan Jam Presensi</span>
-                </div>
-                <h4 class="font-black text-base text-white">SMK TI Bali Global Badung</h4>
-                <ul class="text-xs text-blue-100 space-y-2 leading-relaxed">
-                    <li class="flex items-start space-x-2">
-                        <span class="text-emerald-400 font-bold">•</span>
-                        <span><strong>06:30 - 07:05 WITA</strong>: Presensi Masuk (Tepat Waktu).</span>
-                    </li>
-                    <li class="flex items-start space-x-2">
-                        <span class="text-amber-400 font-bold">•</span>
-                        <span><strong>> 07:05 WITA</strong>: Dinyatakan Terlambat & Poin BK dicatat otomatis.</span>
-                    </li>
-                    <li class="flex items-start space-x-2">
-                        <span class="text-blue-300 font-bold">•</span>
-                        <span><strong>12:25 WITA</strong>: Presensi Kepulangan Siswa.</span>
-                    </li>
-                </ul>
-            </div>
-
-        </div>
 
     </div>
 
