@@ -17,6 +17,7 @@
 <div class="space-y-6" x-data="{
     statusAbsen: '{{ $initialStatus }}', // 'belum', 'tepat', 'telat'
     baseHadir: {{ ($totalHadir ?? 0) > 0 ? $totalHadir : 14 }},
+    liveClock: '',
 
     get totalHadirLive() {
         const initialWasBelum = '{{ $initialStatus }}' === 'belum';
@@ -27,10 +28,20 @@
     },
 
     init() {
+        this.updateClock();
+        setInterval(() => this.updateClock(), 1000);
         const saved = localStorage.getItem('presensi_status_today');
         if (saved === 'telat' || saved === 'tepat' || saved === 'belum') {
             this.statusAbsen = saved;
         }
+    },
+
+    updateClock() {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        this.liveClock = `${hours}:${minutes}:${seconds}`;
     },
 
     toggleStatus() {
@@ -61,22 +72,22 @@
 
         <!-- Top Row: Logo di kiri & Tombol Profil di pojok kanan atas -->
         <div class="relative z-10 flex items-center justify-between mb-4">
-            <!-- Brand Logo (Sudah ada tulisan SMK TI Bali Global Badung di gambarnya) -->
-            <div class="bg-white/95 rounded-2xl py-2 px-4 sm:px-5 inline-flex items-center shadow-md">
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-12 md:h-14 w-auto object-contain">
+            <!-- Brand Logo -->
+            <div class="bg-white/95 rounded-2xl py-1.5 px-3.5 sm:px-4 inline-flex items-center shadow-xs">
+                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-11 w-auto object-contain">
             </div>
 
             <!-- Profile Avatar Button (Pojok Kanan Atas - Mobile & Desktop) -->
             <a href="{{ route('profil') }}" 
                title="Buka Profil Siswa" 
-               class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-md hover:scale-105 active:scale-95 transition-all group">
-                <i data-lucide="user" class="w-6 h-6 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform"></i>
+               class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-xs hover:scale-105 active:scale-95 transition-all group">
+                <i data-lucide="user" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
             </a>
         </div>
 
         <div class="relative z-10">
-            <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight" x-text="getGreeting()">Selamat Pagi,</h1>
-            <p class="text-2xl sm:text-3xl font-extrabold text-blue-100 mt-0.5">Nama Siswa (Wahyu Pratama)</p>
+            <p class="text-sm sm:text-base font-semibold text-blue-100" x-text="getGreeting()">Selamat Pagi,</p>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-0.5">{{ $siswa->nama ?? 'Wahyu Pratama' }}</h1>
             
             <div class="flex flex-wrap items-center gap-2 mt-4">
                 <!-- Status Absen Pill (Clickable & Real-Time Sync) -->
@@ -102,12 +113,13 @@
                 <!-- Live Time Pill (Mengikuti Jam Sekarang) -->
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md">
                     <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5"></i>
-                    <span x-text="'JAM ' + currentClockLive + ' WITA'">JAM 07:30 WITA</span>
+                    <span x-text="'JAM ' + (liveClock || '07:30:00') + ' WITA'">JAM 07:30:00 WITA</span>
                 </span>
 
                 <!-- Class Pill -->
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md">
-                    Kelas XI PPLG 1
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>
+                    Kelas {{ $siswa->kelas ?? 'XI PPLG 1' }} • NIS: {{ $siswa->nis ?? '2026042' }}
                 </span>
             </div>
         </div>
