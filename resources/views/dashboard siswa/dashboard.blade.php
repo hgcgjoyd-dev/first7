@@ -259,7 +259,7 @@
             </div>
 
             <div class="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span class="text-slate-500">Area: Lab RPL 2 & Kelas</span>
+                <span class="text-slate-500">Area: Lab PPLG 2 & Kelas</span>
                 <a href="{{ route('piket') }}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-xl transition-colors">
                     Buka Checklist →
                 </a>

@@ -17,7 +17,7 @@
                  src: '{{ asset('images/images2.png') }}',
                  badge: 'Fasilitas Praktik Unggulan',
                  title: 'Gedung Lab Industri & TeFa',
-                 desc: 'Ruang kerja dan laboratorium industri komprehensif penunjang keahlian siswa RPL, PPLG & TJKT.'
+                 desc: 'Ruang kerja dan laboratorium industri komprehensif penunjang keahlian siswa DKV, PPLG , TJKT & BD.'
              },
              {
                  src: '{{ asset('images/images3.png') }}',

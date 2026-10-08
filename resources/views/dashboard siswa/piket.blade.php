@@ -8,7 +8,7 @@
         piketList: [
             { title: 'Menyapu dan mengepel lantai kelas', desc: 'Dikerjakan pagi hari sebelum jam pertama (07:15 WITA)', done: true },
             { title: 'Bersihkan papan tulis & rapikan spidol', desc: 'Pastikan penghapus bersih & siap digunakan guru', done: true },
-            { title: 'Rapikan meja lab & kabel PC Lab RPL 2', desc: 'Setelah praktikum kejuruan selesai (14:00 WITA)', done: false },
+            { title: 'Rapikan meja lab & kabel PC Lab PPLG', desc: 'Setelah praktikum kejuruan selesai (14:00 WITA)', done: false },
             { title: 'Kosongkan tong sampah & matikan AC/Lampu', desc: 'Pukul 15:30 WITA sebelum gerbang kelas dikunci', done: false }
         ],
         isTuntas: {{ (!empty($piketHariIni) && $piketHariIni->status === 'Selesai') ? 'true' : 'false' }},
@@ -214,7 +214,7 @@
                 </div>
                 <div class="pt-2 flex items-center space-x-2 text-xs">
                     <span class="text-emerald-200">Area Tugas:</span>
-                    <span class="bg-white text-emerald-900 font-extrabold px-3 py-1 rounded-full">Kelas XI PPLG 1 & Lab RPL</span>
+                    <span class="bg-white text-emerald-900 font-extrabold px-3 py-1 rounded-full">Kelas XI PPLG 1 & Lab PPLG</span>
                 </div>
             </div>
 
@@ -254,7 +254,7 @@
                         <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-700 font-extrabold flex items-center justify-center">4</div>
                         <div>
                             <p class="font-bold text-slate-900">I Nyoman Gede</p>
-                            <span class="text-slate-500 font-medium text-[11px]">Area Lab RPL 2</span>
+                            <span class="text-slate-500 font-medium text-[11px]">Area Lab PPLG</span>
                         </div>
                     </div>
                 </div>
@@ -407,7 +407,7 @@
                     </li>
                     <li class="flex items-start space-x-2">
                         <span class="text-teal-400 font-bold">•</span>
-                        <span>Pastikan komputer Lab RPL 2 dimatikan dan stopkontak dicabut saat pulang.</span>
+                        <span>Pastikan komputer Lab PPLG dimatikan dan stopkontak dicabut saat pulang.</span>
                     </li>
                     <li class="flex items-start space-x-2">
                         <span class="text-teal-400 font-bold">•</span>

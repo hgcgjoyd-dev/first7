@@ -356,7 +356,7 @@
                             </div>
                             <div>
                                 <p class="font-bold text-slate-900">Pak Gede, S.Kom</p>
-                                <p class="text-[10px] text-slate-400">Web & Mobile • Lab RPL 2</p>
+                                <p class="text-[10px] text-slate-400">Web & Mobile • Lab PPLG</p>
                             </div>
                         </div>
                         <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold rounded-lg text-[10px]">Aktif</span>
@@ -369,7 +369,7 @@
                             </div>
                             <div>
                                 <p class="font-bold text-slate-900">Ibu Ayu, M.Cs</p>
-                                <p class="text-[10px] text-slate-400">Basis Data • Lab RPL 1</p>
+                                <p class="text-[10px] text-slate-400">Basis Data • Lab PPLG</p>
                             </div>
                         </div>
                         <span class="px-2.5 py-1 bg-slate-200 text-slate-600 font-bold rounded-lg text-[10px]">Offline</span>
