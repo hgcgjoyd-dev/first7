@@ -21,8 +21,8 @@
              },
              {
                  src: '{{ asset('images/images3.png') }}',
-                 badge: 'Lingkungan Kampus Asri',
-                 title: 'Area Kampus & Ruang Teori',
+                 badge: 'Lingkungan Asri',
+                 title: 'Area & Ruang Teori',
                  desc: 'Suasana belajar tertib, representatif, dan menjunjung tinggi kedisiplinan serta budaya Bali.'
              }
          ],
@@ -102,7 +102,7 @@
                  x-transition:leave-end="opacity-0 scale-95"
                  class="absolute inset-0 w-full h-full">
                 <img src="{{ asset('images/images3.png') }}" 
-                     alt="Area Kampus & Ruang Teori" 
+                     alt="Area & Ruang Teori" 
                      class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-black/20"></div>
             </div>
@@ -111,7 +111,7 @@
             <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-20">
                 <span class="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-white/90 text-blue-900 backdrop-blur-md shadow-md">
                     <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500"></i>
-                    <span>Kampus SMK TI Bali Global Badung</span>
+                    <span> SMK TI Bali Global Badung</span>
                 </span>
                 
                 <!-- Slide Counter Pill -->
@@ -186,9 +186,9 @@
             <button @click="setSlide(2)" 
                     class="group relative rounded-2xl overflow-hidden border-2 transition-all text-left bg-slate-900 cursor-pointer aspect-[16/9]"
                     :class="activeSlide === 2 ? 'border-blue-600 shadow-md ring-2 ring-blue-500/30' : 'border-transparent opacity-65 hover:opacity-100'">
-                <img src="{{ asset('images/images3.png') }}" alt="Area Kampus & Lapangan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                <img src="{{ asset('images/images3.png') }}" alt="Area & Lapangan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-2 flex flex-col justify-end">
-                    <span class="text-[10px] sm:text-[11px] font-bold text-white truncate">Area Kampus</span>
+                    <span class="text-[10px] sm:text-[11px] font-bold text-white truncate">Area </span>
                 </div>
             </button>
         </div>
@@ -215,7 +215,7 @@
             
             <!-- Logo Resmi SMK TI Bali Global Badung -->
             <div class="my-4 flex items-center justify-center">
-                <div class="bg-white rounded-2xl p-2.5 shadow-xl flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28">
+                <div class="bg-white rounded-3xl p-3 sm:p-4 shadow-xl flex items-center justify-center w-32 h-32 sm:w-36 sm:h-36">
                     <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="w-full h-full object-contain">
                 </div>
             </div>

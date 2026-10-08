@@ -204,7 +204,7 @@
     <!-- Header Title & School Brand -->
     <div>
         <div class="flex items-center justify-center mb-2">
-            <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="w-20 sm:w-24 h-auto object-contain drop-shadow-sm">
+            <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-14 sm:h-16 w-auto object-contain drop-shadow-sm">
         </div>
         
         <h2 class="text-xl sm:text-2xl font-black text-slate-900">SCAN KARTU PELAJAR</h2>

@@ -8,7 +8,7 @@
     <div class="text-center space-y-3">
         <!-- Logo Resmi SMK TI Bali Global Badung -->
         <div class="flex items-center justify-center">
-            <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="w-24 sm:w-28 h-auto object-contain drop-shadow-sm">
+            <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-16 sm:h-20 w-auto object-contain drop-shadow-sm">
         </div>
 
         <div>

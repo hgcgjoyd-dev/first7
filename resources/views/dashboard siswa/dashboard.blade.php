@@ -62,8 +62,8 @@
         <!-- Top Row: Logo di kiri & Tombol Profil di pojok kanan atas -->
         <div class="relative z-10 flex items-center justify-between mb-4">
             <!-- Brand Logo (Sudah ada tulisan SMK TI Bali Global Badung di gambarnya) -->
-            <div class="bg-white/95 rounded-2xl py-1.5 px-3.5 inline-flex items-center shadow-sm">
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-8 sm:h-9 w-auto object-contain">
+            <div class="bg-white/95 rounded-2xl py-2 px-4 sm:px-5 inline-flex items-center shadow-md">
+                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-12 md:h-14 w-auto object-contain">
             </div>
 
             <!-- Profile Avatar Button (Pojok Kanan Atas - Mobile & Desktop) -->
@@ -206,7 +206,7 @@
             
             <h2 class="text-2xl sm:text-3xl font-black mb-2">Absen Disini</h2>
             <p class="text-xs sm:text-sm text-blue-100 mb-6 font-medium">
-                Posisikan diri di area kampus sekolah SMK TI Bali Global Badung lalu klik tombol scan di bawah ini.
+                Posisikan diri di area sekolah SMK TI Bali Global Badung lalu klik tombol scan di bawah ini.
             </p>
 
             <!-- Arrow Down Indicator -->

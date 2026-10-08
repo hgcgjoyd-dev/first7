@@ -242,10 +242,9 @@
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
             </a>
 
-            <!-- Logo & Nama Sekolah -->
-            <div class="flex items-center space-x-2.5">
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-6 sm:h-8 w-auto object-contain brightness-0 invert drop-shadow-sm">
-                <span class="font-extrabold text-[11px] sm:text-xs tracking-wider uppercase text-white drop-shadow-xs">SMK TI BALI GLOBAL BADUNG</span>
+            <!-- Logo Resmi SMK TI Bali Global Badung (Asli Full Color logo-smk.png) -->
+            <div class="bg-white/95 rounded-2xl py-2 px-4 sm:px-5 inline-flex items-center shadow-md">
+                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-9 sm:h-11 md:h-13 w-auto object-contain">
             </div>
 
             <!-- Avatar -->
@@ -825,7 +824,7 @@
             <div class="bg-gradient-to-br from-slate-900 to-blue-950 text-white rounded-3xl p-5 sm:p-6 shadow-soft space-y-3.5">
                 <div class="flex items-center space-x-2 text-blue-300 text-xs font-bold uppercase tracking-wider">
                     <i data-lucide="map-pin" class="w-4 h-4"></i>
-                    <span>Geofence GPS Kampus</span>
+                    <span>Geofence GPS</span>
                 </div>
                 <h4 class="font-black text-base text-white">Status Lokasi Siswa</h4>
                 <p class="text-xs text-blue-200/90 leading-relaxed">

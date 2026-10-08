@@ -122,7 +122,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <!-- Left: Brand Logo PNG (Sudah berisi tulisan SMK TI Bali Global Badung) -->
             <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-11 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
+                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-11 sm:h-13 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
                 <div class="border-l border-slate-200 pl-3 hidden sm:block">
                     <p class="text-[11px] font-semibold text-slate-500 leading-tight">Presensi & Kesiswaan</p>
                     <p class="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Portal Resmi Siswa</p>
@@ -268,14 +268,14 @@
 
                 <!-- School Info Card with Logo PNG -->
                 <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
-                    <div class="bg-white rounded-2xl p-2.5 mb-3 flex items-center justify-center">
-                        <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 w-auto object-contain">
+                    <div class="bg-white rounded-2xl p-3 mb-3 flex items-center justify-center shadow-xs">
+                        <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-16 w-auto object-contain">
                     </div>
                     <p class="text-xs text-blue-100/90 leading-relaxed">
                         Presensi dibuka 06:30 - 07:05 WITA, kepulangan 12:25 WITA. Keterlambatan dicatat otomatis dan mengirim notifikasi WhatsApp ke orang tua/wali.
                     </p>
                     <div class="mt-4 pt-3 border-t border-blue-800/80 flex items-center justify-between text-[11px] text-blue-200">
-                        <span>Radius Kampus:</span>
+                        <span>Radius SMK:</span>
                         <span class="font-bold text-emerald-300">Maks. 50 Meter</span>
                     </div>
                 </div>
