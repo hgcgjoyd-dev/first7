@@ -3,7 +3,7 @@
 @section('title', 'Sign In Siswa')
 
 @section('content')
-<div class="bg-white rounded-3xl sm:rounded-[36px] p-6 sm:p-8 border border-slate-200/80 shadow-soft space-y-6">
+<div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft space-y-6">
     <div class="text-center space-y-3">
         <!-- Logo Resmi SMK TI Bali Global Badung (Sudah termasuk tulisan resmi) -->
         <div class="flex items-center justify-center">

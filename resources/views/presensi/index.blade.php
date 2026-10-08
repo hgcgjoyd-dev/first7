@@ -95,7 +95,7 @@
                 
                 <!-- Left: Viewfinder Camera (Exact from Image 4 Left) -->
                 <div class="lg:col-span-7 flex flex-col items-center">
-                    <div class="w-full max-w-md aspect-4/5 rounded-[36px] bg-slate-950 border-4 border-slate-800 shadow-2xl relative overflow-hidden flex flex-col items-center justify-between p-6">
+                    <div class="w-full max-w-md aspect-4/5 rounded-3xl bg-slate-950 border-4 border-slate-800 shadow-2xl relative overflow-hidden flex flex-col items-center justify-between p-6">
                         
                         <!-- Top status bar inside viewfinder -->
                         <div class="w-full flex items-center justify-between text-white/90 z-20 text-xs">
@@ -247,7 +247,7 @@
 
     <!-- RESULT MODAL (Exact from Image 4 Slips) -->
     <div x-show="showResultModal" x-cloak class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-[36px] max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 relative">
             
             <!-- Tepat Waktu (Green) -->
             <template x-if="resultModalType === 'tepat_waktu'">
