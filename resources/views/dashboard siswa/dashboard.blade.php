@@ -44,63 +44,62 @@
     }
 }">
     
-    <!-- Header Greeting Hero Card (Exact from Image 2 Left with Logo PNG) -->
+    <!-- Header Greeting Hero Card -->
     <div class="header-gradient text-white rounded-3xl p-6 sm:p-8 shadow-soft relative overflow-hidden">
         <!-- Ambient background glow -->
         <div class="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
         <div class="absolute bottom-0 right-1/4 w-44 h-44 rounded-full bg-blue-400/20 blur-xl pointer-events-none"></div>
 
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-                <!-- Brand Logo (Sudah ada tulisan SMK TI Bali Global Badung di gambarnya) -->
-                <div class="mb-3">
-                    <div class="bg-white/95 rounded-2xl py-1.5 px-3.5 inline-flex items-center shadow-sm">
-                        <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-8 sm:h-9 w-auto object-contain">
-                    </div>
-                </div>
-
-                <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight" x-text="getGreeting()">Selamat Pagi,</h1>
-                <p class="text-2xl sm:text-3xl font-extrabold text-blue-100 mt-0.5">Nama Siswa (Wahyu Pratama)</p>
-                
-                <div class="flex flex-wrap items-center gap-2 mt-4">
-                    <!-- Status Absen Pill (Clickable & Real-Time Sync) -->
-                    <button @click="toggleStatus()" 
-                            title="Status Presensi: Klik untuk tes simulasi status"
-                            class="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-bold transition-all backdrop-blur-md shadow-xs cursor-pointer active:scale-95"
-                            :class="{
-                                'bg-rose-500/95 text-white hover:bg-rose-600': statusAbsen === 'belum',
-                                'bg-emerald-500/95 text-white hover:bg-emerald-600': statusAbsen === 'tepat',
-                                'bg-amber-500/95 text-white hover:bg-amber-600': statusAbsen === 'telat'
-                            }">
-                        <span class="w-2 h-2 rounded-full mr-1.5" 
-                              :class="{
-                                  'bg-white animate-pulse': statusAbsen === 'belum',
-                                  'bg-emerald-200': statusAbsen === 'tepat',
-                                  'bg-amber-100': statusAbsen === 'telat'
-                              }"></span>
-                        <span x-text="statusAbsen === 'belum' ? 'Belum Absen' : (statusAbsen === 'tepat' ? 'Sudah Absen (Tepat)' : 'Sudah Absen (Telat)')">
-                            Belum Absen
-                        </span>
-                    </button>
-
-                    <!-- Live Time Pill (Mengikuti Jam Sekarang) -->
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md">
-                        <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5"></i>
-                        <span x-text="'JAM ' + currentClockLive + ' WITA'">JAM 07:30 WITA</span>
-                    </span>
-
-                    <!-- Class Pill -->
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md">
-                        Kelas XI PPLG 1
-                    </span>
-                </div>
+        <!-- Top Row: Logo di kiri & Tombol Profil di pojok kanan atas -->
+        <div class="relative z-10 flex items-center justify-between mb-4">
+            <!-- Brand Logo (Sudah ada tulisan SMK TI Bali Global Badung di gambarnya) -->
+            <div class="bg-white/95 rounded-2xl py-1.5 px-3.5 inline-flex items-center shadow-sm">
+                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-8 sm:h-9 w-auto object-contain">
             </div>
 
-            <!-- Profile Avatar Button (Direct link to /profil) -->
-            <div class="flex items-center space-x-4 self-start md:self-auto">
-                <a href="{{ route('profil') }}" title="Buka Profil Siswa" class="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-lg hover:scale-105 active:scale-95 transition-all group">
-                    <i data-lucide="user" class="w-8 h-8 sm:w-10 sm:h-10 group-hover:scale-110 transition-transform"></i>
-                </a>
+            <!-- Profile Avatar Button (Pojok Kanan Atas - Mobile & Desktop) -->
+            <a href="{{ route('profil') }}" 
+               title="Buka Profil Siswa" 
+               class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-md hover:scale-105 active:scale-95 transition-all group">
+                <i data-lucide="user" class="w-6 h-6 sm:w-7 sm:h-7 group-hover:scale-110 transition-transform"></i>
+            </a>
+        </div>
+
+        <div class="relative z-10">
+            <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight" x-text="getGreeting()">Selamat Pagi,</h1>
+            <p class="text-2xl sm:text-3xl font-extrabold text-blue-100 mt-0.5">Nama Siswa (Wahyu Pratama)</p>
+            
+            <div class="flex flex-wrap items-center gap-2 mt-4">
+                <!-- Status Absen Pill (Clickable & Real-Time Sync) -->
+                <button @click="toggleStatus()" 
+                        title="Status Presensi: Klik untuk tes simulasi status"
+                        class="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-bold transition-all backdrop-blur-md shadow-xs cursor-pointer active:scale-95"
+                        :class="{
+                            'bg-rose-500/95 text-white hover:bg-rose-600': statusAbsen === 'belum',
+                            'bg-emerald-500/95 text-white hover:bg-emerald-600': statusAbsen === 'tepat',
+                            'bg-amber-500/95 text-white hover:bg-amber-600': statusAbsen === 'telat'
+                        }">
+                    <span class="w-2 h-2 rounded-full mr-1.5" 
+                          :class="{
+                              'bg-white animate-pulse': statusAbsen === 'belum',
+                              'bg-emerald-200': statusAbsen === 'tepat',
+                              'bg-amber-100': statusAbsen === 'telat'
+                          }"></span>
+                    <span x-text="statusAbsen === 'belum' ? 'Belum Absen' : (statusAbsen === 'tepat' ? 'Sudah Absen (Tepat)' : 'Sudah Absen (Telat)')">
+                        Belum Absen
+                    </span>
+                </button>
+
+                <!-- Live Time Pill (Mengikuti Jam Sekarang) -->
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5"></i>
+                    <span x-text="'JAM ' + currentClockLive + ' WITA'">JAM 07:30 WITA</span>
+                </span>
+
+                <!-- Class Pill -->
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md">
+                    Kelas XI PPLG 1
+                </span>
             </div>
         </div>
     </div>

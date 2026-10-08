@@ -148,7 +148,7 @@
             <div class="flex items-center space-x-3">
                 <!-- Notifications Dropdown -->
                 <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" class="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors">
+                    <button @click="open = !open" class="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors" title="Pemberitahuan">
                         <i data-lucide="bell" class="w-5 h-5"></i>
                         <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
                     </button>
@@ -190,17 +190,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- User Profile Link -->
-                <a href="{{ route('profil') }}" class="flex items-center space-x-2.5 p-1 rounded-xl hover:bg-slate-100 transition-colors text-left pl-2 border-l border-slate-200">
-                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
-                    </div>
-                    <div class="hidden sm:block">
-                        <p class="text-xs font-bold text-slate-900 leading-tight">Wahyu Pratama</p>
-                        <p class="text-[10px] text-slate-500">XI PPLG 1 • 2026042</p>
-                    </div>
-                </a>
             </div>
         </div>
     </header>
@@ -234,24 +223,6 @@
                                 <span>Dashboard Siswa</span>
                             </div>
                             <span class="text-[10px] px-2 py-0.5 rounded-full {{ request()->routeIs('dashboard') ? 'bg-blue-700/60 text-white' : 'bg-slate-100 text-slate-600' }}">Beranda</span>
-                        </a>
-
-                        <a href="{{ route('riwayat') }}" 
-                           class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all {{ request()->routeIs('riwayat') ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'text-slate-600 hover:bg-slate-50' }}">
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="calendar" class="w-4 h-4"></i>
-                                <span>Riwayat & Kalender</span>
-                            </div>
-                            <span class="text-[10px] text-slate-400">95%</span>
-                        </a>
-
-                        <a href="{{ route('izin') }}" 
-                           class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all {{ request()->routeIs('izin') ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'text-slate-600 hover:bg-slate-50' }}">
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="file-text" class="w-4 h-4"></i>
-                                <span>Formulir Izin & Sakit</span>
-                            </div>
-                            <i data-lucide="chevron-right" class="w-3.5 h-3.5 opacity-60"></i>
                         </a>
                     </nav>
 
