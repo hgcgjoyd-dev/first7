@@ -168,7 +168,7 @@ class KesiswaanController extends Controller
      */
     public function scan()
     {
-        return view('auth.scan');
+        return view('dashboard siswa.scan');
     }
 
     /**
