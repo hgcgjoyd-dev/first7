@@ -10,6 +10,7 @@ use App\Models\Presensi;
 use App\Models\Siswa;
 use Carbon\Carbon;
 use Exception;
+use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -74,7 +75,7 @@ class KesiswaanController extends Controller
                     }
                 }
             }
-        } catch (Exception $e) {}
+        } catch (Throwable $e) {}
     }
 
     /**
@@ -97,7 +98,7 @@ class KesiswaanController extends Controller
                     return $siswa;
                 }
             }
-        } catch (Exception $e) {}
+        } catch (Throwable $e) {}
 
         return (object)[
             'id'            => 1,
@@ -157,7 +158,7 @@ class KesiswaanController extends Controller
             }
 
             return back()->with('error', 'Email/NIS atau Kata Sandi tidak cocok dengan database.')->withInput();
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return back()->with('error', 'Error database: ' . $e->getMessage());
         }
     }
@@ -210,7 +211,7 @@ class KesiswaanController extends Controller
             }
 
             return response()->json(['success' => false, 'message' => 'Kartu tidak terdaftar.'], 404);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -267,7 +268,7 @@ class KesiswaanController extends Controller
                 $currentDayName = $indonesianDays[Carbon::now()->format('l')] ?? 'Kamis';
                 $piketHariIni = Piket::where('hari', $currentDayName)->first();
             }
-        } catch (Exception $e) {}
+        } catch (Throwable $e) {}
 
         return view('dashboard', compact(
             'siswa',
@@ -294,7 +295,7 @@ class KesiswaanController extends Controller
                     ->whereDate('tanggal', $today)
                     ->first();
             }
-        } catch (Exception $e) {}
+        } catch (Throwable $e) {}
 
         return view('presensi.index', compact('siswa', 'presensiHariIni'));
     }
@@ -357,7 +358,7 @@ class KesiswaanController extends Controller
                 'message' => 'Presensi ' . ucfirst($tipe) . ' berhasil disimpan!',
                 'data'    => $presensi,
             ]);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menyimpan presensi: ' . $e->getMessage()
@@ -412,7 +413,7 @@ class KesiswaanController extends Controller
             ]);
 
             return redirect()->route('riwayat')->with('success', "Pengajuan {$request->jenis} berhasil disimpan ke database!");
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return back()->with('error', 'Gagal menyimpan: ' . $e->getMessage())->withInput();
         }
     }
@@ -458,7 +459,7 @@ class KesiswaanController extends Controller
                     ->whereMonth('tgl_mulai', Carbon::now()->month)
                     ->sum('durasi_hari') ?: 0;
             }
-        } catch (Exception $e) {}
+        } catch (Throwable $e) {}
 
         return view('riwayat.index', compact('siswa', 'daftarPresensi', 'daftarIzin', 'persenHadir', 'totalIzin'));
     }
@@ -475,7 +476,7 @@ class KesiswaanController extends Controller
             if (Schema::hasTable('mapel')) {
                 $daftarMapel = Mapel::orderBy('deadline', 'asc')->get();
             }
-        } catch (Exception $e) {}
+        } catch (Throwable $e) {}
 
         return view('mapel.index', compact('siswa', 'daftarMapel'));
     }
@@ -494,7 +495,7 @@ class KesiswaanController extends Controller
                     ->orderBy('tanggal', 'desc')
                     ->get();
             }
-        } catch (Exception $e) {}
+        } catch (Throwable $e) {}
 
         return view('bk.index', compact('siswa', 'daftarBk'));
     }
@@ -520,7 +521,7 @@ class KesiswaanController extends Controller
                 $currentDayName = $indonesianDays[Carbon::now()->format('l')] ?? 'Kamis';
                 $piketHariIni = Piket::where('hari', $currentDayName)->first();
             }
-        } catch (Exception $e) {}
+        } catch (Throwable $e) {}
 
         return view('piket.index', compact('siswa', 'daftarPiket', 'piketHariIni'));
     }
@@ -563,7 +564,7 @@ class KesiswaanController extends Controller
             }
 
             return back()->with('success', 'Tuntas! Laporan kebersihan piket kelas berhasil dikonfirmasi.');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
             }
@@ -582,7 +583,7 @@ class KesiswaanController extends Controller
             $piket->save();
 
             return back()->with('success', 'Status piket berhasil diperbarui!');
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             return back()->with('error', 'Gagal update status: ' . $e->getMessage());
         }
     }
