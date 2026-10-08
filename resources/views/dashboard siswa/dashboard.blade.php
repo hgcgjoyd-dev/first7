@@ -167,16 +167,16 @@
                 <i data-lucide="arrow-down" class="w-5 h-5 mx-auto"></i>
             </div>
 
-            <!-- Scan Button: Click navigates to /scan -->
-            <a href="{{ route('scan') }}" title="Mulai Scan Kartu Pelajar" class="relative group block">
+            <!-- Presensi Button: Click navigates to /presensi -->
+            <a href="{{ route('presensi') }}" title="Mulai Presensi Masuk & Pulang" class="relative group block">
                 <div class="absolute -inset-4 bg-white/25 rounded-full blur-xl group-hover:bg-white/40 transition-all animate-pulse-ring"></div>
                 <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-2xl relative z-10 group-hover:scale-105 active:scale-95 transition-all">
-                    <i data-lucide="scan" class="w-12 h-12 sm:w-14 sm:h-14"></i>
+                    <i data-lucide="scan-face" class="w-12 h-12 sm:w-14 sm:h-14"></i>
                 </div>
             </a>
 
             <div class="mt-5 text-xs font-semibold text-blue-200">
-                <span>Klik untuk Scan Kartu Pelajar (RFID / Barcode)</span>
+                <span>Klik untuk Mulai Presensi Wajah & Biometrik</span>
             </div>
         </div>
     </div>
