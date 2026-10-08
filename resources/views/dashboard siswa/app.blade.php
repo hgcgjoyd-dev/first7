@@ -271,13 +271,13 @@
                             <span class="text-[10px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-bold">2 Aktif</span>
                         </a>
 
-                        <a href="{{ route('bk') }}" 
-                           class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all {{ request()->routeIs('bk') ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'text-slate-600 hover:bg-slate-50' }}">
+                        <a href="{{ route('konseling') }}" 
+                           class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all {{ request()->routeIs('konseling', 'bk') ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'text-slate-600 hover:bg-slate-50' }}">
                             <div class="flex items-center space-x-3">
                                 <i data-lucide="shield-alert" class="w-4 h-4"></i>
-                                <span>Konseling & Tugas BK</span>
+                                <span>Konseling Siswa (BK)</span>
                             </div>
-                            <span class="text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">15 Poin</span>
+                            <span class="text-[10px] {{ request()->routeIs('konseling', 'bk') ? 'bg-blue-700/60 text-white' : 'bg-rose-100 text-rose-700' }} px-2 py-0.5 rounded-full font-bold">15 Poin</span>
                         </a>
 
                         <a href="{{ route('piket') }}" 

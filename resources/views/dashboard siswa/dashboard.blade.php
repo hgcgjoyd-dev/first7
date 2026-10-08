@@ -159,8 +159,8 @@
                 <span class="text-[10px] text-rose-500 font-bold mt-0.5">2 Aktif</span>
             </a>
 
-            <!-- 4. Konseling & BK -> /bk -->
-            <a href="{{ route('bk') }}" class="group flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/70 hover:bg-violet-50/50 hover:border-violet-200 hover:shadow-md transition-all active:scale-95">
+            <!-- 4. Konseling & BK -> /konseling -->
+            <a href="{{ route('konseling') }}" class="group flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/70 hover:bg-violet-50/50 hover:border-violet-200 hover:shadow-md transition-all active:scale-95">
                 <div class="w-12 h-12 rounded-2xl bg-violet-100 text-violet-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-xs">
                     <i data-lucide="users" class="w-6 h-6"></i>
                 </div>

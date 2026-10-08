@@ -27,10 +27,11 @@ Route::post('/presensi', [KesiswaanController::class, 'storePresensi'])->name('p
 Route::get('/izin', [KesiswaanController::class, 'izin'])->name('izin');
 Route::post('/izin', [KesiswaanController::class, 'storeIzin'])->name('izin.store');
 
-// 4. Riwayat & Mapel & BK
+// 4. Riwayat & Mapel & BK & Konseling
 Route::get('/riwayat', [KesiswaanController::class, 'riwayat'])->name('riwayat');
 Route::get('/mapel', [KesiswaanController::class, 'mapel'])->name('mapel');
 Route::get('/bk', [KesiswaanController::class, 'bk'])->name('bk');
+Route::get('/konseling', [KesiswaanController::class, 'konseling'])->name('konseling');
 
 // 5. Piket & Checklist Kebersihan
 Route::get('/piket', [KesiswaanController::class, 'piket'])->name('piket');

@@ -375,7 +375,7 @@
                     </div>
                     <a href="https://wa.me/6281234567890?text=Halo%20Bu%20Luh%2C%20saya%20Wahyu%20Pratama%20dari%20kelas%20XI%20PPLG%201%20ingin%20konsultasi%20poin%20kedisiplinan" 
                        target="_blank" 
-                       rel="noopener"
+                       rel="noopener" 
                        class="border border-emerald-400 bg-emerald-50/50 hover:bg-emerald-100 text-emerald-700 font-black text-xs px-4 py-2 rounded-full transition-all shrink-0 active:scale-95 shadow-2xs">
                         Chat WA
                     </a>

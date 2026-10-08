@@ -550,6 +550,25 @@ class KesiswaanController extends Controller
     }
 
     /**
+     * 9b. Halaman Konseling Siswa (Baru Sesuai Mockup)
+     */
+    public function konseling()
+    {
+        $siswa = $this->getActiveSiswa();
+        $daftarBk = [];
+
+        try {
+            if (Schema::hasTable('bk')) {
+                $daftarBk = Bk::where('siswa_id', $siswa->id)
+                    ->orderBy('tanggal', 'desc')
+                    ->get();
+            }
+        } catch (Throwable $e) {}
+
+        return view('dashboard siswa.konseling', compact('siswa', 'daftarBk'));
+    }
+
+    /**
      * 10. Piket Kebersihan
      */
     public function piket()
