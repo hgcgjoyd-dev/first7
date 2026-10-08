@@ -73,8 +73,8 @@
             <span class="text-xs font-semibold text-blue-600">Klik ikon untuk membuka</span>
         </div>
 
-        <!-- The 5 Grid Menu Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
+        <!-- The 4 Grid Menu Cards -->
+        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
             
             <!-- 1. Izin & Sakit -> /izin -->
             <a href="{{ route('izin') }}" class="group flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/70 hover:bg-blue-50/50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95">
@@ -103,17 +103,8 @@
                 <span class="text-[10px] text-rose-500 font-bold mt-0.5">2 Aktif</span>
             </a>
 
-            <!-- 4. Absen -> /presensi -->
-            <a href="{{ route('presensi') }}" class="group flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/70 hover:bg-blue-50/50 hover:border-blue-200 hover:shadow-md transition-all active:scale-95">
-                <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-xs">
-                    <i data-lucide="user-check" class="w-6 h-6"></i>
-                </div>
-                <span class="font-bold text-xs sm:text-sm text-slate-800 group-hover:text-blue-600 transition-colors text-center">Absen</span>
-                <span class="text-[10px] text-blue-600 font-bold mt-0.5">Kamera & GPS</span>
-            </a>
-
-            <!-- 5. Konseling & BK -> /bk -->
-            <a href="{{ route('bk') }}" class="group flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/70 hover:bg-violet-50/50 hover:border-violet-200 hover:shadow-md transition-all active:scale-95 col-span-2 sm:col-span-1">
+            <!-- 4. Konseling & BK -> /bk -->
+            <a href="{{ route('bk') }}" class="group flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 bg-slate-50/70 hover:bg-violet-50/50 hover:border-violet-200 hover:shadow-md transition-all active:scale-95">
                 <div class="w-12 h-12 rounded-2xl bg-violet-100 text-violet-600 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform shadow-xs">
                     <i data-lucide="users" class="w-6 h-6"></i>
                 </div>
@@ -176,8 +167,8 @@
                 <i data-lucide="arrow-down" class="w-5 h-5 mx-auto"></i>
             </div>
 
-            <!-- Scan Button: Click navigates to /presensi -->
-            <a href="{{ route('presensi') }}" title="Mulai Presensi Biometrik & Scan" class="relative group block">
+            <!-- Scan Button: Click navigates to /scan -->
+            <a href="{{ route('scan') }}" title="Mulai Scan Kartu Pelajar" class="relative group block">
                 <div class="absolute -inset-4 bg-white/25 rounded-full blur-xl group-hover:bg-white/40 transition-all animate-pulse-ring"></div>
                 <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-2xl relative z-10 group-hover:scale-105 active:scale-95 transition-all">
                     <i data-lucide="scan" class="w-12 h-12 sm:w-14 sm:h-14"></i>
@@ -185,7 +176,7 @@
             </a>
 
             <div class="mt-5 text-xs font-semibold text-blue-200">
-                <span>Klik untuk Verifikasi Biometrik Wajah & GPS</span>
+                <span>Klik untuk Scan Kartu Pelajar (RFID / Barcode)</span>
             </div>
         </div>
     </div>

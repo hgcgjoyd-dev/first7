@@ -236,15 +236,6 @@
                             <span class="text-[10px] px-2 py-0.5 rounded-full {{ request()->routeIs('dashboard') ? 'bg-blue-700/60 text-white' : 'bg-slate-100 text-slate-600' }}">Beranda</span>
                         </a>
 
-                        <a href="{{ route('presensi') }}" 
-                           class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all {{ request()->routeIs('presensi') ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'text-slate-600 hover:bg-slate-50' }}">
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="scan-face" class="w-4 h-4"></i>
-                                <span>Presensi Kamera</span>
-                            </div>
-                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                        </a>
-
                         <a href="{{ route('riwayat') }}" 
                            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all {{ request()->routeIs('riwayat') ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' : 'text-slate-600 hover:bg-slate-50' }}">
                             <div class="flex items-center space-x-3">
@@ -348,10 +339,10 @@
                 <span>Beranda</span>
             </a>
 
-            <!-- 2. Floating Center Fingerprint Absen Button -->
+            <!-- 2. Floating Center Scan Button -->
             <div class="relative -top-5">
-                <a href="{{ route('presensi') }}" 
-                   title="Presensi Absen"
+                <a href="{{ route('scan') }}" 
+                   title="Scan Kartu Pelajar"
                    class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all ring-4 ring-white">
                     <i data-lucide="scan" class="w-7 h-7"></i>
                 </a>
