@@ -9,8 +9,11 @@
     datangResultType: 'telat',      // 'tepat' or 'telat'
     
     cameraActive: false,
+    cameraError: false,
+    errorMessage: '',
     webcamStream: null,
     isProcessing: false,
+    capturedPhoto: null,
 
     recordedTime: '07:06:22 WITA',
     recordedDate: '',
@@ -30,8 +33,12 @@
     init() {
         this.updateClock();
         setInterval(() => this.updateClock(), 1000);
-        this.startCamera();
-        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+        
+        // Start live camera
+        this.$nextTick(() => {
+            this.startCamera();
+            if (window.lucide) lucide.createIcons();
+        });
     },
 
     updateClock() {
@@ -51,20 +58,39 @@
     },
 
     startCamera() {
+        this.cameraError = false;
+        this.errorMessage = '';
         const videoEl = document.getElementById('presensiWebcam');
+        
         if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-            navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
-                .then(stream => {
-                    this.webcamStream = stream;
-                    if (videoEl) {
-                        videoEl.srcObject = stream;
-                        videoEl.style.display = 'block';
-                    }
-                    this.cameraActive = true;
-                })
-                .catch(err => {
-                    this.cameraActive = false;
-                });
+            navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'user',
+                    width: { ideal: 640 },
+                    height: { ideal: 480 }
+                },
+                audio: false
+            })
+            .then(stream => {
+                this.webcamStream = stream;
+                if (videoEl) {
+                    videoEl.srcObject = stream;
+                    videoEl.onloadedmetadata = () => {
+                        videoEl.play().catch(e => console.warn(e));
+                        this.cameraActive = true;
+                    };
+                }
+            })
+            .catch(err => {
+                console.warn('Izin kamera belum diberikan atau diblokir browser:', err);
+                this.cameraActive = false;
+                this.cameraError = true;
+                this.errorMessage = 'Klik tombol di bawah untuk memberikan izin akses kamera di browser Anda.';
+            });
+        } else {
+            this.cameraActive = false;
+            this.cameraError = true;
+            this.errorMessage = 'Browser ini tidak mendukung akses webcam langsung.';
         }
     },
 
@@ -98,10 +124,38 @@
         const mStr = String(m).padStart(2, '0');
         this.recordedTime = `${hStr}:${mStr}:${s} WITA`;
 
-        // Aturan: Lebih dari 07.05 TELAT, Kurang dari atau sama dengan 07.05 TEPAT WAKTU
+        // 1. Ambil snapshot wajah asli dari video stream webcam
+        const videoEl = document.getElementById('presensiWebcam');
+        const canvas = document.getElementById('snapshotCanvas');
+        if (videoEl && canvas && this.cameraActive) {
+            try {
+                canvas.width = videoEl.videoWidth || 640;
+                canvas.height = videoEl.videoHeight || 480;
+                const ctx = canvas.getContext('2d');
+                // Mirror gambar horizontal agar sama dengan tampilan webcam
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+                this.capturedPhoto = canvas.toDataURL('image/jpeg', 0.85);
+            } catch(e) {
+                console.warn('Canvas capture error:', e);
+            }
+        }
+
+        // 2. Evaluasi Aturan 07:05:
+        // Lebih dari 07.05 TELAT
+        // Kurang dari atau sama dengan 07.05 TEPAT WAKTU
         const isLate = (h > 7) || (h === 7 && m > 5);
         this.datangResultType = isLate ? 'telat' : 'tepat';
 
+        // 3. Simpan status ke localStorage agar otomatis tersinkron ke dashboard
+        localStorage.setItem('presensi_status_today', this.datangResultType);
+        localStorage.setItem('presensi_jam_today', this.recordedTime);
+        if (this.capturedPhoto) {
+            try { localStorage.setItem('presensi_foto_today', this.capturedPhoto); } catch(e) {}
+        }
+
+        // 4. Simpan ke database via controller
         fetch('{{ route('presensi.store') }}', {
             method: 'POST',
             headers: {
@@ -110,6 +164,7 @@
             },
             body: JSON.stringify({
                 tipe: 'datang',
+                foto: this.capturedPhoto || null,
                 latitude: -8.6478,
                 longitude: 115.1764
             })
@@ -121,6 +176,12 @@
             this.currentScreen = 'datang_result';
             this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
         }, 800);
+    },
+
+    setResultType(type) {
+        this.datangResultType = type;
+        localStorage.setItem('presensi_status_today', type);
+        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     },
 
     confirmPulang() {
@@ -151,6 +212,9 @@
         }, 800);
     }
 }">
+
+    <!-- Hidden Canvas untuk capture foto wajah asli -->
+    <canvas id="snapshotCanvas" class="hidden"></canvas>
 
     <!-- ========================================================================= -->
     <!-- 1. TOP HEADER HERO (Matching 5 Screens in Reference)                      -->
@@ -195,37 +259,31 @@
             <!-- Dynamic Right Badge (Matches Reference Screenshots) -->
             <div>
                 <!-- Screen 1: Absen Datang Time Pill -->
-                <template x-if="currentScreen === 'datang_camera'">
-                    <div class="bg-blue-900/60 backdrop-blur-md border border-white/20 rounded-2xl px-3 sm:px-4 py-2 text-right">
-                        <span class="text-[10px] font-bold text-blue-200 uppercase tracking-wider block">ABSEN DATANG</span>
-                        <div class="flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white mt-0.5">
-                            <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-300"></i>
-                            <span x-text="currentHour + ':' + String(currentMinute).padStart(2, '0') + ' WITA'">07:05 WITA</span>
-                        </div>
+                <div x-show="currentScreen === 'datang_camera'" class="bg-blue-900/60 backdrop-blur-md border border-white/20 rounded-2xl px-3 sm:px-4 py-2 text-right">
+                    <span class="text-[10px] font-bold text-blue-200 uppercase tracking-wider block">ABSEN DATANG</span>
+                    <div class="flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white mt-0.5">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-300"></i>
+                        <span x-text="currentHour + ':' + String(currentMinute).padStart(2, '0') + ' WITA'">07:05 WITA</span>
                     </div>
-                </template>
+                </div>
 
                 <!-- Screen 2 & 3: Status Verified Pill -->
-                <template x-if="currentScreen === 'datang_result'">
-                    <div class="bg-emerald-500/20 backdrop-blur-md border border-emerald-400/40 rounded-2xl px-3 sm:px-4 py-2 text-right">
-                        <span class="text-[10px] font-bold text-emerald-200 uppercase tracking-wider block">STATUS</span>
-                        <span class="inline-flex items-center space-x-1 text-xs font-black text-emerald-300 mt-0.5">
-                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-                            <span>Verified</span>
-                        </span>
-                    </div>
-                </template>
+                <div x-show="currentScreen === 'datang_result'" class="bg-emerald-500/20 backdrop-blur-md border border-emerald-400/40 rounded-2xl px-3 sm:px-4 py-2 text-right">
+                    <span class="text-[10px] font-bold text-emerald-200 uppercase tracking-wider block">STATUS</span>
+                    <span class="inline-flex items-center space-x-1 text-xs font-black text-emerald-300 mt-0.5">
+                        <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                        <span>Verified</span>
+                    </span>
+                </div>
 
                 <!-- Screen 4 & 5: Absen Pulang Time Pill -->
-                <template x-if="currentScreen === 'pulang_confirm' || currentScreen === 'pulang_result'">
-                    <div class="bg-blue-900/60 backdrop-blur-md border border-white/20 rounded-2xl px-3 sm:px-4 py-2 text-right">
-                        <span class="text-[10px] font-bold text-blue-200 uppercase tracking-wider block">ABSEN PULANG</span>
-                        <div class="flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white mt-0.5">
-                            <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-300"></i>
-                            <span x-text="currentHour + ':' + String(currentMinute).padStart(2, '0') + ' WITA'">12:25 WITA</span>
-                        </div>
+                <div x-show="currentScreen === 'pulang_confirm' || currentScreen === 'pulang_result'" class="bg-blue-900/60 backdrop-blur-md border border-white/20 rounded-2xl px-3 sm:px-4 py-2 text-right">
+                    <span class="text-[10px] font-bold text-blue-200 uppercase tracking-wider block">ABSEN PULANG</span>
+                    <div class="flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white mt-0.5">
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-300"></i>
+                        <span x-text="currentHour + ':' + String(currentMinute).padStart(2, '0') + ' WITA'">12:25 WITA</span>
                     </div>
-                </template>
+                </div>
             </div>
         </div>
     </div>
@@ -260,437 +318,460 @@
             </div>
 
             <!-- ================================================================= -->
-            <!-- SCREEN 1: HALAMAN DATANG (Camera Face Scan Viewfinder)             -->
+            <!-- SCREEN 1: HALAMAN DATANG (Real Camera Face Viewfinder)            -->
             <!-- ================================================================= -->
-            <template x-if="currentScreen === 'datang_camera'">
-                <div class="space-y-4">
-                    <!-- Camera Viewfinder Card -->
-                    <div class="w-full max-w-md mx-auto aspect-square sm:aspect-4/3 rounded-3xl bg-slate-950 border-4 border-slate-900 shadow-2xl relative overflow-hidden flex flex-col items-center justify-between p-4">
-                        
-                        <!-- Webcam Video Feed -->
-                        <video id="presensiWebcam" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover z-0" style="display: none;"></video>
-
-                        <!-- Simulated Camera Fallback View -->
-                        <div class="absolute inset-0 flex flex-col items-center justify-center z-0 bg-gradient-to-b from-slate-900 to-black">
-                            <div class="w-32 h-32 rounded-full border-2 border-dashed border-cyan-400/40 flex items-center justify-center relative">
-                                <i data-lucide="user" class="w-16 h-16 text-cyan-400/40"></i>
-                            </div>
-                        </div>
-
-                        <!-- 4 Cyan Corner Brackets (Exact from Screenshot 1) -->
-                        <div class="absolute top-4 left-4 w-9 h-9 border-t-4 border-l-4 border-cyan-400 rounded-tl-xl z-20 pointer-events-none"></div>
-                        <div class="absolute top-4 right-4 w-9 h-9 border-t-4 border-r-4 border-cyan-400 rounded-tr-xl z-20 pointer-events-none"></div>
-                        <div class="absolute bottom-16 left-4 w-9 h-9 border-b-4 border-l-4 border-cyan-400 rounded-bl-xl z-20 pointer-events-none"></div>
-                        <div class="absolute bottom-16 right-4 w-9 h-9 border-b-4 border-r-4 border-cyan-400 rounded-br-xl z-20 pointer-events-none"></div>
-
-                        <!-- Animated Laser Scanner Line -->
-                        <div class="absolute left-6 right-6 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-laser z-20 pointer-events-none"></div>
-
-                        <!-- Spacer top -->
-                        <div></div>
-
-                        <!-- Bottom Location Pill (Inside viewfinder: Radius 12m Lokasi Valid) -->
-                        <div class="relative z-30 w-full max-w-sm bg-slate-900/90 backdrop-blur-md border border-slate-700/80 px-3.5 py-2 rounded-2xl flex items-center justify-between text-xs text-white shadow-lg">
-                            <div class="flex items-center space-x-2">
-                                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400"></i>
-                                <span class="font-bold text-[11px] sm:text-xs text-slate-200">SMK TI BALI GLOBAL Badung (Radius 12m)</span>
-                            </div>
-                            <span class="bg-emerald-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase">
-                                Lokasi Valid
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Instruction Alert Box -->
-                    <div class="w-full max-w-md mx-auto bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-start space-x-3 text-xs">
-                        <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-bold">
-                            <i data-lucide="info" class="w-4 h-4"></i>
-                        </div>
-                        <div>
-                            <h5 class="font-extrabold text-slate-900 text-xs sm:text-[13px]">Pastikan Wajah Jelas & Terang</h5>
-                            <p class="text-slate-500 text-[11px] mt-0.5 leading-relaxed">
-                                Posisikan wajah tepat di tengah bingkai dan jangan memakai kacamata hitam.
-                            </p>
-                        </div>
-                    </div>
-
-                    <!-- Action Button: Ambil Foto & Catat Absensi -->
-                    <div class="w-full max-w-md mx-auto">
-                        <button type="button" 
-                                @click="takePhotoAndSubmit()" 
-                                :disabled="isProcessing"
-                                class="w-full py-4 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer">
-                            <template x-if="!isProcessing">
-                                <span class="inline-flex items-center space-x-2">
-                                    <i data-lucide="camera" class="w-5 h-5"></i>
-                                    <span>Ambil Foto & Catat Absensi</span>
-                                    <i data-lucide="eye" class="w-4 h-4 opacity-80"></i>
-                                </span>
-                            </template>
-                            <template x-if="isProcessing">
-                                <span class="inline-flex items-center space-x-2">
-                                    <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
-                                    <span>Memverifikasi Wajah & Jam...</span>
-                                </span>
-                            </template>
-                        </button>
-                    </div>
-                </div>
-            </template>
-
-            <!-- ================================================================= -->
-            <!-- SCREEN 2 & 3: DATENG HASIL (TELAT ATAU TEPAT WAKTU)               -->
-            <!-- ================================================================= -->
-            <template x-if="currentScreen === 'datang_result'">
-                <div class="space-y-4 w-full max-w-md mx-auto">
+            <div x-show="currentScreen === 'datang_camera'" class="space-y-4">
+                
+                <!-- Camera Viewfinder Card -->
+                <div class="w-full max-w-md mx-auto aspect-square sm:aspect-4/3 rounded-3xl bg-slate-950 border-4 border-slate-900 shadow-2xl relative overflow-hidden flex flex-col items-center justify-between p-4">
                     
-                    <!-- Time Filter Simulator Pills (Exact from Screens 2 & 3) -->
-                    <div class="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-full border border-slate-200">
-                        <button type="button" 
-                                @click="datangResultType = 'tepat'" 
-                                class="flex-1 py-2 px-3 rounded-full text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5"
-                                :class="datangResultType === 'tepat' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
-                            <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                            <span>Tepat Waktu (≤ 07:05)</span>
-                        </button>
+                    <!-- 1. Real Webcam Video Stream (Mirrored, Live Face View) -->
+                    <video id="presensiWebcam" 
+                           autoplay 
+                           playsinline 
+                           muted 
+                           class="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300"
+                           :class="cameraActive ? 'opacity-100 scale-x-[-1]' : 'opacity-0 pointer-events-none'">
+                    </video>
 
+                    <!-- 2. Fallback jika kamera belum diizinkan -->
+                    <div x-show="!cameraActive" class="absolute inset-0 flex flex-col items-center justify-center z-5 bg-gradient-to-b from-slate-900 via-slate-950 to-black p-6 text-center space-y-3">
+                        <div class="w-20 h-20 rounded-full border-2 border-dashed border-cyan-400/50 flex items-center justify-center text-cyan-400 bg-cyan-950/30">
+                            <i data-lucide="camera" class="w-10 h-10 animate-pulse"></i>
+                        </div>
+                        <div class="space-y-1 max-w-xs">
+                            <p class="text-xs text-white font-extrabold">Kamera Siap Diaktifkan</p>
+                            <p class="text-[11px] text-slate-400 leading-relaxed" x-text="errorMessage || 'Izinkan akses kamera browser agar wajah asli tampil di bingkai.'"></p>
+                        </div>
                         <button type="button" 
-                                @click="datangResultType = 'telat'" 
-                                class="flex-1 py-2 px-3 rounded-full text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5"
-                                :class="datangResultType === 'telat' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
-                            <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
-                            <span>Telat Waktu (> 07:05)</span>
+                                @click="startCamera()" 
+                                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-500/25 active:scale-95 transition-all cursor-pointer">
+                            Buka / Aktifkan Kamera Wajah
                         </button>
                     </div>
 
-                    <!-- ========================================================= -->
-                    <!-- OUTCOME A: TELAT (Screen 2: DATENG TERLAM...)             -->
-                    <!-- ========================================================= -->
-                    <template x-if="datangResultType === 'telat'">
-                        <div class="space-y-4">
-                            <!-- Red Result Card -->
-                            <div class="bg-gradient-to-r from-rose-500 via-rose-600 to-rose-700 rounded-3xl p-5 sm:p-6 text-white shadow-xl shadow-rose-500/20 relative">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="flex items-start space-x-3.5">
-                                        <div class="w-12 h-12 rounded-2xl bg-black/20 flex items-center justify-center shrink-0">
-                                            <i data-lucide="x" class="w-7 h-7 stroke-[3] text-white"></i>
-                                        </div>
-                                        <div>
-                                            <span class="text-[10px] font-black uppercase tracking-wider text-rose-200 block">
-                                                ABSENSI MASUK BERHASIL
-                                            </span>
-                                            <h3 class="text-xl sm:text-2xl font-black text-white mt-0.5 leading-snug">
-                                                Telat
-                                            </h3>
-                                            <p class="text-xs text-rose-100 mt-0.5 leading-relaxed">
-                                                Tercatat melewati batas toleransi pukul 07.05 WITA.
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <span class="bg-rose-900/60 border border-rose-400/40 text-white font-black text-[10px] sm:text-xs px-3 py-1 rounded-full uppercase shrink-0">
-                                        TERLAMBAT
-                                    </span>
-                                </div>
-                            </div>
+                    <!-- 3. Neon Cyan Brackets (Always on top) -->
+                    <div class="absolute top-4 left-4 w-9 h-9 border-t-4 border-l-4 border-cyan-400 rounded-tl-xl z-20 pointer-events-none"></div>
+                    <div class="absolute top-4 right-4 w-9 h-9 border-t-4 border-r-4 border-cyan-400 rounded-tr-xl z-20 pointer-events-none"></div>
+                    <div class="absolute bottom-16 left-4 w-9 h-9 border-b-4 border-l-4 border-cyan-400 rounded-bl-xl z-20 pointer-events-none"></div>
+                    <div class="absolute bottom-16 right-4 w-9 h-9 border-b-4 border-r-4 border-cyan-400 rounded-br-xl z-20 pointer-events-none"></div>
 
-                            <!-- Details Table -->
-                            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-soft space-y-3 text-xs">
-                                <div class="flex items-center justify-between py-2 border-b border-slate-100">
-                                    <span class="text-slate-500 flex items-center space-x-1.5">
-                                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        <span>Tanggal</span>
-                                    </span>
-                                    <span class="font-extrabold text-slate-900" x-text="recordedDate">Kamis, 8 Oktober 2026</span>
-                                </div>
+                    <!-- 4. Animated Laser Scanner Line -->
+                    <div class="absolute left-6 right-6 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-laser z-20 pointer-events-none"></div>
 
-                                <div class="flex items-center justify-between py-2 border-b border-slate-100">
-                                    <span class="text-slate-500 flex items-center space-x-1.5">
-                                        <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        <span>Jam</span>
-                                    </span>
-                                    <span class="font-black text-rose-600 text-sm" x-text="recordedTime">07:06:22 WITA</span>
-                                </div>
-
-                                <div class="flex items-center justify-between py-2 border-b border-slate-100">
-                                    <span class="text-slate-500 flex items-center space-x-1.5">
-                                        <i data-lucide="navigation" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        <span>Radius Lokasi</span>
-                                    </span>
-                                    <span class="font-bold text-slate-800 text-right">SMK TI BALI GLOBAL BADUNG (Radius 8m)</span>
-                                </div>
-
-                                <div class="flex items-center justify-between pt-2">
-                                    <span class="text-slate-500 flex items-center space-x-1.5">
-                                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        <span>ID Bukti Validasi</span>
-                                    </span>
-                                    <span class="bg-blue-50 text-blue-700 font-mono font-black text-[11px] px-2.5 py-1 rounded-lg">
-                                        ABS-{{ date('Ymd') }}-8841
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Back to Home Button -->
-                            <a href="{{ route('dashboard') }}" 
-                               class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all">
-                                <i data-lucide="home" class="w-4 h-4"></i>
-                                <span>Kembali ke Halaman Beranda</span>
-                            </a>
-                        </div>
-                    </template>
-
-                    <!-- ========================================================= -->
-                    <!-- OUTCOME B: TEPAT WAKTU (Screen 3: DATENG TEPAT)            -->
-                    <!-- ========================================================= -->
-                    <template x-if="datangResultType === 'tepat'">
-                        <div class="space-y-4">
-                            <!-- Green Result Card -->
-                            <div class="bg-emerald-50/90 border border-emerald-200 rounded-3xl p-5 sm:p-6 shadow-sm">
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="flex items-start space-x-3.5">
-                                        <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20">
-                                            <i data-lucide="check" class="w-7 h-7 stroke-[3]"></i>
-                                        </div>
-                                        <div>
-                                            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">
-                                                PRESENSI MASUK BERHASIL
-                                            </span>
-                                            <h3 class="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 leading-snug">
-                                                Hadir Tepat Waktu
-                                            </h3>
-                                            <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                                                Berhasil dicatat sebelum batas pukul 07.05 WITA.
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <span class="bg-emerald-100 text-emerald-800 font-black text-[10px] sm:text-xs px-3 py-1 rounded-full uppercase shrink-0">
-                                        TEPAT WAKTU
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Details Table -->
-                            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-soft space-y-3 text-xs">
-                                <div class="flex items-center justify-between py-2 border-b border-slate-100">
-                                    <span class="text-slate-500 flex items-center space-x-1.5">
-                                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        <span>Tanggal</span>
-                                    </span>
-                                    <span class="font-extrabold text-slate-900" x-text="recordedDate">Kamis, 8 Oktober 2026</span>
-                                </div>
-
-                                <div class="flex items-center justify-between py-2 border-b border-slate-100">
-                                    <span class="text-slate-500 flex items-center space-x-1.5">
-                                        <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        <span>Jam</span>
-                                    </span>
-                                    <span class="font-black text-emerald-700 text-sm">07:05:00 WITA</span>
-                                </div>
-
-                                <div class="flex items-center justify-between py-2 border-b border-slate-100">
-                                    <span class="text-slate-500 flex items-center space-x-1.5">
-                                        <i data-lucide="navigation" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        <span>Radius Lokasi</span>
-                                    </span>
-                                    <span class="font-bold text-slate-800 text-right">SMK TI BALI GLOBAL BADUNG (Radius 8m)</span>
-                                </div>
-
-                                <div class="flex items-center justify-between pt-2">
-                                    <span class="text-slate-500 flex items-center space-x-1.5">
-                                        <i data-lucide="shield-check" class="w-3.5 h-3.5 text-slate-400"></i>
-                                        <span>ID Bukti Validasi</span>
-                                    </span>
-                                    <span class="bg-blue-50 text-blue-700 font-mono font-black text-[11px] px-2.5 py-1 rounded-lg">
-                                        ABS-{{ date('Ymd') }}-8841
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Back to Home Button -->
-                            <a href="{{ route('dashboard') }}" 
-                               class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all">
-                                <i data-lucide="home" class="w-4 h-4"></i>
-                                <span>Kembali ke Halaman Beranda</span>
-                            </a>
-                        </div>
-                    </template>
-                </div>
-            </template>
-
-            <!-- ================================================================= -->
-            <!-- SCREEN 4: HALAMAN PULANG (Confirmation View)                      -->
-            <!-- ================================================================= -->
-            <template x-if="currentScreen === 'pulang_confirm'">
-                <div class="space-y-4 w-full max-w-md mx-auto">
-                    <!-- Big Clock Card -->
-                    <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-soft text-center space-y-3">
-                        <div class="flex items-center justify-between text-xs text-slate-500">
-                            <span class="font-extrabold text-emerald-600 flex items-center space-x-1">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <span>WAKTU KEPULANGAN</span>
-                            </span>
-                            <span class="font-semibold" x-text="recordedDate">Kamis, 8 Okt 2026</span>
-                        </div>
-
-                        <!-- Big Clock Display -->
-                        <div class="py-2">
-                            <h2 class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
-                                <span x-text="String(currentHour).padStart(2, '0') + ' : ' + String(currentMinute).padStart(2, '0')">12 : 25</span>
-                                <span class="text-sm font-bold text-slate-400">WITA</span>
-                            </h2>
-                        </div>
-
-                        <!-- Pill: Tidak perlu scan wajah -->
-                        <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200/80">
-                            <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
-                            <span>Tidak perlu scan wajah — Cukup konfirmasi</span>
-                        </div>
-                    </div>
-
-                    <!-- Row 1: Absen Datang Pagi Status -->
-                    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between text-xs">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                                <i data-lucide="user-check" class="w-4 h-4"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-extrabold uppercase text-slate-400">ABSEN DATANG PAGI</p>
-                                <p class="font-black text-slate-900 mt-0.5">07:05 • Hadir Tepat Waktu</p>
-                            </div>
-                        </div>
-                        <span class="border border-emerald-400 text-emerald-700 bg-emerald-50 text-[11px] font-black px-3 py-1 rounded-full">
-                            Terverifikasi
+                    <!-- 5. Top Live Badge -->
+                    <div class="relative z-30 self-end">
+                        <span x-show="cameraActive" class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/90 backdrop-blur-md text-[10px] font-black text-white shadow-md">
+                            <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                            <span>KAMERA AKTIF</span>
                         </span>
                     </div>
 
-                    <!-- Row 2: GPS Location Status -->
-                    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between text-xs">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                                <i data-lucide="map-pin" class="w-4 h-4"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] font-extrabold uppercase text-slate-400">POSISI ANDA SAAT INI</p>
-                                <p class="font-extrabold text-slate-900 mt-0.5">SMK TI BALI GLOBAL Badung</p>
-                                <p class="text-[10px] text-slate-500">Radius GPS 8 meter (Di Dalam Zona)</p>
-                            </div>
+                    <!-- 6. Bottom Location Pill (Inside camera box) -->
+                    <div class="relative z-30 w-full max-w-sm bg-slate-900/90 backdrop-blur-md border border-slate-700/80 px-3.5 py-2 rounded-2xl flex items-center justify-between text-xs text-white shadow-lg">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400"></i>
+                            <span class="font-bold text-[11px] sm:text-xs text-slate-200">SMK TI BALI GLOBAL Badung (Radius 12m)</span>
                         </div>
-                        <span class="bg-emerald-600 text-white font-black text-[11px] px-3 py-1 rounded-full shadow-2xs">
+                        <span class="bg-emerald-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase">
                             Lokasi Valid
                         </span>
                     </div>
+                </div>
 
-                    <!-- Confirm Button -->
+                <!-- Instruction Alert Box -->
+                <div class="w-full max-w-md mx-auto bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-start space-x-3 text-xs">
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-bold">
+                        <i data-lucide="info" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="font-extrabold text-slate-900 text-xs sm:text-[13px]">Pastikan Wajah Jelas & Terang</h5>
+                        <p class="text-slate-500 text-[11px] mt-0.5 leading-relaxed">
+                            Posisikan wajah tepat di tengah bingkai dan jangan memakai kacamata hitam.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Action Button: Ambil Foto & Catat Absensi -->
+                <div class="w-full max-w-md mx-auto">
                     <button type="button" 
-                            @click="confirmPulang()" 
+                            @click="takePhotoAndSubmit()" 
                             :disabled="isProcessing"
-                            class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer">
+                            class="w-full py-4 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer">
                         <template x-if="!isProcessing">
                             <span class="inline-flex items-center space-x-2">
-                                <i data-lucide="check" class="w-4 h-4"></i>
-                                <span>Konfirmasi Absen Pulang Sekarang →</span>
+                                <i data-lucide="camera" class="w-5 h-5"></i>
+                                <span>Ambil Foto & Catat Absensi</span>
+                                <i data-lucide="eye" class="w-4 h-4 opacity-80"></i>
                             </span>
                         </template>
                         <template x-if="isProcessing">
                             <span class="inline-flex items-center space-x-2">
-                                <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-                                <span>Menyimpan Kepulangan...</span>
+                                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                                <span>Mengambil Foto Wajah & Merekam Jam...</span>
                             </span>
                         </template>
                     </button>
                 </div>
-            </template>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- SCREEN 2 & 3: DATENG HASIL (TELAT ATAU TEPAT WAKTU)               -->
+            <!-- ================================================================= -->
+            <div x-show="currentScreen === 'datang_result'" class="space-y-4 w-full max-w-md mx-auto">
+                
+                <!-- Time Filter Simulator Pills (Exact from Screens 2 & 3) -->
+                <div class="flex items-center space-x-2 bg-slate-100 p-1.5 rounded-full border border-slate-200">
+                    <button type="button" 
+                            @click="setResultType('tepat')" 
+                            class="flex-1 py-2 px-3 rounded-full text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                            :class="datangResultType === 'tepat' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        <span>Tepat Waktu (≤ 07:05)</span>
+                    </button>
+
+                    <button type="button" 
+                            @click="setResultType('telat')" 
+                            class="flex-1 py-2 px-3 rounded-full text-xs font-black transition-all cursor-pointer flex items-center justify-center space-x-1.5"
+                            :class="datangResultType === 'telat' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'">
+                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i>
+                        <span>Telat Waktu (> 07:05)</span>
+                    </button>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- OUTCOME A: TELAT (Screen 2: DATENG TERLAM...)             -->
+                <!-- ========================================================= -->
+                <div x-show="datangResultType === 'telat'" class="space-y-4">
+                    <!-- Red Result Card with Face Snapshot -->
+                    <div class="bg-gradient-to-r from-rose-500 via-rose-600 to-rose-700 rounded-3xl p-5 sm:p-6 text-white shadow-xl shadow-rose-500/20 relative">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start space-x-3.5">
+                                <!-- Captured Real Face or Icon -->
+                                <template x-if="capturedPhoto">
+                                    <img :src="capturedPhoto" alt="Wajah Asli" class="w-14 h-14 rounded-2xl object-cover border-2 border-white/60 shadow-md shrink-0">
+                                </template>
+                                <template x-if="!capturedPhoto">
+                                    <div class="w-12 h-12 rounded-2xl bg-black/20 flex items-center justify-center shrink-0">
+                                        <i data-lucide="x" class="w-7 h-7 stroke-[3] text-white"></i>
+                                    </div>
+                                </template>
+                                
+                                <div>
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-rose-200 block">
+                                        ABSENSI MASUK BERHASIL
+                                    </span>
+                                    <h3 class="text-xl sm:text-2xl font-black text-white mt-0.5 leading-snug">
+                                        Telat
+                                    </h3>
+                                    <p class="text-xs text-rose-100 mt-0.5 leading-relaxed">
+                                        Tercatat melewati batas toleransi pukul 07.05 WITA.
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="bg-rose-900/60 border border-rose-400/40 text-white font-black text-[10px] sm:text-xs px-3 py-1 rounded-full uppercase shrink-0">
+                                TERLAMBAT
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Details Table -->
+                    <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-soft space-y-3 text-xs">
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                            <span class="text-slate-500 flex items-center space-x-1.5">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>Tanggal</span>
+                            </span>
+                            <span class="font-extrabold text-slate-900" x-text="recordedDate">Kamis, 8 Oktober 2026</span>
+                        </div>
+
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                            <span class="text-slate-500 flex items-center space-x-1.5">
+                                <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>Jam</span>
+                            </span>
+                            <span class="font-black text-rose-600 text-sm" x-text="recordedTime">07:06:22 WITA</span>
+                        </div>
+
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                            <span class="text-slate-500 flex items-center space-x-1.5">
+                                <i data-lucide="navigation" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>Radius Lokasi</span>
+                            </span>
+                            <span class="font-bold text-slate-800 text-right">SMK TI BALI GLOBAL BADUNG (Radius 8m)</span>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2">
+                            <span class="text-slate-500 flex items-center space-x-1.5">
+                                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>ID Bukti Validasi</span>
+                            </span>
+                            <span class="bg-blue-50 text-blue-700 font-mono font-black text-[11px] px-2.5 py-1 rounded-lg">
+                                ABS-{{ date('Ymd') }}-8841
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Back to Home Button -->
+                    <a href="{{ route('dashboard') }}" 
+                       class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        <span>Kembali ke Halaman Beranda</span>
+                    </a>
+                </div>
+
+                <!-- ========================================================= -->
+                <!-- OUTCOME B: TEPAT WAKTU (Screen 3: DATENG TEPAT)            -->
+                <!-- ========================================================= -->
+                <div x-show="datangResultType === 'tepat'" class="space-y-4">
+                    <!-- Green Result Card with Face Snapshot -->
+                    <div class="bg-emerald-50/90 border border-emerald-200 rounded-3xl p-5 sm:p-6 shadow-sm">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-start space-x-3.5">
+                                <!-- Captured Real Face or Icon -->
+                                <template x-if="capturedPhoto">
+                                    <img :src="capturedPhoto" alt="Wajah Asli" class="w-14 h-14 rounded-2xl object-cover border-2 border-emerald-300 shadow-md shrink-0">
+                                </template>
+                                <template x-if="!capturedPhoto">
+                                    <div class="w-12 h-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20">
+                                        <i data-lucide="check" class="w-7 h-7 stroke-[3]"></i>
+                                    </div>
+                                </template>
+
+                                <div>
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">
+                                        PRESENSI MASUK BERHASIL
+                                    </span>
+                                    <h3 class="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 leading-snug">
+                                        Hadir Tepat Waktu
+                                    </h3>
+                                    <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                                        Berhasil dicatat sebelum batas pukul 07.05 WITA.
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="bg-emerald-100 text-emerald-800 font-black text-[10px] sm:text-xs px-3 py-1 rounded-full uppercase shrink-0">
+                                TEPAT WAKTU
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Details Table -->
+                    <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-soft space-y-3 text-xs">
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                            <span class="text-slate-500 flex items-center space-x-1.5">
+                                <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>Tanggal</span>
+                            </span>
+                            <span class="font-extrabold text-slate-900" x-text="recordedDate">Kamis, 8 Oktober 2026</span>
+                        </div>
+
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                            <span class="text-slate-500 flex items-center space-x-1.5">
+                                <i data-lucide="clock" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>Jam</span>
+                            </span>
+                            <span class="font-black text-emerald-700 text-sm">07:05:00 WITA</span>
+                        </div>
+
+                        <div class="flex items-center justify-between py-2 border-b border-slate-100">
+                            <span class="text-slate-500 flex items-center space-x-1.5">
+                                <i data-lucide="navigation" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>Radius Lokasi</span>
+                            </span>
+                            <span class="font-bold text-slate-800 text-right">SMK TI BALI GLOBAL BADUNG (Radius 8m)</span>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2">
+                            <span class="text-slate-500 flex items-center space-x-1.5">
+                                <i data-lucide="shield-check" class="w-3.5 h-3.5 text-slate-400"></i>
+                                <span>ID Bukti Validasi</span>
+                            </span>
+                            <span class="bg-blue-50 text-blue-700 font-mono font-black text-[11px] px-2.5 py-1 rounded-lg">
+                                ABS-{{ date('Ymd') }}-8841
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Back to Home Button -->
+                    <a href="{{ route('dashboard') }}" 
+                       class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        <span>Kembali ke Halaman Beranda</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- SCREEN 4: HALAMAN PULANG (Confirmation View)                      -->
+            <!-- ================================================================= -->
+            <div x-show="currentScreen === 'pulang_confirm'" class="space-y-4 w-full max-w-md mx-auto">
+                <!-- Big Clock Card -->
+                <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-soft text-center space-y-3">
+                    <div class="flex items-center justify-between text-xs text-slate-500">
+                        <span class="font-extrabold text-emerald-600 flex items-center space-x-1">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>WAKTU KEPULANGAN</span>
+                        </span>
+                        <span class="font-semibold" x-text="recordedDate">Kamis, 8 Okt 2026</span>
+                    </div>
+
+                    <!-- Big Clock Display -->
+                    <div class="py-2">
+                        <h2 class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+                            <span x-text="String(currentHour).padStart(2, '0') + ' : ' + String(currentMinute).padStart(2, '0')">12 : 25</span>
+                            <span class="text-sm font-bold text-slate-400">WITA</span>
+                        </h2>
+                    </div>
+
+                    <!-- Pill: Tidak perlu scan wajah -->
+                    <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200/80">
+                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                        <span>Tidak perlu scan wajah — Cukup konfirmasi</span>
+                    </div>
+                </div>
+
+                <!-- Row 1: Absen Datang Pagi Status -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between text-xs">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                            <i data-lucide="user-check" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-extrabold uppercase text-slate-400">ABSEN DATANG PAGI</p>
+                            <p class="font-black text-slate-900 mt-0.5">07:05 • Hadir Tepat Waktu</p>
+                        </div>
+                    </div>
+                    <span class="border border-emerald-400 text-emerald-700 bg-emerald-50 text-[11px] font-black px-3 py-1 rounded-full">
+                        Terverifikasi
+                    </span>
+                </div>
+
+                <!-- Row 2: GPS Location Status -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between text-xs">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-extrabold uppercase text-slate-400">POSISI ANDA SAAT INI</p>
+                            <p class="font-extrabold text-slate-900 mt-0.5">SMK TI BALI GLOBAL Badung</p>
+                            <p class="text-[10px] text-slate-500">Radius GPS 8 meter (Di Dalam Zona)</p>
+                        </div>
+                    </div>
+                    <span class="bg-emerald-600 text-white font-black text-[11px] px-3 py-1 rounded-full shadow-2xs">
+                        Lokasi Valid
+                    </span>
+                </div>
+
+                <!-- Confirm Button -->
+                <button type="button" 
+                        @click="confirmPulang()" 
+                        :disabled="isProcessing"
+                        class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer">
+                    <template x-if="!isProcessing">
+                        <span class="inline-flex items-center space-x-2">
+                            <i data-lucide="check" class="w-4 h-4"></i>
+                            <span>Konfirmasi Absen Pulang Sekarang →</span>
+                        </span>
+                    </template>
+                    <template x-if="isProcessing">
+                        <span class="inline-flex items-center space-x-2">
+                            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                            <span>Menyimpan Kepulangan...</span>
+                        </span>
+                    </template>
+                </button>
+            </div>
 
             <!-- ================================================================= -->
             <!-- SCREEN 5: HALAMAN BERHASIL PULANG (Screen 5: HALAMAN BERHA...)     -->
             <!-- ================================================================= -->
-            <template x-if="currentScreen === 'pulang_result'">
-                <div class="space-y-4 w-full max-w-md mx-auto">
-                    
-                    <!-- Notification Banner -->
-                    <div class="p-4 rounded-2xl bg-emerald-600 text-white shadow-xl shadow-emerald-600/20 flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                                <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
-                            </div>
-                            <h4 class="font-extrabold text-sm text-white">Absen Pulang Berhasil!</h4>
+            <div x-show="currentScreen === 'pulang_result'" class="space-y-4 w-full max-w-md mx-auto">
+                
+                <!-- Notification Banner -->
+                <div class="p-4 rounded-2xl bg-emerald-600 text-white shadow-xl shadow-emerald-600/20 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
+                            <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
                         </div>
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-ping"></span>
+                        <h4 class="font-extrabold text-sm text-white">Absen Pulang Berhasil!</h4>
                     </div>
-
-                    <!-- Summary Card -->
-                    <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-soft space-y-4">
-                        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                            <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-400">ABSENSI</h4>
-                            <span class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">BERHASIL</span>
-                        </div>
-
-                        <!-- 2 Mini Cards: Masuk & Pulang -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
-                                <span class="text-[10px] font-black text-slate-400 uppercase">ABSEN MASUK PAGI</span>
-                                <h5 class="text-base font-black text-slate-900">07:05 <span class="text-[10px] text-slate-400 font-semibold">WITA</span></h5>
-                                <span class="inline-flex items-center text-[10px] font-extrabold text-emerald-600">● Tepat Waktu</span>
-                            </div>
-
-                            <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1">
-                                <span class="text-[10px] font-black text-emerald-700 uppercase">ABSEN PULANG</span>
-                                <h5 class="text-base font-black text-slate-900" x-text="recordedTime.substring(0, 5) + ' WITA'">12:25 WITA</h5>
-                                <span class="inline-flex items-center text-[10px] font-extrabold text-emerald-700">● Sesuai Jadwal</span>
-                            </div>
-                        </div>
-
-                        <!-- Detail List -->
-                        <div class="divide-y divide-slate-100 text-xs pt-1">
-                            <div class="py-2.5 flex items-center justify-between">
-                                <span class="text-slate-500">Hari & Tanggal</span>
-                                <span class="font-extrabold text-slate-900" x-text="recordedDate">Kamis, 8 Oktober 2026</span>
-                            </div>
-
-                            <div class="py-2.5 flex items-center justify-between">
-                                <span class="text-slate-500">Total Waktu Belajar</span>
-                                <span class="font-black text-blue-600">5 Jam 20 Menit</span>
-                            </div>
-
-                            <div class="py-2.5 flex items-center justify-between">
-                                <span class="text-slate-500">Posisi Lokasi</span>
-                                <span class="font-extrabold text-emerald-700 flex items-center space-x-1">
-                                    <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
-                                    <span>Gerbang SMK TI (Valid)</span>
-                                </span>
-                            </div>
-
-                            <div class="py-2.5 flex items-center justify-between">
-                                <span class="text-slate-500">Status Konfirmasi</span>
-                                <span class="font-black text-slate-900">Terverifikasi</span>
-                            </div>
-
-                            <div class="pt-2.5 flex items-center justify-between text-[11px]">
-                                <span class="text-slate-400 font-mono">ID VERIFIKASI DIGITAL</span>
-                                <span class="font-mono font-bold text-slate-600">OUT-{{ date('Ymd') }}-88119</span>
-                            </div>
-                        </div>
-
-                        <!-- WhatsApp Notification Card -->
-                        <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/90 flex items-center space-x-3 text-xs">
-                            <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                                <i data-lucide="message-circle" class="w-4 h-4"></i>
-                            </div>
-                            <div>
-                                <h6 class="font-extrabold text-emerald-950">Absen Terkirim</h6>
-                                <p class="text-[11px] text-emerald-800">Absensi Siswa Berhasil Terkirim Ke Orang Tua Siswa</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Back to Dashboard -->
-                    <a href="{{ route('dashboard') }}" 
-                       class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all">
-                        <i data-lucide="home" class="w-4 h-4"></i>
-                        <span>Kembali ke Beranda</span>
-                    </a>
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-ping"></span>
                 </div>
-            </template>
+
+                <!-- Summary Card -->
+                <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-soft space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-400">ABSENSI</h4>
+                        <span class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">BERHASIL</span>
+                    </div>
+
+                    <!-- 2 Mini Cards: Masuk & Pulang -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                            <span class="text-[10px] font-black text-slate-400 uppercase">ABSEN MASUK PAGI</span>
+                            <h5 class="text-base font-black text-slate-900">07:05 <span class="text-[10px] text-slate-400 font-semibold">WITA</span></h5>
+                            <span class="inline-flex items-center text-[10px] font-extrabold text-emerald-600">● Tepat Waktu</span>
+                        </div>
+
+                        <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1">
+                            <span class="text-[10px] font-black text-emerald-700 uppercase">ABSEN PULANG</span>
+                            <h5 class="text-base font-black text-slate-900" x-text="recordedTime.substring(0, 5) + ' WITA'">12:25 WITA</h5>
+                            <span class="inline-flex items-center text-[10px] font-extrabold text-emerald-700">● Sesuai Jadwal</span>
+                        </div>
+                    </div>
+
+                    <!-- Detail List -->
+                    <div class="divide-y divide-slate-100 text-xs pt-1">
+                        <div class="py-2.5 flex items-center justify-between">
+                            <span class="text-slate-500">Hari & Tanggal</span>
+                            <span class="font-extrabold text-slate-900" x-text="recordedDate">Kamis, 8 Oktober 2026</span>
+                        </div>
+
+                        <div class="py-2.5 flex items-center justify-between">
+                            <span class="text-slate-500">Total Waktu Belajar</span>
+                            <span class="font-black text-blue-600">5 Jam 20 Menit</span>
+                        </div>
+
+                        <div class="py-2.5 flex items-center justify-between">
+                            <span class="text-slate-500">Posisi Lokasi</span>
+                            <span class="font-extrabold text-emerald-700 flex items-center space-x-1">
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                                <span>Gerbang SMK TI (Valid)</span>
+                            </span>
+                        </div>
+
+                        <div class="py-2.5 flex items-center justify-between">
+                            <span class="text-slate-500">Status Konfirmasi</span>
+                            <span class="font-black text-slate-900">Terverifikasi</span>
+                        </div>
+
+                        <div class="pt-2.5 flex items-center justify-between text-[11px]">
+                            <span class="text-slate-400 font-mono">ID VERIFIKASI DIGITAL</span>
+                            <span class="font-mono font-bold text-slate-600">OUT-{{ date('Ymd') }}-88119</span>
+                        </div>
+                    </div>
+
+                    <!-- WhatsApp Notification Card -->
+                    <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/90 flex items-center space-x-3 text-xs">
+                        <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
+                            <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="font-extrabold text-emerald-950">Absen Terkirim</h6>
+                            <p class="text-[11px] text-emerald-800">Absensi Siswa Berhasil Terkirim Ke Orang Tua Siswa</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Back to Dashboard -->
+                <a href="{{ route('dashboard') }}" 
+                   class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all">
+                    <i data-lucide="home" class="w-4 h-4"></i>
+                    <span>Kembali ke Beranda</span>
+                </a>
+            </div>
 
         </div>
 
