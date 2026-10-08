@@ -1,4 +1,4 @@
-@extends('layouts.auth')
+@extends('dashboard siswa.auth')
 
 @section('title', 'Halaman Awal Gateway')
 
