@@ -5,7 +5,7 @@
 @section('content')
 <div class="space-y-6 text-center">
     <!-- Header Box with Logo (Exact from Image 1 Left) -->
-    <div class="header-gradient text-white rounded-3xl sm:rounded-[40px] p-8 sm:p-10 relative overflow-hidden shadow-2xl shadow-blue-500/25">
+    <div class="header-gradient text-white rounded-3xl sm:rounded-5xl p-8 sm:p-10 relative overflow-hidden shadow-2xl shadow-blue-500/25">
         <!-- Background light blur -->
         <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
 
@@ -33,7 +33,7 @@
     </div>
 
     <!-- Option 1: Scan Kartu Pelajar (Exact from Image 1 Left) -->
-    <div class="bg-white border border-slate-200/80 rounded-3xl sm:rounded-[32px] p-6 sm:p-7 space-y-4 shadow-soft hover:shadow-md transition-shadow">
+    <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-7 space-y-4 shadow-soft hover:shadow-md transition-shadow">
         <div class="w-24 h-24 mx-auto border-2 border-dashed border-blue-500 rounded-3xl flex items-center justify-center bg-blue-50/50 text-4xl font-black text-blue-600 shadow-inner">
             A
         </div>
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Option 2: Login Akun Manual (Exact from Image 1 Left) -->
-    <div class="bg-white border border-slate-200/80 rounded-3xl sm:rounded-[32px] p-6 sm:p-7 space-y-4 shadow-soft hover:shadow-md transition-shadow">
+    <div class="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-7 space-y-4 shadow-soft hover:shadow-md transition-shadow">
         <div class="w-20 h-20 mx-auto bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-700">
             <i data-lucide="contact" class="w-10 h-10 text-slate-700"></i>
         </div>

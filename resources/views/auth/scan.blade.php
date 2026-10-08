@@ -3,7 +3,7 @@
 @section('title', 'Scan Kartu Pelajar')
 
 @section('content')
-<div class="bg-white rounded-3xl sm:rounded-[36px] p-6 sm:p-8 border border-slate-200/80 shadow-soft text-center space-y-6"
+<div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft text-center space-y-6"
      x-data="{
         scanning: false,
         scanned: false,

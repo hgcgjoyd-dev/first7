@@ -18,7 +18,7 @@
 }">
     
     <!-- Header Greeting Hero Card (Exact from Image 2 Left with Logo PNG) -->
-    <div class="header-gradient text-white rounded-3xl sm:rounded-[36px] p-6 sm:p-8 shadow-soft relative overflow-hidden">
+    <div class="header-gradient text-white rounded-3xl p-6 sm:p-8 shadow-soft relative overflow-hidden">
         <!-- Ambient background glow -->
         <div class="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
         <div class="absolute bottom-0 right-1/4 w-44 h-44 rounded-full bg-blue-400/20 blur-xl pointer-events-none"></div>
@@ -67,7 +67,7 @@
     </div>
 
     <!-- 5 MENU LAYANAN CEPAT SISWA (Exact from Image 2 Left - Fully Clickable & Responsive) -->
-    <div class="bg-white rounded-3xl sm:rounded-[32px] p-6 sm:p-8 border border-slate-200/80 shadow-soft">
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft">
         <div class="flex items-center justify-between mb-5">
             <h3 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-400">PILIHAN MENU CEPAT</h3>
             <span class="text-xs font-semibold text-blue-600">Klik ikon untuk membuka</span>
@@ -155,7 +155,7 @@
     </div>
 
     <!-- HERO ACTION SECTION: "Absen Disini" Fingerprint Trigger (Exact from Image 2) -->
-    <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 rounded-3xl sm:rounded-[36px] p-8 text-white text-center shadow-xl shadow-blue-500/15 relative overflow-hidden flex flex-col items-center justify-center">
+    <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 rounded-3xl p-8 text-white text-center shadow-xl shadow-blue-500/15 relative overflow-hidden flex flex-col items-center justify-center">
         <!-- Decoration circles -->
         <div class="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/10 blur-xl"></div>
         <div class="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-xl"></div>
