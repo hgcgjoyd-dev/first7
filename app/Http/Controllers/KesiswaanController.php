@@ -594,7 +594,7 @@ class KesiswaanController extends Controller
     public function profil()
     {
         $siswa = $this->getActiveSiswa();
-        return view('profil.index', compact('siswa'));
+        return view('dashboard siswa.profil', compact('siswa'));
     }
 
     /**
