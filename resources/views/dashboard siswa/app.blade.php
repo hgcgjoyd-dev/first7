@@ -303,33 +303,12 @@
                             <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">+40 Reward</span>
                         </a>
                     </nav>
-<<<<<<< HEAD:resources/views/dashboard siswa/app.blade.php
                 </div>
 
                 <!-- School Info Card with Logo PNG -->
                 <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
-                    <div class="bg-white rounded-2xl p-3 mb-3 flex items-center justify-center shadow-xs">
-                        <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-16 w-auto object-contain">
-=======
-
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-6 mb-3 px-3">Akun Siswa</p>
-
-                    <nav class="space-y-1.5">
-                        <a href="{{ route('logout') }}" 
-                           class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-rose-600 hover:bg-rose-50">
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="log-out" class="w-4 h-4"></i>
-                                <span>Keluar / Ganti Akun</span>
-                            </div>
-                        </a>
-                    </nav>
-                </div>
-
-                <!-- School Info Card with Logo PNG -->
-                <div class="bg-linear-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
-                    <div class="bg-white rounded-2xl p-2.5 mb-3 flex items-center justify-center">
+                    <div class="bg-white rounded-2xl p-2.5 mb-3 flex items-center justify-center shadow-xs">
                         <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 w-auto object-contain">
->>>>>>> 09071e5 (Perbaiki error penulisan):resources/views/layouts/app.blade.php
                     </div>
 
                     <p class="text-xs text-blue-100/90 leading-relaxed">
@@ -366,15 +345,9 @@
             <!-- 2. Floating Center Presensi Button -->
             <div class="relative -top-5">
                 <a href="{{ route('presensi') }}" 
-<<<<<<< HEAD:resources/views/dashboard siswa/app.blade.php
                    title="Presensi Masuk & Pulang"
                    class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all ring-4 ring-white">
-                    <i data-lucide="scan-face" class="w-7 h-7"></i>
-=======
-                   title="Presensi Absen"
-                   class="w-14 h-14 rounded-full bg-linear-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all ring-4 ring-white">
                     <i data-lucide="scan" class="w-7 h-7"></i>
->>>>>>> 09071e5 (Perbaiki error penulisan):resources/views/layouts/app.blade.php
                 </a>
             </div>
 
