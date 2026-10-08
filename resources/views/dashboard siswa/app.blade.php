@@ -264,17 +264,6 @@
                             <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">+40 Reward</span>
                         </a>
                     </nav>
-
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-6 mb-3 px-3">Akun Siswa</p>
-                    <nav class="space-y-1.5">
-                        <a href="{{ route('logout') }}" 
-                           class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-rose-600 hover:bg-rose-50">
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="log-out" class="w-4 h-4"></i>
-                                <span>Keluar / Ganti Akun</span>
-                            </div>
-                        </a>
-                    </nav>
                 </div>
 
                 <!-- School Info Card with Logo PNG -->
