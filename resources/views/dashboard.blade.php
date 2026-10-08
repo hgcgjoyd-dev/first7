@@ -168,7 +168,7 @@
             
             <h2 class="text-2xl sm:text-3xl font-black mb-2">Absen Disini</h2>
             <p class="text-xs sm:text-sm text-blue-100 mb-6 font-medium">
-                Posisikan diri di area kampus sekolah SMK TI Bali Global Badung lalu klik tombol sidik jari di bawah ini.
+                Posisikan diri di area sekolah SMK TI Bali Global Badung lalu klik tombol sidik jari di bawah ini.
             </p>
 
             <!-- Arrow Down Indicator -->
@@ -221,7 +221,7 @@
             </div>
 
             <div class="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span class="text-slate-500">Area: Lab RPL 2 & Kelas</span>
+                <span class="text-slate-500">Area Lingkungan: Lab RPL & Kelas</span>
                 <a href="{{ route('piket') }}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-xl transition-colors">
                     Buka Checklist →
                 </a>
