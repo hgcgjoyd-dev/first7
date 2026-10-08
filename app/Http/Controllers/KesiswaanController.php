@@ -79,11 +79,11 @@ class KesiswaanController extends Controller
             if (Schema::hasTable('presensi') && Presensi::count() === 0) {
                 $todayDate = Carbon::today();
                 $sampleRecords = [
-                    $todayDate->copy()->subDays(7)->toDateString() => ['07:01:00', '15:30:00', 'Hadir', 'Tepat Waktu'],
-                    $todayDate->copy()->subDays(6)->toDateString() => ['06:58:00', '15:30:00', 'Hadir', 'Tepat Waktu'],
-                    $todayDate->copy()->subDays(5)->toDateString() => ['07:04:00', '15:30:00', 'Hadir', 'Tepat Waktu'],
-                    $todayDate->copy()->subDays(2)->toDateString() => ['07:02:00', '15:30:00', 'Hadir', 'Tepat Waktu'],
-                    $todayDate->copy()->subDays(1)->toDateString() => ['07:11:00', '15:30:00', 'Terlambat', 'Terlambat 6 Menit'],
+                    $todayDate->copy()->subDays(7)->toDateString() => ['07:01:00', '12:25:00', 'Hadir', 'Tepat Waktu'],
+                    $todayDate->copy()->subDays(6)->toDateString() => ['06:58:00', '12:25:00', 'Hadir', 'Tepat Waktu'],
+                    $todayDate->copy()->subDays(5)->toDateString() => ['07:04:00', '12:25:00', 'Hadir', 'Tepat Waktu'],
+                    $todayDate->copy()->subDays(2)->toDateString() => ['07:02:00', '12:25:00', 'Hadir', 'Tepat Waktu'],
+                    $todayDate->copy()->subDays(1)->toDateString() => ['07:11:00', '12:25:00', 'Terlambat', 'Terlambat 6 Menit'],
                 ];
                 foreach ($sampleRecords as $tgl => $row) {
                     Presensi::create([

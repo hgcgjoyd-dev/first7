@@ -10,7 +10,7 @@
             $attendanceDbMap[\Carbon\Carbon::parse($p->tanggal)->format('Y-m-d')] = [
                 'status'     => $p->status,
                 'jam_masuk'  => $p->jam_masuk ? substr($p->jam_masuk, 0, 5) . ' WITA' : '07.10 WITA',
-                'jam_pulang' => $p->jam_pulang ? substr($p->jam_pulang, 0, 5) . ' WITA' : '15.30 WITA',
+                'jam_pulang' => $p->jam_pulang ? substr($p->jam_pulang, 0, 5) . ' WITA' : '12.25 WITA',
                 'keterangan' => $p->keterangan ?? 'Hadir Tepat Waktu'
             ];
         }
@@ -665,15 +665,15 @@
                 <ul class="text-xs text-blue-100 space-y-2 leading-relaxed">
                     <li class="flex items-start space-x-2">
                         <span class="text-emerald-400 font-bold">•</span>
-                        <span><strong>06:30 - 07:15 WITA</strong>: Presensi Masuk (Tepat Waktu).</span>
+                        <span><strong>06:30 - 07:05 WITA</strong>: Presensi Masuk (Tepat Waktu).</span>
                     </li>
                     <li class="flex items-start space-x-2">
                         <span class="text-amber-400 font-bold">•</span>
-                        <span><strong>> 07:15 WITA</strong>: Dinyatakan Terlambat & Poin BK dicatat otomatis.</span>
+                        <span><strong>> 07:05 WITA</strong>: Dinyatakan Terlambat & Poin BK dicatat otomatis.</span>
                     </li>
                     <li class="flex items-start space-x-2">
                         <span class="text-blue-300 font-bold">•</span>
-                        <span><strong>15:30 WITA</strong>: Presensi Kepulangan Siswa.</span>
+                        <span><strong>12:25 WITA</strong>: Presensi Kepulangan Siswa.</span>
                     </li>
                 </ul>
             </div>

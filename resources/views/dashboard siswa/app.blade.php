@@ -283,7 +283,7 @@
                         <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 w-auto object-contain">
                     </div>
                     <p class="text-xs text-blue-100/90 leading-relaxed">
-                        Presensi dibuka 06:30 - 07:15 WITA. Keterlambatan dicatat otomatis dan mengirim notifikasi WhatsApp ke orang tua/wali.
+                        Presensi dibuka 06:30 - 07:05 WITA, kepulangan 12:25 WITA. Keterlambatan dicatat otomatis dan mengirim notifikasi WhatsApp ke orang tua/wali.
                     </p>
                     <div class="mt-4 pt-3 border-t border-blue-800/80 flex items-center justify-between text-[11px] text-blue-200">
                         <span>Radius Kampus:</span>
