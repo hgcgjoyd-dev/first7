@@ -140,6 +140,9 @@ class KesiswaanController extends Controller
     public function landing()
     {
         $this->ensureDatabaseReady();
+        if (view()->exists('dashboard siswa.auth.landing')) {
+            return view('dashboard siswa.auth.landing');
+        }
         return view('dashboard siswa.landing');
     }
 
@@ -148,6 +151,9 @@ class KesiswaanController extends Controller
      */
     public function login()
     {
+        if (view()->exists('dashboard siswa.auth.login')) {
+            return view('dashboard siswa.auth.login');
+        }
         return view('dashboard siswa.login');
     }
 
@@ -189,6 +195,9 @@ class KesiswaanController extends Controller
      */
     public function scan()
     {
+        if (view()->exists('dashboard siswa.auth.scan')) {
+            return view('dashboard siswa.auth.scan');
+        }
         return view('dashboard siswa.scan');
     }
 

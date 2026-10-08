@@ -1,4 +1,4 @@
-@extends('dashboard siswa.auth')
+@extends('dashboard siswa.auth.auth')
 
 @section('title', 'Halaman Awal Gateway')
 
@@ -188,7 +188,7 @@
                     :class="activeSlide === 2 ? 'border-blue-600 shadow-md ring-2 ring-blue-500/30' : 'border-transparent opacity-65 hover:opacity-100'">
                 <img src="{{ asset('images/images3.png') }}" alt="Area & Lapangan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-2 flex flex-col justify-end">
-                    <span class="text-[10px] sm:text-[11px] font-bold text-white truncate">Area </span>
+                    <span class="text-[10px] sm:text-[11px] font-bold text-white truncate">Area Kampus</span>
                 </div>
             </button>
         </div>
@@ -201,18 +201,6 @@
             <!-- Background light blur -->
             <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
 
-            <div class="flex items-center justify-between text-xs mb-4">
-                <span class="flex items-center space-x-1.5 bg-black/25 backdrop-blur-md px-3 py-1 rounded-full text-white">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                    <span class="font-bold tracking-wider text-[10px]">PRESENSI ONLINE</span>
-                </span>
-                <span class="text-[11px] font-semibold text-blue-100 bg-white/15 px-2.5 py-0.5 rounded-full">
-                    Radius 50m
-                </span>
-            </div>
-            
-            <p class="text-[10px] uppercase tracking-widest font-extrabold text-blue-200">PORTAL RESMI SISWA</p>
-            
             <!-- Logo Resmi SMK TI Bali Global Badung -->
             <div class="my-4 flex items-center justify-center">
                 <div class="bg-white rounded-3xl p-3 sm:p-4 shadow-xl flex items-center justify-center w-32 h-32 sm:w-36 sm:h-36">

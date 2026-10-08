@@ -134,31 +134,23 @@
             <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
                 <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-11 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
                 <div class="border-l border-slate-200 pl-3 hidden sm:block">
-                    <p class="text-[11px] font-semibold text-slate-500 leading-tight">Presensi & Kesiswaan</p>
-                    <p class="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Portal Resmi Siswa</p>
+                    <p class="text-xs font-bold text-slate-700 leading-tight">Presensi & Kesiswaan</p>
                 </div>
             </a>
 
-            <!-- Middle: Live Status Badges (Online & Clock) -->
-            <div class="hidden md:flex items-center space-x-4">
-                <div class="flex items-center space-x-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200/80 rounded-full text-xs font-semibold text-emerald-700">
-                    <span class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                    </span>
-                    <span>ONLINE • Lokasi Valid (Radius 12m)</span>
-                </div>
-
-                <div class="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-semibold text-slate-700">
-                    <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-600"></i>
-                    <span x-text="currentTimeWita">07:30:00 WITA</span>
-                </div>
-            </div>
-
-            <!-- Right: Quick Navigation, Profile & Logout -->
+            <!-- Right: Quick Navigation, Profile & Notifications (Pojok Kanan) -->
             <div class="flex items-center space-x-3">
 
-                <!-- Notifications Dropdown -->
+                <!-- User Profile Link Button -->
+                <a href="{{ route('profil') }}" 
+                   title="Buka Profil Siswa" 
+                   class="p-1 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center group">
+                    <div class="w-9 h-9 rounded-full bg-linear-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
+                        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                    </div>
+                </a>
+
+                <!-- Notifications Dropdown (Pojok Kanan Atas) -->
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open" class="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors" title="Pemberitahuan">
                         <i data-lucide="bell" class="w-5 h-5"></i>
@@ -209,15 +201,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- User Profile Link Button (Pojok Kanan Atas) -->
-                <a href="{{ route('profil') }}" 
-                   title="Buka Profil Siswa" 
-                   class="p-1 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center pl-2 border-l border-slate-200 group">
-                    <div class="w-9 h-9 rounded-full bg-linear-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
-                        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
-                    </div>
-                </a>
 
             </div>
         </div>
@@ -310,10 +293,6 @@
                         Presensi dibuka 06:30 - 07:05 WITA, kepulangan 12:25 WITA. Keterlambatan dicatat otomatis dan mengirim notifikasi WhatsApp ke orang tua/wali.
                     </p>
 
-                    <div class="mt-4 pt-3 border-t border-blue-800/80 flex items-center justify-between text-[11px] text-blue-200">
-                        <span>Radius SMK:</span>
-                        <span class="font-bold text-emerald-300">Maks. 50 Meter</span>
-                    </div>
                 </div>
             </aside>
 

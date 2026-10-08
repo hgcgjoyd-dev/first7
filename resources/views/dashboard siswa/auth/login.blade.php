@@ -1,4 +1,4 @@
-@extends('dashboard siswa.auth')
+@extends('dashboard siswa.auth.auth')
 
 @section('title', 'Sign In Siswa')
 

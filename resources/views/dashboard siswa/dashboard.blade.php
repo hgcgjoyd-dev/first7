@@ -69,19 +69,70 @@
         <div class="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
         <div class="absolute bottom-0 right-1/4 w-44 h-44 rounded-full bg-blue-400/20 blur-xl pointer-events-none"></div>
 
-        <!-- Top Row: Logo di kiri & Tombol Profil di pojok kanan atas -->
+        <!-- Top Row: Logo di kiri & Tombol Notif di pojok kanan atas -->
         <div class="relative z-10 flex items-center justify-between mb-4">
             <!-- Brand Logo -->
             <div class="bg-white/95 rounded-2xl py-1.5 px-3.5 sm:px-4 inline-flex items-center shadow-xs">
                 <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-11 w-auto object-contain">
             </div>
 
-            <!-- Profile Avatar Button (Pojok Kanan Atas - Mobile & Desktop) -->
-            <a href="{{ route('profil') }}" 
-               title="Buka Profil Siswa" 
-               class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-xs hover:scale-105 active:scale-95 transition-all group">
-                <i data-lucide="user" class="w-6 h-6 group-hover:scale-110 transition-transform"></i>
-            </a>
+            <!-- Profile & Notification Buttons (Pojok Kanan Atas) -->
+            <div class="flex items-center space-x-2">
+                <!-- Profile Avatar Button -->
+                <a href="{{ route('profil') }}" 
+                   title="Buka Profil Siswa" 
+                   class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-xs hover:scale-105 active:scale-95 transition-all group">
+                    <i data-lucide="user" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                </a>
+
+                <!-- Notification Bell Button (Pojok Kanan) -->
+                <div class="relative" x-data="{ heroNotifOpen: false }">
+                    <button @click="heroNotifOpen = !heroNotifOpen" 
+                            title="Pemberitahuan Siswa"
+                            class="relative w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                        <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"></span>
+                    </button>
+
+                    <!-- Dropdown Notifikasi Hero Card -->
+                    <div x-show="heroNotifOpen" @click.away="heroNotifOpen = false" x-cloak
+                         class="absolute right-0 mt-2 w-80 sm:w-88 bg-white rounded-2xl shadow-2xl border border-slate-100 py-3 z-50 text-slate-800">
+                        <div class="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
+                            <span class="font-bold text-sm text-slate-800">Pemberitahuan Siswa</span>
+                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">3 Baru</span>
+                        </div>
+                        <div class="divide-y divide-slate-100 text-xs text-left">
+                            <a href="{{ route('bk') }}" class="p-3 hover:bg-slate-50 flex items-start space-x-3 block">
+                                <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-900">Panggilan BK: Dra. Ni Luh Suastini</p>
+                                    <p class="text-slate-500 text-[11px] mt-0.5">Jadwal evaluasi kedisiplinan ruang BK (08:30 WITA)</p>
+                                </div>
+                            </a>
+                            <a href="{{ route('profil') }}" class="p-3 hover:bg-slate-50 flex items-start space-x-3 block">
+                                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="award" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-900">Reward Juara 2 LKS Web Tech</p>
+                                    <p class="text-slate-500 text-[11px] mt-0.5">Ditambahkan +30 poin penghargaan siswa</p>
+                                </div>
+                            </a>
+                            <a href="{{ route('mapel') }}" class="p-3 hover:bg-slate-50 flex items-start space-x-3 block">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="code" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-900">Tugas Web & Mobile: Besok!</p>
+                                    <p class="text-slate-500 text-[11px] mt-0.5">Deadline Slice UI Figma pukul 23:59 WITA</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="relative z-10">
