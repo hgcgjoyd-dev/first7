@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('dashboard siswa.app')
 
 @section('title', 'Dashboard Siswa')
 
