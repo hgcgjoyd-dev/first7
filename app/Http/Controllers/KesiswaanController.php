@@ -119,7 +119,7 @@ class KesiswaanController extends Controller
     public function landing()
     {
         $this->ensureDatabaseReady();
-        return view('auth.landing');
+        return view('dashboard siswa.landing');
     }
 
     /**
@@ -127,7 +127,7 @@ class KesiswaanController extends Controller
      */
     public function login()
     {
-        return view('auth.login');
+        return view('dashboard siswa.login');
     }
 
     /**
