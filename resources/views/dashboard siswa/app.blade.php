@@ -300,7 +300,8 @@
         </div>
     </div>
 
-    <!-- MOBILE BOTTOM NAVIGATION (Beranda, Fingerprint Absen, Riwayat - Sesuai Desain) -->
+    <!-- MOBILE BOTTOM NAVIGATION (Hanya Tampil di Dashboard Sesuai Revisi) -->
+    @if(request()->routeIs('dashboard'))
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-8 py-2.5 z-40 shadow-lg">
         <div class="max-w-md mx-auto flex items-center justify-between relative">
             <!-- 1. Beranda -->
@@ -328,6 +329,7 @@
         </div>
     </nav>
     <div class="h-20 lg:h-0"></div>
+    @endif
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {

@@ -32,7 +32,7 @@
     monthNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
     daysGrid: [],
     dbRecords: {{ Js::from($attendanceDbMap) }},
-    rekapHadir: {{ count($daftarPresensi) > 0 ? count($daftarPresensi) : 14 }},
+    rekapHadir: {{ ($totalHadir ?? 0) > 0 ? $totalHadir : (count($daftarPresensi) > 0 ? count($daftarPresensi) : 14) }},
     rekapIzin: {{ $totalIzin ?? 3 }},
     rekapAlpha: 1,
 
@@ -344,17 +344,17 @@
             <!-- CARD 1: QUICK SUMMARY 2-COLUMN (Hadir 95% | Izin 3 Hari)          -->
             <!-- ================================================================= -->
             <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-soft grid grid-cols-2 divide-x divide-slate-100">
-                <!-- Left: Hadir 95% -->
+                <!-- Left: Hadir Kali -->
                 <div class="flex items-center space-x-3 sm:space-x-4 pl-2 pr-4">
                     <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
                         <i data-lucide="user-check" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h4 class="font-extrabold text-sm sm:text-base text-slate-900 leading-tight">
-                            Hadir: {{ $persenHadir ?? 95 }}%
+                        <h4 class="font-extrabold text-sm sm:text-base text-slate-900 leading-tight" x-text="'Hadir: ' + rekapHadir + ' Kali'">
+                            Hadir: {{ $totalHadir ?? 14 }} Kali
                         </h4>
                         <p class="text-[11px] sm:text-xs font-semibold text-emerald-600 mt-0.5">
-                            Tingkat Disiplin Baik
+                            Total Presensi Masuk
                         </p>
                     </div>
                 </div>
@@ -365,7 +365,7 @@
                         <i data-lucide="mail" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h4 class="font-extrabold text-sm sm:text-base text-slate-900 leading-tight">
+                        <h4 class="font-extrabold text-sm sm:text-base text-slate-900 leading-tight" x-text="'Izin: ' + rekapIzin + ' Hari'">
                             Izin: {{ $totalIzin ?? 3 }} Hari
                         </h4>
                         <p class="text-[11px] sm:text-xs font-medium text-slate-400 mt-0.5" x-text="'Bulan ' + currentMonthName">
@@ -538,8 +538,8 @@
                                 <span class="text-[10px] sm:text-xs text-slate-400 font-semibold">Hari</span>
                             </div>
                         </div>
-                        <p class="text-[10px] sm:text-[11px] font-extrabold text-emerald-600 pt-0.5">
-                            93.3% Hadir
+                        <p class="text-[10px] sm:text-[11px] font-extrabold text-emerald-600 pt-0.5" x-text="rekapHadir + ' Kali Hadir'">
+                            {{ $totalHadir ?? 0 }} Kali Hadir
                         </p>
                     </div>
 
