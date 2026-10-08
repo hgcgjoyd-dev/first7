@@ -219,6 +219,123 @@
         </div>
     </div>
 
+    <!-- KAMPUS & FASILITAS SEKOLAH (3 FOTO BARU SMK TI BALI GLOBAL BADUNG) -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft"
+         x-data="{
+             previewModal: false,
+             activePhoto: { src: '', title: '', desc: '' },
+             openPhoto(src, title, desc) {
+                 this.activePhoto = { src, title, desc };
+                 this.previewModal = true;
+                 this.$nextTick(() => {
+                     if (window.lucide) lucide.createIcons();
+                 });
+             }
+         }">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    <h3 class="text-sm sm:text-base font-extrabold text-slate-900 tracking-tight">Lingkungan & Fasilitas Kampus</h3>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">SMK TI Bali Global Badung • Berstandar Industri & Berbasis Teknologi</p>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                    Area Presensi Valid (Radius 50m)
+                </span>
+            </div>
+        </div>
+
+        <!-- 3 Cards Grid: Responsive 1 col on mobile, 3 cols on desktop/tablet -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <!-- 1. Gedung Teaching Factory (images.png) -->
+            <div @click="openPhoto('{{ asset('images/images.png') }}', 'Gedung Teaching Factory', 'Pusat Kejuruan Axioo Class Program & PLN Icon Plus Class Program dengan standar industri teknologi modern.')"
+                 class="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 cursor-pointer shadow-xs hover:shadow-lg transition-all duration-300">
+                <div class="aspect-[16/10] w-full overflow-hidden">
+                    <img src="{{ asset('images/images.png') }}" 
+                         alt="Gedung Teaching Factory" 
+                         class="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent p-4 flex flex-col justify-end text-white">
+                    <span class="inline-block px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase bg-blue-600 text-white w-max mb-1">
+                        Teaching Factory
+                    </span>
+                    <h4 class="font-bold text-xs sm:text-sm text-white group-hover:text-blue-300 transition-colors">
+                        Gedung Teaching Factory
+                    </h4>
+                    <p class="text-[10px] text-slate-300 line-clamp-1 mt-0.5">
+                        Axioo & PLN Icon Plus Program
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2. Gedung Lab Industri & TeFa (images2.png) -->
+            <div @click="openPhoto('{{ asset('images/images2.png') }}', 'Gedung Lab Industri & TeFa', 'Fasilitas praktik kejuruan komprehensif penunjang keahlian siswa RPL, PPLG & TJKT standar industri.')"
+                 class="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 cursor-pointer shadow-xs hover:shadow-lg transition-all duration-300">
+                <div class="aspect-[16/10] w-full overflow-hidden">
+                    <img src="{{ asset('images/images2.png') }}" 
+                         alt="Gedung Lab Industri & TeFa" 
+                         class="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent p-4 flex flex-col justify-end text-white">
+                    <span class="inline-block px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase bg-emerald-600 text-white w-max mb-1">
+                        Lab Praktik
+                    </span>
+                    <h4 class="font-bold text-xs sm:text-sm text-white group-hover:text-emerald-300 transition-colors">
+                        Lab Industri & TeFa
+                    </h4>
+                    <p class="text-[10px] text-slate-300 line-clamp-1 mt-0.5">
+                        Standar Kejuruan Nasional
+                    </p>
+                </div>
+            </div>
+
+            <!-- 3. Area Kampus & Ruang Teori (images3.png) -->
+            <div @click="openPhoto('{{ asset('images/images3.png') }}', 'Area Kampus & Ruang Kelas', 'Lingkungan kampus terpadu yang asri, nyaman, dan menjunjung tinggi kedisiplinan serta budaya Bali.')"
+                 class="group relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 cursor-pointer shadow-xs hover:shadow-lg transition-all duration-300">
+                <div class="aspect-[16/10] w-full overflow-hidden">
+                    <img src="{{ asset('images/images3.png') }}" 
+                         alt="Area Kampus & Ruang Kelas" 
+                         class="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent p-4 flex flex-col justify-end text-white">
+                    <span class="inline-block px-2 py-0.5 rounded-md text-[9px] font-extrabold uppercase bg-amber-600 text-white w-max mb-1">
+                        Area Kampus
+                    </span>
+                    <h4 class="font-bold text-xs sm:text-sm text-white group-hover:text-amber-300 transition-colors">
+                        Ruang Kelas & Lapangan
+                    </h4>
+                    <p class="text-[10px] text-slate-300 line-clamp-1 mt-0.5">
+                        Lingkungan Asri & Terpadu
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lightbox Modal Preview -->
+        <div x-show="previewModal" 
+             x-cloak 
+             class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+             @click.self="previewModal = false"
+             @keydown.escape.window="previewModal = false">
+            <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl relative" @click.stop>
+                <div class="relative aspect-[16/10] w-full bg-slate-950">
+                    <img :src="activePhoto.src" :alt="activePhoto.title" class="w-full h-full object-cover">
+                    <button @click="previewModal = false" 
+                            class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-all cursor-pointer">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <div class="p-5">
+                    <h4 class="font-bold text-base text-slate-900" x-text="activePhoto.title"></h4>
+                    <p class="text-xs text-slate-500 mt-1" x-text="activePhoto.desc"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- RESPONSIVE EXTRA WIDGETS FOR DESKTOP & MOBILE -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Piket Hari Ini Card Preview -> /piket -->

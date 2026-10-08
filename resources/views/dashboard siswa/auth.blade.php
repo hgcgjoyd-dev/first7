@@ -48,14 +48,17 @@
       x-init="$nextTick(() => lucide.createIcons())">
 
     <!-- Top Simple Nav -->
-    <div class="max-w-xl mx-auto w-full flex items-center justify-between pb-4">
+    <div class="{{ (request()->routeIs('landing') || request()->path() === '/') ? 'max-w-5xl' : 'max-w-xl' }} mx-auto w-full flex items-center justify-between pb-4">
         @if(!request()->routeIs('landing') && request()->path() !== '/')
             <a href="{{ route('landing') }}" class="flex items-center space-x-2 text-xs font-bold text-slate-500 hover:text-blue-600 transition-colors">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 <span>Kembali ke Halaman Awal</span>
             </a>
         @else
-            <div></div>
+            <div class="flex items-center space-x-2 text-xs font-semibold text-slate-500">
+                <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                <span>SMK TI Bali Global Badung</span>
+            </div>
         @endif
         <div class="flex items-center space-x-2 bg-emerald-50 px-3 py-1 rounded-full text-xs font-bold text-emerald-700 border border-emerald-200">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
@@ -64,7 +67,7 @@
     </div>
 
     <!-- Main Card Body -->
-    <main class="max-w-md mx-auto w-full my-auto">
+    <main class="{{ (request()->routeIs('landing') || request()->path() === '/') ? 'max-w-5xl' : 'max-w-md' }} mx-auto w-full my-auto transition-all">
         @yield('content')
     </main>
 
