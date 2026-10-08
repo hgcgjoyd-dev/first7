@@ -430,7 +430,7 @@ class KesiswaanController extends Controller
                 $file->move(public_path('uploads/izin'), $namaFile);
             }
 
-            Izin::create([
+            $izin = Izin::create([
                 'siswa_id'    => $siswa->id,
                 'jenis'       => $request->jenis,
                 'tgl_mulai'   => $request->tgl_mulai,
@@ -441,8 +441,22 @@ class KesiswaanController extends Controller
                 'status'      => 'Menunggu',
             ]);
 
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Pengajuan {$request->jenis} berhasil disimpan ke database!",
+                    'data'    => $izin,
+                ]);
+            }
+
             return redirect()->route('riwayat')->with('success', "Pengajuan {$request->jenis} berhasil disimpan ke database!");
         } catch (Throwable $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menyimpan: ' . $e->getMessage()
+                ], 500);
+            }
             return back()->with('error', 'Gagal menyimpan: ' . $e->getMessage())->withInput();
         }
     }

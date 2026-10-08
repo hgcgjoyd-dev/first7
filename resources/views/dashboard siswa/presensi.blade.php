@@ -4,8 +4,7 @@
 
 @section('content')
 <div class="w-full space-y-6" x-data="{
-    currentScreen: 'datang_camera', // 'datang_camera', 'datang_result', 'pulang_confirm', 'pulang_result'
-    activeTab: 'datang',            // 'datang' or 'pulang'
+    currentScreen: 'datang_camera', // 'datang_camera' or 'datang_result'
     datangResultType: 'telat',      // 'tepat' or 'telat'
     
     cameraActive: false,
@@ -31,22 +30,12 @@
     },
 
     init() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
-        if (tabParam === 'pulang') {
-            this.switchTab('pulang');
-        } else if (tabParam === 'datang') {
-            this.switchTab('datang');
-        }
-
         this.updateClock();
         setInterval(() => this.updateClock(), 1000);
         
-        // Start live camera if on datang tab
+        // Start live camera directly
         this.$nextTick(() => {
-            if (this.activeTab === 'datang') {
-                this.startCamera();
-            }
+            this.startCamera();
             if (window.lucide) lucide.createIcons();
         });
     },
@@ -110,18 +99,6 @@
             this.webcamStream = null;
         }
         this.cameraActive = false;
-    },
-
-    switchTab(tab) {
-        this.activeTab = tab;
-        if (tab === 'datang') {
-            this.currentScreen = 'datang_camera';
-            this.$nextTick(() => this.startCamera());
-        } else {
-            this.stopCamera();
-            this.currentScreen = 'pulang_confirm';
-        }
-        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
     },
 
     takePhotoAndSubmit() {
@@ -194,34 +171,6 @@
         this.datangResultType = type;
         localStorage.setItem('presensi_status_today', type);
         this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
-    },
-
-    confirmPulang() {
-        this.isProcessing = true;
-        const now = new Date();
-        const hStr = String(now.getHours()).padStart(2, '0');
-        const mStr = String(now.getMinutes()).padStart(2, '0');
-        const sStr = String(now.getSeconds()).padStart(2, '0');
-        this.recordedTime = `${hStr}:${mStr}:${sStr} WITA`;
-
-        fetch('{{ route('presensi.store') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                tipe: 'pulang',
-                latitude: -8.6478,
-                longitude: 115.1764
-            })
-        }).catch(() => {});
-
-        setTimeout(() => {
-            this.isProcessing = false;
-            this.currentScreen = 'pulang_result';
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
-        }, 800);
     }
 }">
 
