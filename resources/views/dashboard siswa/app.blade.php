@@ -132,12 +132,7 @@
 
             <!-- Left: Brand Logo PNG (Sudah berisi tulisan SMK TI Bali Global Badung) -->
             <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
-<<<<<<< HEAD:resources/views/dashboard siswa/app.blade.php
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-11 sm:h-13 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
-=======
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-11 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
-
->>>>>>> 09071e5 (Perbaiki error penulisan):resources/views/layouts/app.blade.php
+                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-12 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
                 <div class="border-l border-slate-200 pl-3 hidden sm:block">
                     <p class="text-[11px] font-semibold text-slate-500 leading-tight">Presensi & Kesiswaan</p>
                     <p class="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Portal Resmi Siswa</p>
@@ -306,14 +301,6 @@
                             <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">+40 Reward</span>
                         </a>
                     </nav>
-                </div>
-
-                <!-- School Info Card with Logo PNG -->
-                <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
-                    <div class="bg-white rounded-2xl p-3 mb-3 flex items-center justify-center shadow-xs">
-                        <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-16 w-auto object-contain">
-
-
                     <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-6 mb-3 px-3">Akun Siswa</p>
 
                     <nav class="space-y-1.5">
@@ -328,10 +315,9 @@
                 </div>
 
                 <!-- School Info Card with Logo PNG -->
-                <div class="bg-linear-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
+                <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
                     <div class="bg-white rounded-2xl p-2.5 mb-3 flex items-center justify-center">
                         <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 w-auto object-contain">
-
                     </div>
 
                     <p class="text-xs text-blue-100/90 leading-relaxed">
@@ -372,10 +358,6 @@
                    title="Presensi Masuk & Pulang"
                    class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all ring-4 ring-white">
                     <i data-lucide="scan-face" class="w-7 h-7"></i>
-
-                   title="Presensi Absen"
-                   class="w-14 h-14 rounded-full bg-linear-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all ring-4 ring-white">
-                    <i data-lucide="scan" class="w-7 h-7"></i>
 
                 </a>
             </div>
