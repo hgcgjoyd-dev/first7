@@ -1,279 +1,891 @@
 @extends('dashboard siswa.app')
 
-@section('title', 'Profil & Kedisiplinan Murid')
+@section('title', 'Riwayat & Kalender Kehadiran')
 
 @section('content')
-<div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft">
-    
-    <!-- Top Profile Header (Exact from Image 5 Top) -->
-    <div class="flex items-center justify-between pb-6 border-b border-slate-100">
-        <div class="flex items-center space-x-3 sm:space-x-4">
-            <a href="{{ route('dashboard') }}" title="Kembali ke Dashboard" class="p-2.5 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+@php
+    $attendanceDbMap = [];
+
+    if (!empty($daftarPresensi)) {
+        foreach ($daftarPresensi as $p) {
+            $attendanceDbMap[\Carbon\Carbon::parse($p->tanggal)->format('Y-m-d')] = [
+                'status'     => $p->status,
+                'jam_masuk'  => $p->jam_masuk ? substr($p->jam_masuk, 0, 5) . ' WITA' : '07.10 WITA',
+                'jam_pulang' => $p->jam_pulang ? substr($p->jam_pulang, 0, 5) . ' WITA' : '12.25 WITA',
+                'keterangan' => $p->keterangan ?? 'Hadir Tepat Waktu'
+            ];
+        }
+    }
+@endphp
+
+<div class="w-full space-y-5" x-data="{
+    today: new Date(),
+    displayedYear: new Date().getFullYear(),
+    displayedMonth: new Date().getMonth(),
+    selectedDateKey: '',
+    selectedDayData: {
+        dateStr: '',
+        status: 'Hadir',
+        desc: 'Status: Hadir Hari Ini (07.10 WITA)',
+        badgeClass: 'bg-emerald-100 text-emerald-800',
+        dotClass: 'bg-emerald-500'
+    },
+    monthNames: ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'],
+    daysGrid: [],
+    dbRecords: {{ Js::from($attendanceDbMap) }},
+    rekapHadir: {{ ($totalHadir ?? 0) > 0 ? $totalHadir : (count($daftarPresensi) > 0 ? count($daftarPresensi) : 14) }},
+    rekapIzin: {{ $totalIzin ?? 3 }},
+    rekapAlpha: 1,
+
+    get displayedMonthName() {
+        return this.monthNames[this.displayedMonth];
+    },
+
+    get currentMonthName() {
+        return this.monthNames[this.today.getMonth()];
+    },
+
+    getGreeting() {
+        const hr = new Date().getHours();
+
+        if (hr >= 4 && hr < 11) return 'Selamat Pagi,';
+        if (hr >= 11 && hr < 15) return 'Selamat Siang,';
+        if (hr >= 15 && hr < 18) return 'Selamat Sore,';
+
+        return 'Selamat Malam,';
+    },
+
+    init() {
+        this.today = new Date();
+        this.displayedYear = this.today.getFullYear();
+        this.displayedMonth = this.today.getMonth();
+        this.generateCalendar();
+        this.selectToday();
+
+        this.$nextTick(() => {
+            if (window.lucide) lucide.createIcons();
+        });
+    },
+
+    prevMonth() {
+        if (this.displayedMonth === 0) {
+            this.displayedMonth = 11;
+            this.displayedYear--;
+        } else {
+            this.displayedMonth--;
+        }
+
+        this.generateCalendar();
+    },
+
+    nextMonth() {
+        if (this.displayedMonth === 11) {
+            this.displayedMonth = 0;
+            this.displayedYear++;
+        } else {
+            this.displayedMonth++;
+        }
+
+        this.generateCalendar();
+    },
+
+    goToToday() {
+        this.today = new Date();
+        this.displayedYear = this.today.getFullYear();
+        this.displayedMonth = this.today.getMonth();
+        this.generateCalendar();
+        this.selectToday();
+    },
+
+    selectToday() {
+        const y = this.today.getFullYear();
+        const m = String(this.today.getMonth() + 1).padStart(2, '0');
+        const d = String(this.today.getDate()).padStart(2, '0');
+        const key = `${y}-${m}-${d}`;
+
+        const found = this.daysGrid.find(cell => cell.dateKey === key);
+
+        if (found) {
+            this.selectDay(found);
+        } else {
+            this.selectedDateKey = key;
+            this.selectedDayData = {
+                dateStr: `${this.today.getDate()} ${this.currentMonthName} ${y}`,
+                status: 'Hadir',
+                desc: 'Status: Hadir Hari Ini (07.10 WITA)',
+                badgeClass: 'bg-emerald-100 text-emerald-800',
+                dotClass: 'bg-emerald-500'
+            };
+        }
+    },
+
+    generateCalendar() {
+        const year = this.displayedYear;
+        const month = this.displayedMonth;
+
+        const firstDayIndex = new Date(year, month, 1).getDay();
+        const totalDays = new Date(year, month + 1, 0).getDate();
+        const prevTotalDays = new Date(year, month, 0).getDate();
+
+        const grid = [];
+
+        for (let i = firstDayIndex - 1; i >= 0; i--) {
+            const dayNum = prevTotalDays - i;
+            const prevMonthIndex = (month + 11) % 12;
+            const prevYear = month === 0 ? year - 1 : year;
+
+            const key = `${prevYear}-${String(prevMonthIndex + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+            const dateObj = new Date(prevYear, prevMonthIndex, dayNum);
+
+            grid.push({
+                day: dayNum,
+                dateKey: key,
+                dateObj: dateObj,
+                isCurrentMonth: false,
+                isPrevMonth: true,
+                isSunday: dateObj.getDay() === 0,
+                isSaturday: dateObj.getDay() === 6,
+                status: null
+            });
+        }
+
+        for (let d = 1; d <= totalDays; d++) {
+            const dateObj = new Date(year, month, d);
+            const dayOfWeek = dateObj.getDay();
+
+            const isSunday = dayOfWeek === 0;
+            const isSaturday = dayOfWeek === 6;
+            const isWeekend = isSunday || isSaturday;
+
+            const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+            const todayClean = new Date(
+                this.today.getFullYear(),
+                this.today.getMonth(),
+                this.today.getDate()
+            );
+
+            const isToday = dateObj.getTime() === todayClean.getTime();
+            const isPast = dateObj.getTime() < todayClean.getTime();
+
+            let status = null;
+            let checkinTime = '07.10 WITA';
+
+            if (this.dbRecords[key]) {
+                const rec = this.dbRecords[key];
+
+                if (rec.status === 'Hadir' || rec.status === 'Terlambat') {
+                    status = 'hadir';
+                    checkinTime = rec.jam_masuk;
+                } else if (rec.status === 'Izin' || rec.status === 'Sakit') {
+                    status = 'izin';
+                } else {
+                    status = 'alpha';
+                }
+            } else if (isToday) {
+                status = 'hadir';
+                checkinTime = '07.10 WITA';
+            } else if (!isWeekend && isPast) {
+                if (d === 9 || d === 10 || d === 18) {
+                    status = 'izin';
+                } else if (d === 14) {
+                    status = 'alpha';
+                } else {
+                    status = 'hadir';
+                    checkinTime = d % 2 === 0 ? '07.05 WITA' : '07.12 WITA';
+                }
+            }
+
+            grid.push({
+                day: d,
+                dateKey: key,
+                dateObj: dateObj,
+                isCurrentMonth: true,
+                isSunday: isSunday,
+                isSaturday: isSaturday,
+                isWeekend: isWeekend,
+                isToday: isToday,
+                isPast: isPast,
+                status: status,
+                checkinTime: checkinTime
+            });
+        }
+
+        const remainder = (7 - (grid.length % 7)) % 7;
+
+        for (let j = 1; j <= remainder; j++) {
+            const nextMonthIndex = (month + 1) % 12;
+            const nextYear = month === 11 ? year + 1 : year;
+
+            const key = `${nextYear}-${String(nextMonthIndex + 1).padStart(2, '0')}-${String(j).padStart(2, '0')}`;
+            const dateObj = new Date(nextYear, nextMonthIndex, j);
+
+            grid.push({
+                day: j,
+                dateKey: key,
+                dateObj: dateObj,
+                isCurrentMonth: false,
+                isNextMonth: true,
+                isSunday: dateObj.getDay() === 0,
+                isSaturday: dateObj.getDay() === 6,
+                status: null
+            });
+        }
+
+        this.daysGrid = grid;
+
+        this.$nextTick(() => {
+            if (window.lucide) lucide.createIcons();
+        });
+    },
+
+    selectDay(cell) {
+        this.selectedDateKey = cell.dateKey;
+
+        const d = cell.day;
+
+        const m = cell.isCurrentMonth
+            ? this.displayedMonthName
+            : (
+                cell.isPrevMonth
+                    ? this.monthNames[(this.displayedMonth + 11) % 12]
+                    : this.monthNames[(this.displayedMonth + 1) % 12]
+            );
+
+        const y = cell.dateObj.getFullYear();
+        const dateStr = `${d} ${m} ${y}`;
+
+        if (cell.isToday) {
+            this.selectedDayData = {
+                dateStr: dateStr,
+                status: 'Hadir',
+                desc: 'Status: Hadir Hari Ini (' + cell.checkinTime + ')',
+                badgeClass: 'bg-emerald-100 text-emerald-800',
+                dotClass: 'bg-emerald-500'
+            };
+        } else if (cell.status === 'hadir') {
+            this.selectedDayData = {
+                dateStr: dateStr,
+                status: 'Hadir',
+                desc: 'Status: Hadir Tepat Waktu (' + cell.checkinTime + ')',
+                badgeClass: 'bg-emerald-100 text-emerald-800',
+                dotClass: 'bg-emerald-500'
+            };
+        } else if (cell.status === 'izin') {
+            this.selectedDayData = {
+                dateStr: dateStr,
+                status: 'Izin',
+                desc: 'Status: Izin Sakit (Surat Dokter Terlampir)',
+                badgeClass: 'bg-amber-100 text-amber-800',
+                dotClass: 'bg-amber-400'
+            };
+        } else if (cell.status === 'alpha') {
+            this.selectedDayData = {
+                dateStr: dateStr,
+                status: 'Alpha',
+                desc: 'Status: Tanpa Keterangan (Alpha)',
+                badgeClass: 'bg-rose-100 text-rose-800',
+                dotClass: 'bg-rose-500'
+            };
+        } else if (cell.isWeekend) {
+            this.selectedDayData = {
+                dateStr: dateStr,
+                status: 'Libur',
+                desc: 'Status: Hari Libur Akhir Pekan',
+                badgeClass: 'bg-slate-100 text-slate-700',
+                dotClass: 'bg-slate-400'
+            };
+        } else {
+            this.selectedDayData = {
+                dateStr: dateStr,
+                status: 'Terjadwal',
+                desc: 'Status: Jadwal Pembelajaran Belum Berlangsung',
+                badgeClass: 'bg-slate-100 text-slate-600',
+                dotClass: 'bg-slate-400'
+            };
+        }
+
+        this.$nextTick(() => {
+            if (window.lucide) lucide.createIcons();
+        });
+    }
+}">
+
+    <!-- ========================================================================= -->
+    <!-- 1. TOP HEADER HERO                                                        -->
+    <!-- ========================================================================= -->
+    <div class="bg-linear-to-r from-blue-700 via-blue-600 to-indigo-700 text-white rounded-3xl sm:rounded-[32px] p-5 sm:p-7 shadow-lg shadow-blue-500/15 relative overflow-hidden">
+
+        <!-- Ambient decorative shapes -->
+        <div class="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+        <div class="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-indigo-500/20 blur-xl pointer-events-none"></div>
+
+        <!-- Top Navigation Row -->
+        <div class="relative z-10 flex items-center justify-between pb-4 sm:pb-5 border-b border-white/10">
+
+            <a
+                href="{{ route('dashboard') }}"
+                class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md flex items-center justify-center text-white transition-all active:scale-95 shadow-sm"
+                title="Kembali ke Dashboard"
+            >
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
             </a>
-            <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-3xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-500/20 shrink-0">
-                <i data-lucide="graduation-cap" class="w-7 h-7 sm:w-10 sm:h-10"></i>
+
+            <!-- Logo -->
+            <div class="bg-white/95 rounded-2xl py-2 px-4 sm:px-5 inline-flex items-center shadow-md">
+                <img
+                    src="{{ asset('images/logo-smk.png') }}"
+                    alt="Logo SMK TI Bali Global Badung"
+                    class="h-9 sm:h-11 md:h-13 w-auto object-contain"
+                >
             </div>
-            <div>
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900">Halo, Wahyu Pratama</h2>
-                <p class="text-xs text-slate-500 font-semibold mt-0.5">Siswa • XI PPLG 1 • SMK TI Bali Global</p>
+
+            <div class="relative">
+                <a
+                    href="{{ route('dashboard') }}"
+                    class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md flex items-center justify-center text-white transition-all active:scale-95 shadow-sm"
+                    title="Beranda"
+                >
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                </a>
             </div>
+
         </div>
-        <button class="p-2.5 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 relative">
-            <i data-lucide="bell" class="w-5 h-5"></i>
-            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
-        </button>
+
+        <!-- Middle Row -->
+        <div class="relative z-10 flex items-center justify-between pt-4 sm:pt-5">
+
+            <div>
+                <p class="text-xs sm:text-sm text-blue-100 font-medium" x-text="getGreeting()">
+                    Selamat Pagi,
+                </p>
+
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight mt-0.5">
+                    {{ $siswa->nama ?? 'Nama Siswa' }}
+                </h1>
+
+                <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 font-extrabold text-[11px] sm:text-xs shadow-sm mt-2">
+                    <span class="w-2 h-2 rounded-full bg-rose-600"></span>
+                    <span>{{ $siswa->kelas ?? 'XI PPLG 1' }}</span>
+                </div>
+            </div>
+
+            <!-- Avatar -->
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg ring-4 ring-white/25 shrink-0">
+                <i data-lucide="user" class="w-8 h-8 sm:w-9 sm:h-9"></i>
+            </div>
+
+        </div>
     </div>
 
-    <!-- Date Banner (Exact from Image 5) -->
-    <div class="mt-6 p-4 rounded-2xl bg-blue-600 text-white flex items-center justify-between shadow-md shadow-blue-600/15">
-        <div class="flex items-center space-x-3 text-xs font-bold">
-            <i data-lucide="calendar" class="w-5 h-5 text-blue-200"></i>
-            <div>
-                <span class="text-[10px] uppercase tracking-wider text-blue-200 block">HARI INI (REAL-TIME)</span>
-                <span class="text-sm font-extrabold" x-text="currentDateLive + ' • ' + currentTimeWita">Jumat, 25 September 2026</span>
-            </div>
-        </div>
-        <i data-lucide="chevron-right" class="w-5 h-5 text-blue-200"></i>
-    </div>
+    <!-- ========================================================================= -->
+    <!-- 2. MAIN RESPONSIVE CONTENT GRID                                          -->
+    <!-- ========================================================================= -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
-    <!-- 2x2 METRIC CARDS GRID (Exact from Image 5) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-        <!-- 1. Poin Penalti BK -->
-        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
-            <div class="flex items-center justify-between">
-                <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+        <!-- LEFT COLUMN -->
+        <div class="lg:col-span-7 xl:col-span-8 space-y-4">
+
+            <!-- CARD 1: QUICK SUMMARY -->
+            <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-soft grid grid-cols-2 divide-x divide-slate-100">
+
+                <div class="flex items-center space-x-3 sm:space-x-4 pl-2 pr-4">
+                    <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
+                        <i data-lucide="user-check" class="w-5 h-5"></i>
+                    </div>
+
+                    <div>
+                        <h4
+                            class="font-extrabold text-sm sm:text-base text-slate-900 leading-tight"
+                            x-text="'Hadir: ' + rekapHadir + ' Kali'"
+                        >
+                            Hadir: {{ $totalHadir ?? 14 }} Kali
+                        </h4>
+
+                        <p class="text-[11px] sm:text-xs font-semibold text-emerald-600 mt-0.5">
+                            Total Presensi Masuk
+                        </p>
+                    </div>
                 </div>
-                <span class="bg-amber-100 text-amber-800 font-extrabold text-[10px] px-2.5 py-1 rounded-full uppercase">Teguran</span>
-            </div>
-            <div>
-                <p class="text-xs text-slate-500 font-semibold">Poin Penalti BK</p>
-                <p class="text-2xl font-black text-rose-600">15 <span class="text-xs text-slate-400 font-normal">/ 30 Poin</span></p>
-            </div>
-            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                <div class="bg-rose-500 h-full rounded-full" style="width: 50%;"></div>
-            </div>
-            <p class="text-[10px] text-slate-500 font-semibold">Batas SP-1: 30 Poin</p>
-        </div>
 
-        <!-- 2. Poin Prestasi -->
-        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
-            <div class="flex items-center justify-between">
-                <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                    <i data-lucide="trophy" class="w-4 h-4"></i>
+                <div class="flex items-center space-x-3 sm:space-x-4 pl-4 sm:pl-6">
+                    <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                    </div>
+
+                    <div>
+                        <h4
+                            class="font-extrabold text-sm sm:text-base text-slate-900 leading-tight"
+                            x-text="'Izin: ' + rekapIzin + ' Hari'"
+                        >
+                            Izin: {{ $totalIzin ?? 3 }} Hari
+                        </h4>
+
+                        <p
+                            class="text-[11px] sm:text-xs font-medium text-slate-400 mt-0.5"
+                            x-text="'Bulan ' + currentMonthName"
+                        >
+                            Bulan Oktober
+                        </p>
+                    </div>
                 </div>
-                <span class="bg-emerald-100 text-emerald-800 font-extrabold text-[10px] px-2.5 py-1 rounded-full uppercase">+Reward</span>
-            </div>
-            <div>
-                <p class="text-xs text-slate-500 font-semibold">Poin Prestasi</p>
-                <p class="text-2xl font-black text-emerald-600">+40 <span class="text-xs text-slate-400 font-normal">Poin</span></p>
-            </div>
-            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                <div class="bg-emerald-500 h-full rounded-full" style="width: 80%;"></div>
-            </div>
-            <p class="text-[10px] text-slate-500 font-semibold">2 Penghargaan aktif</p>
-        </div>
 
-        <!-- 3. Total Alpa Siswa -->
-        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
-            <div class="flex items-center justify-between">
-                <div class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                    <i data-lucide="x" class="w-4 h-4"></i>
+            </div>
+
+            <!-- CARD 2: CALENDAR -->
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-soft space-y-4">
+
+                <div class="flex items-center justify-between">
+
+                    <div class="flex items-center space-x-2.5">
+                        <i data-lucide="calendar" class="w-5 h-5 text-blue-600"></i>
+
+                        <h3
+                            class="font-black text-sm sm:text-base text-slate-900"
+                            x-text="displayedMonthName + ' ' + displayedYear"
+                        >
+                            Oktober 2026
+                        </h3>
+                    </div>
+
+                    <div class="flex items-center space-x-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/80 text-xs">
+
+                        <button
+                            type="button"
+                            @click="prevMonth()"
+                            class="w-7 h-7 rounded-xl hover:bg-white flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all cursor-pointer"
+                            title="Bulan Sebelumnya"
+                        >
+                            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="goToToday()"
+                            class="px-2.5 py-1 font-bold text-slate-700 hover:text-blue-600 transition-colors cursor-pointer text-[11px]"
+                        >
+                            Bulan Ini
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="nextMonth()"
+                            class="w-7 h-7 rounded-xl hover:bg-white flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all cursor-pointer"
+                            title="Bulan Berikutnya"
+                        >
+                            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                        </button>
+
+                    </div>
                 </div>
-                <span class="bg-slate-200 text-slate-700 font-bold text-[10px] px-2.5 py-1 rounded-full">Bulan Ini</span>
+
+                <!-- Legend -->
+                <div class="bg-slate-50/90 rounded-2xl p-2.5 border border-slate-100 flex items-center justify-around text-xs font-bold">
+
+                    <div class="flex items-center space-x-1.5 text-slate-700">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                        <span>Hadir (Hijau)</span>
+                    </div>
+
+                    <div class="flex items-center space-x-1.5 text-slate-700">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                        <span>Izin (Kuning)</span>
+                    </div>
+
+                    <div class="flex items-center space-x-1.5 text-slate-700">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                        <span>Alpha (Merah)</span>
+                    </div>
+
+                </div>
+
+                <!-- Day Headers -->
+                <div class="grid grid-cols-7 gap-1 sm:gap-2 text-center text-xs font-black text-slate-400 pt-1">
+                    <div class="text-rose-400">Min</div>
+                    <div>Sen</div>
+                    <div>Sel</div>
+                    <div>Rab</div>
+                    <div>Kam</div>
+                    <div>Jum</div>
+                    <div>Sab</div>
+                </div>
+
+                <!-- Calendar Days -->
+                <div class="grid grid-cols-7 gap-1.5 sm:gap-2.5 text-center items-center justify-items-center pt-1">
+
+                    <template x-for="(cell, idx) in daysGrid" :key="cell.dateKey + '-' + idx">
+
+                        <button
+                            type="button"
+                            @click="selectDay(cell)"
+                            class="w-10 h-10 sm:w-11 sm:h-11 rounded-full flex flex-col items-center justify-center transition-all relative cursor-pointer active:scale-95"
+                            :class="{
+                                'bg-teal-600 text-white font-black shadow-md scale-105 z-10': selectedDateKey === cell.dateKey,
+                                'border-2 border-emerald-400 text-emerald-950 font-black hover:bg-emerald-50': selectedDateKey !== cell.dateKey && cell.isCurrentMonth && cell.status === 'hadir',
+                                'border-2 border-amber-400 text-amber-950 font-black hover:bg-amber-50': selectedDateKey !== cell.dateKey && cell.isCurrentMonth && cell.status === 'izin',
+                                'border-2 border-rose-400 text-rose-950 font-black hover:bg-rose-50': selectedDateKey !== cell.dateKey && cell.isCurrentMonth && cell.status === 'alpha',
+                                'text-rose-300 font-semibold hover:bg-rose-50/50': selectedDateKey !== cell.dateKey && cell.isCurrentMonth && cell.isSunday && !cell.status,
+                                'text-slate-300 font-semibold hover:bg-slate-50': selectedDateKey !== cell.dateKey && cell.isCurrentMonth && cell.isSaturday && !cell.status,
+                                'text-slate-400 font-medium hover:bg-slate-50': selectedDateKey !== cell.dateKey && cell.isCurrentMonth && !cell.isWeekend && !cell.status,
+                                'text-slate-300/80 font-normal opacity-60': !cell.isCurrentMonth
+                            }"
+                        >
+
+                            <span
+                                class="text-xs sm:text-[13px] leading-none"
+                                x-text="cell.day"
+                            ></span>
+
+                            <template x-if="selectedDateKey === cell.dateKey">
+                                <span class="w-1.5 h-1.5 rounded-full bg-white mt-0.5"></span>
+                            </template>
+
+                            <template x-if="selectedDateKey !== cell.dateKey && cell.isCurrentMonth && cell.status === 'hadir'">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-0.5"></span>
+                            </template>
+
+                            <template x-if="selectedDateKey !== cell.dateKey && cell.isCurrentMonth && cell.status === 'izin'">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mt-0.5"></span>
+                            </template>
+
+                            <template x-if="selectedDateKey !== cell.dateKey && cell.isCurrentMonth && cell.status === 'alpha'">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500 mt-0.5"></span>
+                            </template>
+
+                        </button>
+
+                    </template>
+
+                </div>
             </div>
-            <div>
-                <p class="text-xs text-slate-500 font-semibold">Total Alpa Siswa</p>
-                <p class="text-2xl font-black text-slate-900">1 <span class="text-xs text-slate-400 font-normal">Hari</span></p>
+
+            <!-- CARD 3: SELECTED DAY STATUS -->
+            <div class="bg-blue-50/70 border border-blue-200/90 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-2xs">
+
+                <div class="flex items-center space-x-2.5">
+                    <span
+                        class="w-2.5 h-2.5 rounded-full shrink-0"
+                        :class="selectedDayData.dotClass"
+                    ></span>
+
+                    <div>
+                        <h4
+                            class="font-extrabold text-xs sm:text-sm text-slate-900"
+                            x-text="selectedDayData.dateStr"
+                        >
+                            8 Oktober 2026
+                        </h4>
+
+                        <p
+                            class="text-[11px] text-slate-500 font-medium"
+                            x-text="selectedDayData.desc"
+                        >
+                            Status: Hadir Hari Ini (07.10 WITA)
+                        </p>
+                    </div>
+                </div>
+
+                <span
+                    class="font-black text-xs px-3 py-1 rounded-full shadow-2xs"
+                    :class="selectedDayData.badgeClass"
+                    x-text="selectedDayData.status"
+                >
+                    Hadir
+                </span>
+
             </div>
-            <p class="text-[10px] text-amber-600 font-bold">⚠️ Maks: 3 hari per semester</p>
+
+            <!-- REKAPITULASI -->
+            <div class="space-y-3 pt-1">
+
+                <h4 class="text-xs font-black uppercase tracking-wider text-slate-400 px-1">
+                    REKAPITULASI KEHADIRAN
+                </h4>
+
+                <div class="grid grid-cols-3 gap-2.5 sm:gap-4">
+
+                    <!-- Total Kehadiran -->
+                    <div class="bg-white rounded-3xl p-3 sm:p-4 border border-emerald-200/80 shadow-2xs space-y-2 hover:shadow-xs transition-all">
+
+                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                            <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] sm:text-xs font-bold text-slate-400">
+                                Total Kehadiran
+                            </p>
+
+                            <div class="flex items-baseline space-x-1 mt-0.5">
+                                <span
+                                    class="text-xl sm:text-2xl font-black text-emerald-600"
+                                    x-text="rekapHadir"
+                                >
+                                    14
+                                </span>
+
+                                <span class="text-[10px] sm:text-xs text-slate-400 font-semibold">
+                                    Hari
+                                </span>
+                            </div>
+                        </div>
+
+                        <p
+                            class="text-[10px] sm:text-[11px] font-extrabold text-emerald-600 pt-0.5"
+                            x-text="rekapHadir + ' Kali Hadir'"
+                        >
+                            {{ $totalHadir ?? 0 }} Kali Hadir
+                        </p>
+
+                    </div>
+
+                    <!-- Total Izin -->
+                    <div class="bg-white rounded-3xl p-3 sm:p-4 border border-amber-200/80 shadow-2xs space-y-2 hover:shadow-xs transition-all">
+
+                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                            <i data-lucide="mail" class="w-4 h-4"></i>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] sm:text-xs font-bold text-slate-400">
+                                Total Izin
+                            </p>
+
+                            <div class="flex items-baseline space-x-1 mt-0.5">
+                                <span
+                                    class="text-xl sm:text-2xl font-black text-amber-500"
+                                    x-text="rekapIzin"
+                                >
+                                    3
+                                </span>
+
+                                <span class="text-[10px] sm:text-xs text-slate-400 font-semibold">
+                                    Hari
+                                </span>
+                            </div>
+                        </div>
+
+                        <p class="text-[10px] sm:text-[11px] font-extrabold text-amber-600 pt-0.5">
+                            Ada Surat
+                        </p>
+
+                    </div>
+
+                    <!-- Total Tidak Hadir -->
+                    <div class="bg-white rounded-3xl p-3 sm:p-4 border border-rose-200/80 shadow-2xs space-y-2 hover:shadow-xs transition-all">
+
+                        <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+                            <i data-lucide="x" class="w-4 h-4 stroke-[3]"></i>
+                        </div>
+
+                        <div>
+                            <p class="text-[10px] sm:text-xs font-bold text-slate-400">
+                                Total Tidak Hadir
+                            </p>
+
+                            <div class="flex items-baseline space-x-1 mt-0.5">
+                                <span
+                                    class="text-xl sm:text-2xl font-black text-rose-600"
+                                    x-text="rekapAlpha"
+                                >
+                                    1
+                                </span>
+
+                                <span class="text-[10px] sm:text-xs text-slate-400 font-semibold">
+                                    Hari
+                                </span>
+                            </div>
+                        </div>
+
+                        <p class="text-[10px] sm:text-[11px] font-extrabold text-rose-600 pt-0.5">
+                            Alpha
+                        </p>
+
+                    </div>
+
+                </div>
+            </div>
+
         </div>
 
-        <!-- 4. Jadwal Konseling -->
-        <div class="p-5 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
-            <div class="flex items-center justify-between">
-                <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+        <!-- RIGHT COLUMN -->
+        <div class="lg:col-span-5 xl:col-span-4 space-y-5">
+
+            <!-- TABEL CATATAN PRESENSI -->
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-soft space-y-4">
+
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+
+                    <div>
+                        <h4 class="font-extrabold text-sm text-slate-900">
+                            Log Presensi Terbaru
+                        </h4>
+
+                        <p class="text-[11px] text-slate-500">
+                            Histori kehadiran tercatat di sistem
+                        </p>
+                    </div>
+
+                    <a
+                        href="{{ route('presensi') }}"
+                        title="Buka Presensi Absen Datang & Pulang"
+                        class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] rounded-xl flex items-center space-x-1.5 transition-all shadow-xs active:scale-95 shrink-0"
+                    >
+                        <i data-lucide="scan-face" class="w-3.5 h-3.5"></i>
+                        <span>Absen Datang & Pulang</span>
+                    </a>
+
+                </div>
+
+                @if(count($daftarPresensi) > 0)
+
+                    <div class="divide-y divide-slate-100 text-xs">
+
+                        @foreach(array_slice($daftarPresensi->toArray(), 0, 5) as $p)
+
+                            <div class="py-3 flex items-center justify-between">
+
+                                <div>
+                                    <p class="font-bold text-slate-900">
+                                        {{ \Carbon\Carbon::parse($p['tanggal'])->translatedFormat('d M Y') }}
+                                    </p>
+
+                                    <p class="text-[11px] text-slate-500 mt-0.5">
+                                        Masuk:
+                                        <span class="font-semibold text-slate-700">
+                                            {{ $p['jam_masuk'] ? substr($p['jam_masuk'], 0, 5) . ' WITA' : '-' }}
+                                        </span>
+                                    </p>
+                                </div>
+
+                                <div>
+
+                                    @if($p['status'] === 'Hadir')
+
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">
+                                            Hadir
+                                        </span>
+
+                                    @elseif($p['status'] === 'Terlambat')
+
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800">
+                                            Terlambat
+                                        </span>
+
+                                    @else
+
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800">
+                                            {{ $p['status'] }}
+                                        </span>
+
+                                    @endif
+
+                                </div>
+
+                            </div>
+
+                        @endforeach
+
+                    </div>
+
+                @else
+
+                    <div class="space-y-2 text-xs">
+
+                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-slate-900">8 Oktober 2026</p>
+                                <p class="text-[11px] text-slate-500">Masuk: 07.10 WITA</p>
+                            </div>
+
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">
+                                Hadir
+                            </span>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-slate-900">7 Oktober 2026</p>
+                                <p class="text-[11px] text-slate-500">Masuk: 07.05 WITA</p>
+                            </div>
+
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">
+                                Hadir
+                            </span>
+                        </div>
+
+                        <div class="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-slate-900">6 Oktober 2026</p>
+                                <p class="text-[11px] text-slate-500">Masuk: 07.12 WITA</p>
+                            </div>
+
+                            <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800">
+                                Hadir
+                            </span>
+                        </div>
+
+                    </div>
+
+                @endif
+
+                <div class="pt-2">
+                    <a
+                        href="{{ route('izin') }}"
+                        class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center space-x-2 transition-all"
+                    >
+                        <i data-lucide="file-plus" class="w-4 h-4 text-blue-600"></i>
+                        <span>Ajukan Surat Izin / Sakit</span>
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- ATURAN JAM PRESENSI -->
+            <div class="bg-linear-to-br from-slate-900 to-blue-950 text-white rounded-3xl p-5 sm:p-6 shadow-soft space-y-3.5">
+
+                <div class="flex items-center space-x-2 text-blue-300 text-xs font-bold uppercase tracking-wider">
                     <i data-lucide="clock" class="w-4 h-4"></i>
+                    <span>Ketentuan Jam Presensi</span>
                 </div>
-                <span class="bg-blue-100 text-blue-800 font-bold text-[10px] px-2.5 py-1 rounded-full">Jadwal</span>
+
+                <h4 class="font-black text-base text-white">
+                    SMK TI Bali Global Badung
+                </h4>
+
+                <ul class="text-xs text-blue-100 space-y-2 leading-relaxed">
+
+                    <li class="flex items-start space-x-2">
+                        <span class="text-emerald-400 font-bold">•</span>
+                        <span>
+                            <strong>06:30 - 07:05 WITA</strong>:
+                            Presensi Masuk (Tepat Waktu).
+                        </span>
+                    </li>
+
+                    <li class="flex items-start space-x-2">
+                        <span class="text-amber-400 font-bold">•</span>
+                        <span>
+                            <strong>&gt; 07:05 WITA</strong>:
+                            Dinyatakan Terlambat & Poin BK dicatat otomatis.
+                        </span>
+                    </li>
+
+                    <li class="flex items-start space-x-2">
+                        <span class="text-blue-300 font-bold">•</span>
+                        <span>
+                            <strong>12:25 WITA</strong>:
+                            Presensi Kepulangan Siswa.
+                        </span>
+                    </li>
+
+                </ul>
+
             </div>
-            <div>
-                <p class="text-xs text-slate-500 font-semibold">Jadwal Konseling</p>
-                <p class="text-2xl font-black text-blue-600">1 <span class="text-xs text-slate-400 font-normal">Sesi Aktif</span></p>
-            </div>
-            <p class="text-[10px] text-blue-600 font-bold">Hari ini, 09:30 WITA</p>
+
         </div>
+
     </div>
 
-    <!-- 7-DAY DISCIPLINE TREND CHART (Exact from Image 5 Middle) -->
-    <div class="mt-8 p-6 rounded-3xl bg-slate-50/70 border border-slate-200/80">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <h4 class="font-extrabold text-sm text-slate-900">Tren Kedisiplinan 7 Hari Terakhir</h4>
-                <p class="text-xs text-slate-500">Statistik Kehadiran Periode September 2026</p>
-            </div>
-            <span class="text-xs bg-white px-2.5 py-1 rounded-xl font-bold border border-slate-200 text-slate-600">Sep 2026</span>
-        </div>
-
-        <div class="h-48 flex items-end justify-between gap-2 px-2 pt-6 pb-2 border-b border-slate-200">
-            <!-- 19 Jum -->
-            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                <div class="w-full max-w-[32px] bg-slate-200 rounded-t-xl overflow-hidden flex flex-col justify-end" style="height: 90%;">
-                    <div class="bg-amber-400 w-full h-4"></div>
-                    <div class="bg-rose-500 w-full h-8"></div>
-                </div>
-                <span class="text-[10px] font-bold text-slate-500 text-center">19<br><span class="text-slate-400">Jum</span></span>
-            </div>
-
-            <!-- 20 Sab (Weekend) -->
-            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                <div class="w-full max-w-[32px] bg-slate-200/60 rounded-t-xl" style="height: 40%;"></div>
-                <span class="text-[10px] font-bold text-slate-400 text-center">20<br>Sab</span>
-            </div>
-
-            <!-- 21 Min (Weekend) -->
-            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                <div class="w-full max-w-[32px] bg-slate-200/60 rounded-t-xl" style="height: 40%;"></div>
-                <span class="text-[10px] font-bold text-slate-400 text-center">21<br>Min</span>
-            </div>
-
-            <!-- 22 Sen (Terlambat) -->
-            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                <div class="w-full max-w-[32px] bg-slate-200 rounded-t-xl overflow-hidden flex flex-col justify-end" style="height: 90%;">
-                    <div class="bg-amber-400 w-full h-12"></div>
-                </div>
-                <span class="text-[10px] font-bold text-slate-500 text-center">22<br><span class="text-slate-400">Sen</span></span>
-            </div>
-
-            <!-- 23 Sel (Tepat Waktu) -->
-            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                <div class="w-full max-w-[32px] bg-blue-600 rounded-t-xl" style="height: 85%;"></div>
-                <span class="text-[10px] font-bold text-slate-500 text-center">23<br><span class="text-slate-400">Sel</span></span>
-            </div>
-
-            <!-- 24 Rab (Tepat Waktu) -->
-            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                <div class="w-full max-w-[32px] bg-blue-600 rounded-t-xl" style="height: 85%;"></div>
-                <span class="text-[10px] font-bold text-slate-500 text-center">24<br><span class="text-slate-400">Rab</span></span>
-            </div>
-
-            <!-- 25 Hari ini (Tepat Waktu - Emerald) -->
-            <div class="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                <div class="w-full max-w-[32px] bg-emerald-500 rounded-t-xl ring-2 ring-emerald-300 shadow-md shadow-emerald-500/20" style="height: 90%;"></div>
-                <span class="text-[10px] font-extrabold text-blue-600 text-center">25<br><span class="font-bold">Hari ini</span></span>
-            </div>
-        </div>
-
-        <div class="mt-4 flex items-center justify-center space-x-6 text-xs font-semibold text-slate-600">
-            <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-blue-600"></span><span>Tepat Waktu</span></span>
-            <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-amber-400"></span><span>Terlambat</span></span>
-            <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-rose-500"></span><span>Alpa</span></span>
-        </div>
-    </div>
-
-    <!-- MENU CEPAT (Exact from Image 5 Middle Bottom) -->
-    <div class="mt-8">
-        <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 mb-4">MENU CEPAT</h4>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <a href="{{ route('bk') }}" class="p-4 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 hover:shadow-md transition-all flex items-center justify-between text-left block">
-                <div class="flex items-center space-x-3 text-xs">
-                    <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                        <i data-lucide="shield" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="font-bold text-slate-900">Cek Poin BK</p>
-                        <p class="text-slate-500 text-[11px]">Rincian tata tertib & surat</p>
-                    </div>
-                </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-            </a>
-
-            <button @click="alert('Daftar Prestasi:\n1. Juara 2 LKS Web Tech (+30 Poin)\n2. Koordinator Terbaik Regu Piket (+10 Poin)')" class="p-4 rounded-2xl bg-white border border-slate-200 hover:border-emerald-300 hover:shadow-md transition-all flex items-center justify-between text-left">
-                <div class="flex items-center space-x-3 text-xs">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                        <i data-lucide="trophy" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="font-bold text-slate-900">Prestasi Siswa</p>
-                        <p class="text-slate-500 text-[11px]">Poin penghargaan & sertifikat</p>
-                    </div>
-                </div>
-                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- AKTIVITAS TERBARU (Exact from Image 5 Bottom) -->
-    <div class="mt-8 space-y-4">
-        <div class="flex items-center justify-between">
-            <h4 class="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center space-x-1.5">
-                <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-600"></i>
-                <span>AKTIVITAS TERBARU</span>
-            </h4>
-            <span class="text-xs font-bold text-slate-400">Bulan Ini</span>
-        </div>
-
-        <div class="space-y-3 text-xs">
-            <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
-                        <i data-lucide="calendar" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="font-bold text-slate-900">Panggilan BK: Dra. Ni Luh Suastini</p>
-                        <p class="text-[11px] text-slate-500">Jadwal evaluasi kedisiplinan ruang BK</p>
-                    </div>
-                </div>
-                <span class="text-slate-500 font-semibold text-[11px]">08:30</span>
-            </div>
-
-            <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                        <i data-lucide="check" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="font-bold text-slate-900">Reward Juara 2 LKS Web Tech</p>
-                        <p class="text-[11px] text-slate-500">Ditambahkan +30 poin penghargaan</p>
-                    </div>
-                </div>
-                <span class="text-slate-500 font-semibold text-[11px]">Kemarin</span>
-            </div>
-
-            <div class="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                        <i data-lucide="alert-circle" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <p class="font-bold text-slate-900">Pelanggaran Terlambat Sekolah</p>
-                        <p class="text-[11px] text-slate-500">+5 Poin dicatat oleh Guru Piket</p>
-                    </div>
-                </div>
-                <span class="text-slate-500 font-semibold text-[11px]">22 Sep</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- TOMBOL LOGOUT RESMI SISWA (Hanya di Halaman Profil) -->
-    <div class="mt-8 pt-6 border-t border-slate-200">
-        <div class="p-4 sm:p-5 rounded-2xl bg-rose-50/70 border border-rose-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="flex items-center space-x-3 text-center sm:text-left w-full sm:w-auto">
-                <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                    <i data-lucide="log-out" class="w-5 h-5"></i>
-                </div>
-                <div>
-                    <h5 class="text-xs sm:text-sm font-bold text-slate-900">Keluar dari Akun Siswa</h5>
-                    <p class="text-[11px] text-slate-500">Keluar dari sesi login dan kembali ke Halaman Awal portal</p>
-                </div>
-            </div>
-            <a href="{{ route('logout') }}" 
-               class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-95">
-                <i data-lucide="log-out" class="w-4 h-4"></i>
-                <span>Keluar Akun (Logout)</span>
-            </a>
-        </div>
-    </div>
 </div>
 @endsection
