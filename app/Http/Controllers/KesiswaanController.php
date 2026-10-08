@@ -152,7 +152,7 @@ class KesiswaanController extends Controller
                 return redirect()->route('dashboard')->with('success', 'Selamat datang, ' . $siswa->nama);
             }
 
-            if ($siswa && ($siswa->password === $request->password || $request->password === 'password123')) {
+            if ($siswa && ($siswa->password === $request->password)) {
                 session(['siswa_id' => $siswa->id]);
                 return redirect()->route('dashboard')->with('success', 'Selamat datang, ' . $siswa->nama);
             }

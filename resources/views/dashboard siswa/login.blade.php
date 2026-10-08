@@ -38,7 +38,7 @@
             <label class="block text-xs font-extrabold uppercase text-slate-500 mb-1">EMAIL / NIS</label>
             <div class="relative">
                 <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
-                <input type="text" name="email" value="{{ old('email', 'wahyu.pratama@smktibaliglobal.sch.id') }}" placeholder="Masukkan Email atau NIS" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-hidden transition-all">
+                <input type="text" name="email" value="{{ old('email') }}" placeholder="Masukkan Email atau NIS" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-hidden transition-all">
             </div>
         </div>
 
@@ -48,28 +48,32 @@
                 <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
                 <input :type="showPassword ? 'text' : 'password'" 
                        name="password" 
-                       value="password123" 
-                       placeholder="Kata Sandi" 
+                       value="" 
+                       placeholder="Masukkan Kata Sandi" 
                        required 
                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-11 py-3 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-hidden transition-all">
-                <!-- Eye icon button to toggle password visibility -->
+                <!-- Eye icon button to toggle password visibility (menggunakan SVG langsung agar tidak duplikasi) -->
                 <button type="button" 
-                        @click="showPassword = !showPassword; $nextTick(() => lucide.createIcons())" 
+                        @click="showPassword = !showPassword" 
                         class="absolute right-3.5 top-3 text-slate-400 hover:text-blue-600 focus:outline-none transition-colors cursor-pointer p-0.5" 
                         title="Lihat / Sembunyikan Kata Sandi">
-                    <template x-if="!showPassword">
-                        <i data-lucide="eye" class="w-4 h-4"></i>
-                    </template>
-                    <template x-if="showPassword">
-                        <i data-lucide="eye-off" class="w-4 h-4 text-blue-600"></i>
-                    </template>
+                    <svg x-show="!showPassword" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                        <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <svg x-show="showPassword" x-cloak xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-blue-600">
+                        <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/>
+                        <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/>
+                        <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/>
+                        <path d="m2 2 20 20"/>
+                    </svg>
                 </button>
             </div>
         </div>
 
         <div class="flex items-center justify-between text-xs">
             <label class="flex items-center space-x-2 cursor-pointer text-slate-600">
-                <input type="checkbox" name="remember" checked class="rounded text-blue-600 focus:ring-blue-500">
+                <input type="checkbox" name="remember" class="rounded text-blue-600 focus:ring-blue-500">
                 <span>Simpan info akun</span>
             </label>
             <a href="#" class="text-blue-600 hover:underline font-semibold">Lupa kata sandi?</a>
