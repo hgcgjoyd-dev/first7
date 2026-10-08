@@ -55,11 +55,11 @@
                     <span>Izin</span>
                 </button>
 
-                <button type="button" @click="jenis = 'Cuti'" 
-                        :class="jenis === 'Cuti' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'"
+                <button type="button" @click="jenis = 'dispen'" 
+                        :class="jenis === 'dispen' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'"
                         class="py-4 px-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center space-y-1.5 font-bold text-xs sm:text-sm">
                     <i data-lucide="briefcase" class="w-5 h-5"></i>
-                    <span>Cuti</span>
+                    <span>Dispen</span>
                 </button>
 
                 <button type="button" @click="jenis = 'Sakit'" 
