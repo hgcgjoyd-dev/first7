@@ -43,3 +43,12 @@ Route::get('/profil', [KesiswaanController::class, 'profil'])->name('profil');
 
 // 7. Cek Koneksi Database
 Route::get('/cek-db', [DatabaseController::class, 'check'])->name('cek-db');
+
+// 8. Dashboard Guru BK (Responsive Mobile & Desktop)
+Route::get('/dashboardbk', function () {
+    return view('dashboard guru.dashboardbk');
+})->name('guru.bk');
+
+Route::get('/dashboard-guru/bk', function () {
+    return view('dashboard guru.dashboardbk');
+})->name('dashboard.guru.bk');
