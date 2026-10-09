@@ -31,5 +31,13 @@
     </form>
 
     <a href="{{ route('dashboard.siswa') }}" class="text-sm font-semibold text-blue-700 hover:underline">Kembali ke dashboard</a>
+    <div class="flex items-center justify-center my-1">
+        <span class="text-xs font-bold text-slate-400 uppercase px-4 bg-white">ATAU</span>
+    </div>
+    <a href="{{ route('login') }}"
+       class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-extrabold py-3 rounded-2xl flex items-center justify-center space-x-2 transition-all text-xs block text-center">
+        <i data-lucide="user-check" class="w-4 h-4 inline-block mr-1"></i>
+        <span>MASUK DENGAN AKUN</span>
+    </a>
 </div>
 @endsection

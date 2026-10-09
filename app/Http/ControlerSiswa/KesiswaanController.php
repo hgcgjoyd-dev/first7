@@ -12,6 +12,7 @@ use App\Models\Siswa;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
@@ -67,43 +68,43 @@ class KesiswaanController extends Controller
     }
 
     /**
-     * Proses Scan Barcode / Kartu RFID langsung ke database
+     * Proses Scan Kartu Pelajar — login langsung via nama di kartu
      */
     public function postScan(Request $request)
     {
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:50'],
+            'code' => ['required', 'string', 'max:100'],
         ]);
-        $student = $this->getActiveSiswa();
 
-        abort_unless(hash_equals($student->no_siswa, $validated['code']), 403);
+        $code = trim($validated['code']);
 
-        $today = Carbon::today();
-        $attendance = Absensi::query()
-            ->where('id_siswa', $student->id_siswa)
-            ->whereDate('tanggal', $today)
-            ->first();
+        // Cari siswa berdasarkan nama lengkap (nama_siswa)
+        $siswa = Siswa::where('nama_siswa', $validated['code'])->first();
 
-        if (! $attendance) {
-            $attendance = new Absensi([
-                'id_siswa' => $student->id_siswa,
-                'tanggal' => $today,
-                'jam_masuk' => Carbon::now()->toTimeString(),
-                'status' => Carbon::now()->hour >= 8 ? 'Terlambat' : 'Hadir',
-                'keterangan' => 'Scan kartu siswa',
-            ]);
-            $attendance->save();
+        if (! $siswa) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun tidak sesuai. Nama kartu tidak terdaftar.',
+            ], 404);
         }
 
-        if (! $request->expectsJson()) {
-            return redirect()->route('dashboard.siswa')->with('success', 'Presensi berhasil dicatat.');
+        // Ambil akun user yang terhubung ke siswa
+        $user = $siswa->user;
+
+        if (! $user || ! $user->isActive()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Akun tidak sesuai. Silakan login manual.',
+            ], 403);
         }
+
+        // Login otomatis tanpa email/password
+        Auth::login($user);
+        $request->session()->regenerate();
 
         return response()->json([
             'success' => true,
-            'message' => 'Presensi berhasil dicatat.',
-            'siswa' => $student,
-            'presensi' => $attendance,
+            'message' => 'Login via kartu pelajar berhasil!',
             'redirect' => route('dashboard.siswa'),
         ]);
     }

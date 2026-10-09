@@ -12,6 +12,10 @@
         facingMode: 'environment',
         scanning: false,
         scanned: false,
+        scanFailed: false,
+        scanErrorMessage: '',
+        isBlurry: false,
+        lastDetectedCode: null,
         capturedPhoto: null,
         detector: null,
         detectInterval: null,
@@ -110,6 +114,35 @@
             this.cameraActive = false;
         },
 
+        computeSharpness(videoEl) {
+            const canvas = document.getElementById('sharpnessCanvas');
+            if (!canvas) return 1000;
+            const ctx = canvas.getContext('2d');
+            const w = 160, h = 120;
+            canvas.width = w; canvas.height = h;
+            ctx.drawImage(videoEl, 0, 0, w, h);
+            const data = ctx.getImageData(0, 0, w, h).data;
+            const gray = new Uint8Array(w * h);
+            for (let i = 0; i < w * h; i++) {
+                const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2];
+                gray[i] = 0.299 * r + 0.587 * g + 0.114 * b;
+            }
+            let sum = 0, sumSq = 0, n = 0;
+            for (let y = 1; y < 119; y++) {
+                for (let x = 1; x < 159; x++) {
+                    const idx = y * 160 + x;
+                    const v = gray[idx];
+                    const lap = gray[(y - 1) * 160 + x] + gray[(y + 1) * 160 + x] +
+                                gray[y * 160 + x - 1] + gray[y * 160 + x + 1] - 4 * v;
+                    sum += lap;
+                    sumSq += lap * lap;
+                    n++;
+                }
+            }
+            const mean = sum / n;
+            return (sumSq / n) - (mean * mean); // Laplacian variance
+        },
+
         startAutoDetection() {
             if (this.detectInterval) {
                 clearInterval(this.detectInterval);
@@ -124,26 +157,33 @@
                     return;
                 }
 
-                const videoEl =
-                    document.getElementById('scannerWebcam');
+                const videoEl = document.getElementById('scannerWebcam');
 
                 if (
                     this.detector &&
                     videoEl &&
                     videoEl.readyState >= 2
                 ) {
+                    // Cek ketajaman (blur detection) via Laplacian variance
+                    const sharpness = this.computeSharpness(videoEl);
+                    this.isBlurry = sharpness < 150; // threshold
+
+                    if (this.isBlurry) {
+                        // Cuma set flag, jangan deteksi saat burem
+                        return;
+                    }
+
                     this.detector.detect(videoEl)
                         .then(barcodes => {
                             if (
                                 barcodes &&
                                 barcodes.length > 0
                             ) {
-                                const detectedCode =
-                                    barcodes[0].rawValue || '102938';
-
-                                this.triggerScanSuccess(
-                                    detectedCode
-                                );
+                                const detectedCode = barcodes[0].rawValue?.trim();
+                                if (detectedCode) {
+                                    this.lastDetectedCode = detectedCode;
+                                    this.triggerScanSuccess(detectedCode);
+                                }
                             }
                         })
                         .catch(() => {});
@@ -230,10 +270,19 @@
             }
         },
 
-        triggerScanSuccess(cardCode = '102938') {
+        triggerScanSuccess(cardCode = null) {
             if (this.scanning || this.scanned) return;
 
+            const code = cardCode || this.lastDetectedCode;
+            if (!code) {
+                this.scanFailed = true;
+                this.scanErrorMessage = 'Tidak ada data kartu terbaca. Coba lagi.';
+                return;
+            }
+
             this.scanning = true;
+            this.scanFailed = false;
+            this.scanErrorMessage = '';
             this.captureSnapshot();
             this.playBeep();
 
@@ -243,27 +292,30 @@
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
-                body: JSON.stringify({
-                    code: cardCode
-                })
-            }).catch(() => {});
-
-            setTimeout(() => {
+                body: JSON.stringify({ code })
+            })
+            .then(r => r.json())
+            .then(data => {
                 this.scanning = false;
-                this.scanned = true;
-                this.stopCamera();
-
-                this.$nextTick(() => {
-                    if (window.lucide) {
-                        lucide.createIcons();
-                    }
-                });
-
-                setTimeout(() => {
-                    window.location.href =
-                        '{{ route('dashboard') }}';
-                }, 900);
-            }, 600);
+                if (data.success) {
+                    this.scanned = true;
+                    this.stopCamera();
+                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '{{ route('dashboard.siswa') }}';
+                    }, 900);
+                } else {
+                    this.scanFailed = true;
+                    this.scanErrorMessage = data.message || 'Scan gagal. Coba lagi.';
+                    this.scanned = false;
+                }
+            })
+            .catch(() => {
+                this.scanning = false;
+                this.scanFailed = true;
+                this.scanErrorMessage = 'Terjadi kesalahan jaringan. Coba lagi.';
+                this.scanned = false;
+            });
         }
      }">
 
@@ -329,6 +381,9 @@
          :class="scanned
              ? 'ring-4 ring-emerald-400'
              : ''">
+
+        <canvas id="sharpnessCanvas"
+                class="hidden"></canvas>
 
         <!-- Real Webcam Video Stream -->
         <video id="scannerWebcam"
@@ -452,8 +507,20 @@
         Posisikan kartu pelajar di dalam bingkai pemindai kamera.
     </p>
 
+    <!-- Peringatan Layar Burem -->
+    <div x-show="cameraActive && isBlurry && !scanned && !scanning"
+         class="w-full py-2 text-center text-amber-600 text-xs font-medium bg-amber-50 border border-amber-200 rounded-xl animate-pulse">
+        <i data-lucide="alert-triangle" class="w-4 h-4 inline-block mr-1"></i>
+        Layar burem, fokuskan kartu agar terbaca
+    </div>
+
+    <!-- Pesan Error Scan -->
+    <div x-show="scanFailed"
+         class="w-full py-2 text-center text-rose-600 text-xs font-medium bg-rose-50 border border-rose-200 rounded-xl"
+         x-text="scanErrorMessage"></div>
+
     <!-- Tombol Scan Sekarang -->
-    <button @click="triggerScanSuccess('102938')"
+    <button @click="triggerScanSuccess()"
             :disabled="scanning || scanned"
             class="w-full font-extrabold py-3.5 rounded-2xl shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-[0.98] cursor-pointer"
             :class="scanned
@@ -545,7 +612,7 @@
         </i>
 
         <span>
-            LOGIN DENGAN AKUN MANUAL
+            MASUK DENGAN AKUN
         </span>
 
     </a>

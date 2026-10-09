@@ -25,6 +25,9 @@ Route::post('/logout', [AuthController::class, 'destroy'])
     ->middleware('auth')
     ->name('logout');
 
+Route::get('/scan', [KesiswaanController::class, 'scan'])->name('scan');
+Route::post('/scan', [KesiswaanController::class, 'postScan'])->name('scan.post');
+
 Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/siswa', [DashboardController::class, 'siswa'])
@@ -42,8 +45,6 @@ Route::middleware(['auth', 'active'])->group(function (): void {
 
     Route::middleware('role:siswa')->group(function (): void {
         Route::redirect('/dashboardsiswa', '/dashboard/siswa')->name('dashboard.siswa.legacy');
-        Route::get('/scan', [KesiswaanController::class, 'scan'])->name('scan');
-        Route::post('/scan', [KesiswaanController::class, 'postScan'])->name('scan.post');
         Route::get('/presensi', [KesiswaanController::class, 'presensi'])->name('presensi');
         Route::post('/presensi', [KesiswaanController::class, 'storePresensi'])->name('presensi.store');
         Route::get('/izin', [KesiswaanController::class, 'izin'])->name('izin');
