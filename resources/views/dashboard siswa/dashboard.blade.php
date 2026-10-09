@@ -64,10 +64,12 @@
 }">
     
     <!-- Header Greeting Hero Card -->
-    <div class="header-gradient text-white rounded-3xl p-6 sm:p-8 shadow-soft relative overflow-hidden">
-        <!-- Ambient background glow -->
-        <div class="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
-        <div class="absolute bottom-0 right-1/4 w-44 h-44 rounded-full bg-blue-400/20 blur-xl pointer-events-none"></div>
+    <div class="header-gradient text-white rounded-3xl p-6 sm:p-8 shadow-soft relative">
+        <!-- Ambient background glow (contained with overflow-hidden and rounded corners) -->
+        <div class="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
+            <div class="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-white/10 blur-2xl"></div>
+            <div class="absolute bottom-0 right-1/4 w-44 h-44 rounded-full bg-blue-400/20 blur-xl"></div>
+        </div>
 
         <!-- Top Row: Logo di kiri & Tombol Notif di pojok kanan atas -->
         <div class="relative z-10 flex items-center justify-between mb-4">
@@ -76,7 +78,7 @@
                 <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-11 w-auto object-contain">
             </div>
 
-            <!-- Profile & Notification Buttons (Pojok Kanan Atas) -->
+            <!-- Profile & Notification Buttons (Pojok Kanan Atas Hero) -->
             <div class="flex items-center space-x-2">
                 <!-- Profile Avatar Button -->
                 <a href="{{ route('profil') }}" 
@@ -91,10 +93,10 @@
                             title="Pemberitahuan Siswa"
                             class="relative w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer">
                         <i data-lucide="bell" class="w-5 h-5"></i>
-                        <span class="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"></span>
+                        <span class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"></span>
                     </button>
 
-                    <!-- Dropdown Notifikasi Hero Card -->
+                    <!-- Dropdown Notifikasi Hero Card (Tampil Bebas Tanpa Terpotong) -->
                     <div x-show="heroNotifOpen" @click.away="heroNotifOpen = false" x-cloak
                          class="absolute right-0 mt-2 w-80 sm:w-88 bg-white rounded-2xl shadow-2xl border border-slate-100 py-3 z-50 text-slate-800">
                         <div class="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
@@ -158,9 +160,9 @@
                     </span>
                 </div>
 
-                <!-- Live Time Pill (Mengikuti Jam Sekarang) -->
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md">
-                    <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5"></i>
+                <!-- Live Time Pill (Mengikuti Jam Sekarang - Jelas & Tidak Terpotong) -->
+                <span class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-blue-700 shadow-md border border-white/40 tabular-nums select-none">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5 text-blue-600"></i>
                     <span x-text="'JAM ' + (liveClock || '07:30:00') + ' WITA'">JAM 07:30:00 WITA</span>
                 </span>
 
@@ -261,7 +263,7 @@
         <div class="relative z-10 flex flex-col items-center max-w-md">
             <div class="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider text-blue-100 mb-3">
                 <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                <span>Presensi Cepat Harian</span>
+                <span>Absensi Cepat Harian</span>
             </div>
             
             <h2 class="text-2xl sm:text-3xl font-black mb-2">Absen Disini</h2>
@@ -274,8 +276,8 @@
                 <i data-lucide="arrow-down" class="w-5 h-5 mx-auto"></i>
             </div>
 
-            <!-- Presensi Button: Click navigates to /presensi -->
-            <a href="{{ route('presensi') }}" title="Mulai Presensi Masuk & Pulang" class="relative group block">
+            <!-- Absensi Button: Click navigates to /presensi -->
+            <a href="{{ route('presensi') }}" title="Mulai Absensi Masuk & Pulang" class="relative group block">
                 <div class="absolute -inset-4 bg-white/25 rounded-full blur-xl group-hover:bg-white/40 transition-all animate-pulse-ring"></div>
                 <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-2xl relative z-10 group-hover:scale-105 active:scale-95 transition-all">
                     <i data-lucide="scan-face" class="w-12 h-12 sm:w-14 sm:h-14"></i>
