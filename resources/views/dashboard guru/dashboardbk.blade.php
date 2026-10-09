@@ -264,11 +264,11 @@
                     </div>
 
                     <!-- Right: White Circular Avatar with User Icon (Mockup Match) -->
-                    <button @click="modalProfil = true" 
-                            title="Buka Profil Guru BK"
-                            class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0">
+                    <a href="{{ route('guru.profile') }}" 
+                       title="Buka Halaman Profil Guru BK"
+                       class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0">
                         <i data-lucide="user" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]"></i>
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -413,12 +413,11 @@
         </button>
 
         <!-- Tab 2: Profile (Inactive Gray) -->
-        <button @click="modalProfil = true" 
-                :class="modalProfil ? 'text-blue-600 font-bold' : 'text-slate-400 hover:text-slate-600'"
-                class="flex flex-col items-center justify-center space-y-1 transition-all">
+        <a href="{{ route('guru.profile') }}" 
+           class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-blue-600 transition-all">
             <i data-lucide="user" class="w-6 h-6 stroke-[2.2]"></i>
             <span class="text-[11px]">Profile</span>
-        </button>
+        </a>
     </nav>
 
 

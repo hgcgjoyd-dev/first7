@@ -478,7 +478,7 @@
                 </div>
 
                 <!-- Right Avatar with Red Robot/User Icon (Exact Mockup Match) -->
-                <a href="{{ route('guru.bk') }}" 
+                <a href="{{ route('guru.profile') }}" 
                    title="Profil Guru BK"
                    class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-rose-500/80 text-white border-2 border-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0">
                     <i data-lucide="bot" class="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]"></i>

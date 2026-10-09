@@ -83,3 +83,17 @@ Route::get('/konseling-guru', function () {
     return view('dashboard guru.konseling');
 })->name('konseling.guru');
 
+// 12. Profil Guru BK (Responsive Mobile & Desktop)
+Route::get('/profilebk', function () {
+    return view('dashboard guru.profilebk');
+})->name('profilebk');
+
+Route::get('/dashboard-guru/profile', function () {
+    return view('dashboard guru.profilebk');
+})->name('guru.profile');
+
+Route::get('/dashboard-guru/profilebk', function () {
+    return view('dashboard guru.profilebk');
+})->name('dashboard.guru.profilebk');
+
+
