@@ -14,18 +14,37 @@
         scanned: false,
         scanFailed: false,
         scanErrorMessage: '',
+        scanStatusMessage: '',
         isBlurry: false,
         capturedPhoto: null,
-        detectInterval: null,
+        scannedStudentName: '',
+        scannedStudentNis: '',
+        scannedStudentClass: '',
+        showManualInput: false,
+        manualCode: '',
+        barcodeDetector: null,
+        autoScanInterval: null,
         ocrWorker: null,
         ocrLoading: false,
-        ocrStatus: '',
 
         init() {
             this.$nextTick(() => {
+                this.initBarcodeDetector();
                 this.startCamera();
                 if (window.lucide) lucide.createIcons();
             });
+        },
+
+        initBarcodeDetector() {
+            if ('BarcodeDetector' in window) {
+                try {
+                    this.barcodeDetector = new BarcodeDetector({
+                        formats: ['code_128', 'code_39', 'ean_13', 'qr_code', 'upc_a']
+                    });
+                } catch (e) {
+                    console.warn('BarcodeDetector error:', e);
+                }
+            }
         },
 
         startCamera() {
@@ -54,15 +73,12 @@
                             videoEl.play().catch(e => console.warn(e));
                             this.cameraActive = true;
                             this.setupFocus();
-                            // Tidak perlu auto-detection OCR di background — cukup saat tombol diklik
+                            this.startAutoDetection();
                         };
                     }
                 })
                 .catch(err => {
-                    console.warn(
-                        'Izin kamera belum aktif atau sedang digunakan:',
-                        err
-                    );
+                    console.warn('Camera access error:', err);
 
                     if (this.facingMode === 'environment') {
                         this.facingMode = 'user';
@@ -72,30 +88,24 @@
 
                     this.cameraActive = false;
                     this.cameraError = true;
-                    this.errorMessage =
-                        'Klik tombol di bawah untuk memberikan izin kamera pada browser Anda.';
+                    this.errorMessage = 'Izin kamera belum aktif. Berikan izin di browser atau gunakan input nomor manual.';
                 });
             } else {
                 this.cameraActive = false;
                 this.cameraError = true;
-                this.errorMessage =
-                    'Browser ini tidak mendukung akses kamera langsung.';
+                this.errorMessage = 'Browser ini tidak mendukung akses kamera langsung. Silakan gunakan opsi input nomor kartu manual.';
             }
         },
 
         toggleFacingMode() {
-            this.facingMode =
-                (this.facingMode === 'environment')
-                    ? 'user'
-                    : 'environment';
-
+            this.facingMode = (this.facingMode === 'environment') ? 'user' : 'environment';
             this.startCamera();
         },
 
         stopCamera() {
-            if (this.detectInterval) {
-                clearInterval(this.detectInterval);
-                this.detectInterval = null;
+            if (this.autoScanInterval) {
+                clearInterval(this.autoScanInterval);
+                this.autoScanInterval = null;
             }
 
             if (this.webcamStream) {
@@ -104,36 +114,6 @@
             }
 
             this.cameraActive = false;
-        },
-
-        computeSharpness(videoEl) {
-            const canvas = document.getElementById('sharpnessCanvas');
-            if (!canvas) return 1000;
-            const ctx = canvas.getContext('2d');
-            const w = 160, h = 120;
-            canvas.width = w; canvas.height = h;
-            ctx.drawImage(videoEl, 0, 0, w, h);
-            const data = ctx.getImageData(0, 0, w, h).data;
-            const gray = new Uint8Array(w * h);
-            for (let i = 0; i < w * h; i++) {
-                const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2];
-                gray[i] = 0.299 * r + 0.587 * g + 0.114 * b;
-            }
-
-            let sum = 0, sumSq = 0, n = 0;
-            for (let y = 1; y < 119; y++) {
-                for (let x = 1; x < 159; x++) {
-                    const idx = y * 160 + x;
-                    const v = gray[idx];
-                    const lap = gray[(y - 1) * 160 + x] + gray[(y + 1) * 160 + x] +
-                                gray[y * 160 + x - 1] + gray[y * 160 + x + 1] - 4 * v;
-                    sum += lap;
-                    sumSq += lap * lap;
-                    n++;
-                }
-            }
-            const mean = sum / n;
-            return (sumSq / n) - (mean * mean); // Laplacian variance
         },
 
         setupFocus() {
@@ -154,544 +134,515 @@
             }
         },
 
-        async initOcrWorker() {
-            if (this.ocrWorker) return;
-            this.ocrLoading = true;
-            this.ocrStatus = 'Memuat mesin OCR...';
-            try {
-                this.ocrWorker = await Tesseract.createWorker('eng', 1, {
-                    logger: m => console.log(m),
-                    cacheMethod: 'write'
-                });
-                this.ocrLoading = false;
-                this.ocrStatus = '';
-            } catch (e) {
-                console.error('OCR init error:', e);
-                this.ocrLoading = false;
-                this.ocrStatus = 'Gagal memuat OCR. Coba refresh halaman.';
-            }
+        startAutoDetection() {
+            if (this.autoScanInterval) clearInterval(this.autoScanInterval);
+            if (!this.barcodeDetector) return;
+
+            this.autoScanInterval = setInterval(async () => {
+                if (!this.cameraActive || this.scanning || this.scanned) return;
+                const videoEl = document.getElementById('scannerWebcam');
+                if (!videoEl || videoEl.readyState < 2) return;
+
+                try {
+                    const barcodes = await this.barcodeDetector.detect(videoEl);
+                    if (barcodes && barcodes.length > 0) {
+                        const code = barcodes[0].rawValue?.trim();
+                        if (code) {
+                            this.processCode(code);
+                        }
+                    }
+                } catch (e) {}
+            }, 450);
         },
 
-        async performOcr() {
-            // Cek ketajaman dulu
-            const videoEl = document.getElementById('scannerWebcam');
-            const sharpness = this.computeSharpness(videoEl);
-            this.isBlurry = sharpness < 150;
+        async triggerScan() {
+            if (this.scanning || this.scanned) return;
 
-            if (this.isBlurry) {
+            const videoEl = document.getElementById('scannerWebcam');
+            if (!this.cameraActive || !videoEl) {
                 this.scanFailed = true;
-                this.scanErrorMessage = 'Layar burem, fokuskan kartu agar terbaca';
+                this.scanErrorMessage = 'Kamera belum aktif. Klik Buka Kamera atau gunakan input nomor kartu manual.';
                 return;
             }
 
-            this.scanFailed = false;
-            this.scanErrorMessage = '';
             this.scanning = true;
             this.scanFailed = false;
             this.scanErrorMessage = '';
+            this.scanStatusMessage = 'Mengambil gambar kartu...';
 
-            // Ambil frame dari video ke canvas (upscale 2x untuk akurasi OCR)
-            const videoEl = document.getElementById('scannerWebcam');
-            const ocrCanvas = this.$refs.ocrCanvas;
-            const w = videoEl.videoWidth * 2;
-            const h = videoEl.videoHeight * 2;
-            ocrCanvas.width = w;
-            ocrCanvas.height = h;
-            const ctx = ocrCanvas.getContext('2d');
+            // Snapshot dari frame video ke canvas
+            const canvas = document.getElementById('scannerCanvas') || document.createElement('canvas');
+            const w = videoEl.videoWidth || 1280;
+            const h = videoEl.videoHeight || 720;
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
             ctx.drawImage(videoEl, 0, 0, w, h);
 
-            // Inisialisasi OCR worker jika belum
-            await this.initOcrWorker();
-            if (!this.ocrWorker) {
-                this.scanFailed = true;
-                this.scanErrorMessage = 'Mesin OCR gagal dimuat. Coba refresh halaman.';
-                this.scanning = false;
-                return;
+            try {
+                this.capturedPhoto = canvas.toDataURL('image/jpeg', 0.85);
+            } catch(e) {}
+
+            // 1. Coba Barcode/QR Detector
+            if (this.barcodeDetector) {
+                this.scanStatusMessage = 'Mencari Barcode/QR pada kartu...';
+                try {
+                    const barcodes = await this.barcodeDetector.detect(canvas);
+                    if (barcodes && barcodes.length > 0) {
+                        const code = barcodes[0].rawValue?.trim();
+                        if (code) {
+                            await this.processCode(code);
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Barcode error:', e);
+                }
             }
 
-            this.ocrStatus = 'Membaca nama...';
+            // 2. Fallback ke OCR Tesseract jika barcode tidak ada
+            this.scanStatusMessage = 'Membaca teks nama/NIS kartu...';
+            try {
+                if (!this.ocrWorker && window.Tesseract) {
+                    this.scanStatusMessage = 'Menyiapkan modul pembaca kartu...';
+                    this.ocrWorker = await Tesseract.createWorker('eng', 1, {
+                        cacheMethod: 'write'
+                    });
+                }
+
+                if (this.ocrWorker) {
+                    this.scanStatusMessage = 'Mengenali teks kartu pelajar...';
+                    const { data: { text } } = await this.ocrWorker.recognize(canvas);
+                    const rawText = text ? text.trim() : '';
+
+                    // Prioritas: cari digit angka (NIS / No Siswa, min 5 digit)
+                    const numMatch = rawText.match(/\b\d{5,10}\b/);
+                    if (numMatch) {
+                        await this.processCode(numMatch[0]);
+                        return;
+                    }
+
+                    // Atau cari baris nama siswa
+                    const lines = rawText.split('\n')
+                        .map(l => l.trim().replace(/[^a-zA-Z\s]/g, ''))
+                        .filter(l => l.length >= 3 && !/kartu|pelajar|smk|bali|global|siswa/i.test(l));
+
+                    if (lines.length > 0) {
+                        await this.processCode(lines[0]);
+                        return;
+                    }
+
+                    if (rawText.length >= 3) {
+                        await this.processCode(rawText);
+                        return;
+                    }
+                }
+            } catch (ocrErr) {
+                console.warn('OCR error:', ocrErr);
+            }
+
+            // Jika keduanya gagal menemukan teks/barcode yang jelas
+            this.scanning = false;
+            this.scanFailed = true;
+            this.scanErrorMessage = 'Kartu belum terbaca jelas. Posisikan lebih dekat & terang, atau ketik nomor kartu manual di bawah.';
+        },
+
+        async processCode(code) {
+            if (!code || this.scanned) return;
+
             this.scanning = true;
             this.scanFailed = false;
             this.scanErrorMessage = '';
+            this.scanStatusMessage = 'Memverifikasi data kartu ke sistem...';
+            this.playBeep();
 
             try {
-                const { data: { text } } = await this.ocrWorker.recognize(this.$refs.ocrCanvas, {
-                    rectangle: { top: 0, left: 0, width: this.$refs.ocrCanvas.width, height: this.$refs.ocrCanvas.height }
-                });
-
-                const name = text.trim().replace(/\s+/g, ' ');
-                console.log('OCR result:', name);
-
-                if (!name || name.length < 3) {
-                    this.scanFailed = true;
-                    this.scanErrorMessage = 'Nama tidak terbaca. Coba lagi dengan pencahayaan lebih baik.';
-                    this.scanning = false;
-                    return;
-                }
-
-                // Kirim ke server
                 const res = await fetch('{{ route('scan.post') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ code: name })
+                    body: JSON.stringify({ code: code.trim() })
                 });
 
                 const data = await res.json();
-
                 this.scanning = false;
 
                 if (data.success) {
                     this.scanned = true;
+                    this.scannedStudentName = data.siswa?.nama || 'Siswa Terdaftar';
+                    this.scannedStudentNis = data.siswa?.no_siswa ? `NIS: ${data.siswa.no_siswa}` : '';
+                    this.scannedStudentClass = data.siswa?.kelas || 'SMK TI Bali Global';
+                    this.stopCamera();
+
                     this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+
                     setTimeout(() => {
                         window.location.href = data.redirect || '{{ route('dashboard.siswa') }}';
-                    }, 900);
+                    }, 1100);
                 } else {
                     this.scanFailed = true;
-                    this.scanErrorMessage = data.message || 'Scan gagal. Coba lagi.';
+                    this.scanErrorMessage = data.message || 'Kartu tidak dikenali atau belum terdaftar.';
                     this.scanned = false;
                 }
-            } catch (e) {
-                console.error('OCR/Scan error:', e);
+            } catch (err) {
+                console.error('Fetch error:', err);
                 this.scanning = false;
                 this.scanFailed = true;
-                this.scanErrorMessage = 'Terjadi kesalahan saat membaca kartu. Coba lagi.';
+                this.scanErrorMessage = 'Gagal memproses kartu. Periksa koneksi internet Anda.';
+                this.scanned = false;
             }
         },
 
-        triggerScanSuccess() {
-            if (this.scanning || this.scanned) return;
-            this.performOcr();
+        submitManual() {
+            if (!this.manualCode.trim()) {
+                this.scanFailed = true;
+                this.scanErrorMessage = 'Ketik nomor siswa atau nama lengkap Anda terlebih dahulu.';
+                return;
+            }
+            this.processCode(this.manualCode.trim());
         },
+
+        handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            this.scanning = true;
+            this.scanFailed = false;
+            this.scanErrorMessage = '';
+            this.scanStatusMessage = 'Membaca foto kartu yang diunggah...';
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const img = new Image();
+                img.onload = async () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    this.capturedPhoto = canvas.toDataURL('image/jpeg', 0.85);
+
+                    if (this.barcodeDetector) {
+                        try {
+                            const barcodes = await this.barcodeDetector.detect(canvas);
+                            if (barcodes && barcodes.length > 0) {
+                                const code = barcodes[0].rawValue?.trim();
+                                if (code) {
+                                    await this.processCode(code);
+                                    return;
+                                }
+                            }
+                        } catch(e) {}
+                    }
+
+                    try {
+                        if (!this.ocrWorker && window.Tesseract) {
+                            this.ocrWorker = await Tesseract.createWorker('eng', 1);
+                        }
+                        if (this.ocrWorker) {
+                            const { data: { text } } = await this.ocrWorker.recognize(canvas);
+                            const cleaned = text ? text.trim() : '';
+                            const num = cleaned.match(/\b\d{5,10}\b/);
+                            if (num) {
+                                await this.processCode(num[0]);
+                                return;
+                            }
+                            if (cleaned.length >= 3) {
+                                await this.processCode(cleaned);
+                                return;
+                            }
+                        }
+                    } catch(e) {}
+
+                    this.scanning = false;
+                    this.scanFailed = true;
+                    this.scanErrorMessage = 'Foto kartu tidak dapat terbaca. Gunakan foto yang lebih tajam atau ketik nomor manual.';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        },
+
         playBeep() {
             try {
-                const AudioCtx =
-                    window.AudioContext ||
-                    window.webkitAudioContext;
-
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
                 if (!AudioCtx) return;
-
                 const ctx = new AudioCtx();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
 
                 osc.type = 'sine';
-                osc.frequency.value = 920;
-
-                gain.gain.setValueAtTime(
-                    0.12,
-                    ctx.currentTime
-                );
-
-                gain.gain.exponentialRampToValueAtTime(
-                    0.01,
-                    ctx.currentTime + 0.16
-                );
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
 
                 osc.connect(gain);
                 gain.connect(ctx.destination);
-
                 osc.start();
-                osc.stop(ctx.currentTime + 0.16);
+                osc.stop(ctx.currentTime + 0.18);
             } catch(e) {}
-        },
-
-        captureSnapshot() {
-            const videoEl =
-                document.getElementById('scannerWebcam');
-
-            const canvas =
-                document.getElementById('scannerCanvas');
-
-            if (
-                videoEl &&
-                canvas &&
-                this.cameraActive
-            ) {
-                try {
-                    canvas.width =
-                        videoEl.videoWidth || 640;
-
-                    canvas.height =
-                        videoEl.videoHeight || 480;
-
-                    const ctx =
-                        canvas.getContext('2d');
-
-                    ctx.drawImage(
-                        videoEl,
-                        0,
-                        0,
-                        canvas.width,
-                        canvas.height
-                    );
-
-                    this.capturedPhoto =
-                        canvas.toDataURL(
-                            'image/jpeg',
-                            0.85
-                        );
-                } catch(e) {
-                    console.warn(e);
-                }
-            }
-        },
-
-        triggerScanSuccess(cardCode = null) {
-            if (this.scanning || this.scanned) return;
-
-            const code = cardCode || this.lastDetectedCode;
-            if (!code) {
-                this.scanFailed = true;
-                this.scanErrorMessage = 'Tidak ada data kartu terbaca. Coba lagi.';
-                return;
-            }
-
-            this.scanning = true;
-            this.scanFailed = false;
-            this.scanErrorMessage = '';
-            this.captureSnapshot();
-            this.playBeep();
-
-            fetch('{{ route('scan.post') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ code })
-            })
-            .then(r => r.json())
-            .then(data => {
-                this.scanning = false;
-                if (data.success) {
-                    this.scanned = true;
-                    this.stopCamera();
-                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
-                    setTimeout(() => {
-                        window.location.href = data.redirect || '{{ route('dashboard.siswa') }}';
-                    }, 900);
-                } else {
-                    this.scanFailed = true;
-                    this.scanErrorMessage = data.message || 'Scan gagal. Coba lagi.';
-                    this.scanned = false;
-                }
-            })
-            .catch(() => {
-                this.scanning = false;
-                this.scanFailed = true;
-                this.scanErrorMessage = 'Terjadi kesalahan jaringan. Coba lagi.';
-                this.scanned = false;
-            });
         }
      }">
 
     <!-- Top Status Header -->
     <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-
-        <div class="flex items-center space-x-1.5">
-
-            <span class="w-2 h-2 rounded-full"
-                  :class="cameraActive
-                      ? 'bg-emerald-500 animate-pulse'
-                      : 'bg-amber-400'">
+        <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full transition-colors"
+                  :class="cameraActive ? 'bg-emerald-500 animate-pulse' : (cameraError ? 'bg-rose-500' : 'bg-amber-400')">
             </span>
-
-            <span class="text-[11px] font-bold text-slate-600"
-                  x-text="cameraActive
-                      ? 'Kamera Aktif'
-                      : 'Menyiapkan Kamera'">
-                Kamera Aktif
+            <span class="text-xs font-bold text-slate-600"
+                  x-text="cameraActive ? 'Kamera Pemindai Siap' : (cameraError ? 'Kamera Tidak Tersedia' : 'Menyiapkan Kamera...')">
+                Menyiapkan Kamera...
             </span>
-
         </div>
 
-        <!-- Toggle Camera -->
+        <!-- Toggle Front/Back Camera -->
         <button type="button"
                 @click="toggleFacingMode()"
                 x-show="cameraActive"
                 class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Ganti Kamera (Depan / Belakang)">
-
-            <i data-lucide="refresh-cw"
-               class="w-4 h-4"></i>
+                title="Ganti Kamera Depan / Belakang">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
         </button>
-
-        <div x-show="!cameraActive"
-             class="w-8">
-        </div>
     </div>
 
     <!-- Header Title & School Brand -->
     <div>
-
         <div class="flex items-center justify-center mb-2">
-
             <img src="{{ asset('images/logo-smk.png') }}"
                  alt="Logo SMK TI Bali Global Badung"
                  class="h-14 sm:h-16 w-auto object-contain drop-shadow-sm">
-
         </div>
 
-        <h2 class="text-xl sm:text-2xl font-black text-slate-900">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
             SCAN KARTU PELAJAR
         </h2>
-
-        <p class="text-xs text-slate-500 mt-0.5">
-            Arahkan barcode atau QR kartu pelajar tepat ke kamera
+        <p class="text-xs text-slate-500 mt-1">
+            Posisikan kartu pelajar di dalam bingkai, lalu tekan tombol pindai di bawah
         </p>
-
     </div>
 
     <!-- Scanner Viewfinder Box -->
-    <div class="w-full aspect-square max-w-[300px] mx-auto rounded-3xl bg-slate-950 border-4 border-slate-900 relative p-3 flex items-center justify-center overflow-hidden shadow-2xl transition-all duration-300"
-         :class="scanned
-             ? 'ring-4 ring-emerald-400'
-             : ''">
+    <div class="w-full aspect-square max-w-[310px] mx-auto rounded-3xl bg-slate-950 border-4 border-slate-900 relative p-3 flex items-center justify-center overflow-hidden shadow-2xl transition-all duration-300"
+         :class="scanned ? 'ring-4 ring-emerald-400' : ''">
 
-        <canvas id="sharpnessCanvas"
-                class="hidden"></canvas>
-
-        <!-- OCR Canvas (hidden, for text recognition) -->
-        <canvas x-ref="ocrCanvas"
-                class="hidden"></canvas>
+        <!-- Hidden canvas for image capture & processing -->
+        <canvas id="scannerCanvas" class="hidden"></canvas>
 
         <!-- Real Webcam Video Stream -->
         <video id="scannerWebcam"
-autoplay
-                playsinline
-                muted
-                class="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300"
-                :class="{
-                    'opacity-100': cameraActive && !scanned,
-                    'opacity-0 pointer-events-none': !cameraActive || scanned
-                }"
-                style="touch-action: none;"
-                @loadedmetadata="setupFocus()">
+               autoplay
+               playsinline
+               muted
+               class="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300"
+               :class="{
+                   'opacity-100': cameraActive && !scanned,
+                   'opacity-0 pointer-events-none': !cameraActive || scanned
+               }"
+               style="touch-action: none;"
+               @loadedmetadata="setupFocus()">
         </video>
 
-        <!-- Hidden Canvas -->
-        <canvas id="scannerCanvas"
-                class="hidden">
-        </canvas>
-
-        <!-- Snapshot Image -->
+        <!-- Snapshot Image (Displayed upon successful scan) -->
         <template x-if="scanned && capturedPhoto">
-
             <img :src="capturedPhoto"
                  alt="Hasil Scan Kartu"
                  class="absolute inset-0 w-full h-full object-cover z-10">
-
         </template>
 
-        <!-- Fallback View -->
+        <!-- Fallback View When Camera Inactive -->
         <div x-show="!cameraActive && !scanned"
-             class="absolute inset-0 flex flex-col items-center justify-center z-[5] bg-linear-to-b from-slate-900 to-black p-5 text-center space-y-3">
-
+             class="absolute inset-0 flex flex-col items-center justify-center z-[5] bg-gradient-to-b from-slate-900 to-black p-5 text-center space-y-3">
             <div class="w-16 h-16 rounded-full border-2 border-dashed border-cyan-400/50 flex items-center justify-center text-cyan-400 bg-cyan-950/30">
-
-                <i data-lucide="camera"
-                   class="w-8 h-8 animate-pulse">
-                </i>
-
+                <i data-lucide="camera" class="w-8 h-8 animate-pulse"></i>
             </div>
 
-            <div class="space-y-1 max-w-[220px]">
-
+            <div class="space-y-1 max-w-[230px]">
                 <p class="text-xs text-white font-extrabold">
-                    Kamera Siap Dibuka
+                    Kamera Belum Terbuka
                 </p>
-
-                <p class="text-[10px] text-slate-400 leading-relaxed"
-                   x-text="errorMessage || 'Izinkan browser mengakses kamera untuk membaca kartu pelajar.'">
+                <p class="text-[11px] text-slate-400 leading-relaxed"
+                   x-text="errorMessage || 'Izinkan akses kamera browser Anda untuk memindai kartu pelajar secara langsung.'">
                 </p>
-
             </div>
 
             <button type="button"
                     @click="startCamera()"
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-[11px] rounded-xl shadow-lg shadow-blue-500/25 active:scale-95 transition-all cursor-pointer">
-
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-500/25 active:scale-95 transition-all cursor-pointer">
                 Buka Kamera Sekarang
-
             </button>
-
         </div>
 
         <!-- Corner Scanner Brackets -->
-
         <div class="absolute top-3 left-3 w-8 h-8 border-t-4 border-l-4 rounded-tl-xl z-20 pointer-events-none transition-colors duration-300"
-             :class="scanned
-                 ? 'border-emerald-400'
-                 : 'border-cyan-400'">
+             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
         </div>
-
         <div class="absolute top-3 right-3 w-8 h-8 border-t-4 border-r-4 rounded-tr-xl z-20 pointer-events-none transition-colors duration-300"
-             :class="scanned
-                 ? 'border-emerald-400'
-                 : 'border-cyan-400'">
+             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
         </div>
-
         <div class="absolute bottom-3 left-3 w-8 h-8 border-b-4 border-l-4 rounded-bl-xl z-20 pointer-events-none transition-colors duration-300"
-             :class="scanned
-                 ? 'border-emerald-400'
-                 : 'border-cyan-400'">
+             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
         </div>
-
         <div class="absolute bottom-3 right-3 w-8 h-8 border-b-4 border-r-4 rounded-br-xl z-20 pointer-events-none transition-colors duration-300"
-             :class="scanned
-                 ? 'border-emerald-400'
-                 : 'border-cyan-400'">
+             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
         </div>
 
         <!-- Animated Laser Line -->
         <div x-show="cameraActive && !scanned"
-             class="absolute left-4 right-4 h-0.5 bg-linear-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-laser z-20 pointer-events-none">
+             class="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-laser z-20 pointer-events-none">
+        </div>
+
+        <!-- Quick Camera Shutter Button inside Viewfinder (Bottom Center) -->
+        <div x-show="cameraActive && !scanned && !scanning"
+             class="absolute bottom-4 inset-x-0 flex justify-center z-25">
+            <button type="button"
+                    @click="triggerScan()"
+                    class="w-14 h-14 rounded-full bg-white/90 hover:bg-white text-blue-600 border-4 border-blue-500 flex items-center justify-center shadow-2xl active:scale-90 transition-transform cursor-pointer group"
+                    title="Ambil Foto & Pindai Kartu">
+                <i data-lucide="camera" class="w-6 h-6 text-blue-600 group-hover:scale-110 transition-transform"></i>
+            </button>
         </div>
 
         <!-- Success Overlay -->
         <div x-show="scanned"
              x-cloak
-             class="absolute inset-0 bg-emerald-950/70 backdrop-blur-[2px] flex flex-col items-center justify-center space-y-2 z-30 p-4 animate-in fade-in zoom-in-95 duration-200">
-
+             class="absolute inset-0 bg-emerald-950/85 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 z-30 p-4 animate-in fade-in zoom-in-95 duration-200 text-center">
             <div class="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/40">
-
-                <i data-lucide="check"
-                   class="w-9 h-9 stroke-[3]">
-                </i>
-
+                <i data-lucide="check" class="w-9 h-9 stroke-[3]"></i>
             </div>
-
             <div class="text-xs font-black text-emerald-200 uppercase tracking-wider">
                 KARTU TERVERIFIKASI!
             </div>
-
-            <div class="text-xs font-black text-white bg-black/40 px-3 py-1 rounded-full border border-white/20">
-                Wahyu Pratama • XI PPLG 1
+            <div class="text-xs font-black text-white bg-black/40 px-3.5 py-1.5 rounded-full border border-white/20">
+                <span x-text="scannedStudentName || 'Siswa Terdaftar'"></span>
+                <span x-show="scannedStudentClass" x-text="' • ' + scannedStudentClass"></span>
             </div>
-
+            <div x-show="scannedStudentNis" class="text-[11px] text-emerald-300 font-mono font-bold" x-text="scannedStudentNis"></div>
         </div>
-
     </div>
 
     <!-- Petunjuk Arahkan Kartu -->
     <p class="text-[11px] text-slate-500 font-medium">
-        Posisikan kartu pelajar di dalam bingkai pemindai kamera.
+        Arahkan barcode atau nama kartu tepat ke dalam bingkai pemindai kamera.
     </p>
 
-    <!-- Peringatan Layar Burem -->
-    <div x-show="cameraActive && isBlurry && !scanned && !scanning"
-         class="w-full py-2 text-center text-amber-600 text-xs font-medium bg-amber-50 border border-amber-200 rounded-xl animate-pulse">
-        <i data-lucide="alert-triangle" class="w-4 h-4 inline-block mr-1"></i>
-        Layar burem, fokuskan kartu agar terbaca
+    <!-- Status Saat Memproses Scan -->
+    <div x-show="scanning"
+         x-cloak
+         class="w-full py-2.5 px-3 text-center text-blue-700 text-xs font-bold bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center space-x-2 animate-pulse">
+        <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        <span x-text="scanStatusMessage || 'Memproses kartu pelajar...'"></span>
     </div>
 
     <!-- Pesan Error Scan -->
     <div x-show="scanFailed"
-         class="w-full py-2 text-center text-rose-600 text-xs font-medium bg-rose-50 border border-rose-200 rounded-xl"
-         x-text="scanErrorMessage"></div>
+         x-cloak
+         class="w-full py-2.5 px-3 text-center text-rose-600 text-xs font-semibold bg-rose-50 border border-rose-200 rounded-xl leading-relaxed"
+         x-text="scanErrorMessage">
+    </div>
 
-    <!-- Tombol Scan Sekarang -->
-    <button @click="triggerScanSuccess()"
+    <!-- TOMBOL UTAMA: PINDAI KARTU SEKARANG -->
+    <button type="button"
+            @click="triggerScan()"
             :disabled="scanning || scanned"
-            class="w-full font-extrabold py-3.5 rounded-2xl shadow-lg flex items-center justify-center space-x-2 transition-all active:scale-[0.98] cursor-pointer"
+            class="w-full font-black py-4 px-6 rounded-2xl shadow-xl flex items-center justify-center space-x-3 transition-all active:scale-[0.98] cursor-pointer"
             :class="scanned
-                ? 'bg-emerald-600 text-white shadow-emerald-500/25'
+                ? 'bg-emerald-600 text-white shadow-emerald-500/25 cursor-default'
                 : (scanning
-                    ? 'bg-blue-500 text-white cursor-wait'
-                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25')">
+                    ? 'bg-blue-500 text-white cursor-wait opacity-90'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/30 ring-4 ring-blue-500/20')">
 
-        <template x-if="!scanning && !scanned">
+        <!-- Tampilan Normal: Selalu tampil langsung -->
+        <span x-show="!scanning && !scanned" class="flex items-center space-x-2 text-sm sm:text-base tracking-wide uppercase">
+            <i data-lucide="scan" class="w-5 h-5"></i>
+            <span>PINDAI KARTU SEKARANG</span>
+        </span>
 
-            <span class="flex items-center space-x-2">
+        <!-- Tampilan Saat Memindai -->
+        <span x-show="scanning" x-cloak class="flex items-center space-x-2 text-sm sm:text-base">
+            <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span x-text="scanStatusMessage || 'MEMINDAI KARTU PELAJAR...'"></span>
+        </span>
 
-                <i data-lucide="scan"
-                   class="w-4 h-4">
-                </i>
-
-                <span>
-                    PINDAI KARTU SEKARANG
-                </span>
-
-            </span>
-
-        </template>
-
-        <template x-if="scanning">
-
-            <span class="flex items-center space-x-2">
-
-                <svg class="animate-spin h-4 w-4 text-white"
-                     fill="none"
-                     viewBox="0 0 24 24">
-
-                    <circle class="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            stroke-width="4">
-                    </circle>
-
-                    <path class="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8H4z">
-                    </path>
-
-                </svg>
-
-                <span>
-                    MEMINDAI KARTU PELAJAR...
-                </span>
-
-            </span>
-
-        </template>
-
-        <template x-if="scanned">
-
-            <span class="flex items-center space-x-2">
-
-                <i data-lucide="check-circle"
-                   class="w-4 h-4">
-                </i>
-
-                <span>
-                    BERHASIL! MENGALIHKAN...
-                </span>
-
-            </span>
-
-        </template>
-
+        <!-- Tampilan Berhasil -->
+        <span x-show="scanned" x-cloak class="flex items-center space-x-2 text-sm sm:text-base">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            <span>BERHASIL! MENGALIHKAN...</span>
+        </span>
     </button>
+
+    <!-- Opsi Alternatif: Unggah Foto atau Ketik Nomor Manual -->
+    <div class="pt-1">
+        <div class="grid grid-cols-2 gap-2 text-xs">
+            <!-- Tombol Unggah Gambar Kartu -->
+            <label class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer text-center">
+                <i data-lucide="image" class="w-4 h-4 text-slate-500"></i>
+                <span>Unggah Foto Kartu</span>
+                <input type="file" accept="image/*" class="hidden" @change="handleFileUpload($event)">
+            </label>
+
+            <!-- Toggle Input Nomor Manual -->
+            <button type="button"
+                    @click="showManualInput = !showManualInput"
+                    class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer text-center">
+                <i data-lucide="keypad" class="w-4 h-4 text-slate-500"></i>
+                <span>Input No. Kartu</span>
+            </button>
+        </div>
+
+        <!-- Form Input Nomor Siswa / NIS Manual -->
+        <div x-show="showManualInput"
+             x-cloak
+             x-transition
+             class="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left space-y-2.5">
+            <label for="manualCardCode" class="block text-xs font-bold text-slate-700">
+                Nomor Siswa (NIS) atau Nama Kartu:
+            </label>
+            <div class="flex space-x-2">
+                <input id="manualCardCode"
+                       type="text"
+                       x-model="manualCode"
+                       @keydown.enter.prevent="submitManual()"
+                       placeholder="Contoh: 102938 atau Wahyu Pratama"
+                       class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="button"
+                        @click="submitManual()"
+                        :disabled="scanning"
+                        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-colors shrink-0 cursor-pointer">
+                    Kirim
+                </button>
+            </div>
+            <p class="text-[10px] text-slate-400">
+                Masukkan nomor siswa tepat 7 digit atau nama lengkap sesuai kartu pelajar.
+            </p>
+        </div>
+    </div>
 
     <!-- Divider "ATAU" -->
     <div class="flex items-center justify-center my-1">
-
         <span class="text-xs font-bold text-slate-400 uppercase px-4 bg-white">
             ATAU
         </span>
-
     </div>
 
     <!-- Tombol Login Manual -->
     <a href="{{ route('login') }}"
-       class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-extrabold py-3 rounded-2xl flex items-center justify-center space-x-2 transition-all text-xs block text-center">
-
-        <i data-lucide="user-check"
-           class="w-4 h-4 inline-block mr-1">
-        </i>
-
-        <span>
-            MASUK DENGAN AKUN
-        </span>
-
+       class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-extrabold py-3.5 rounded-2xl flex items-center justify-center space-x-2 transition-all text-xs block text-center">
+        <i data-lucide="user-check" class="w-4 h-4 inline-block mr-1"></i>
+        <span>MASUK DENGAN AKUN (NIS & PASSWORD)</span>
     </a>
 
 </div>
+
+<!-- Tesseract OCR Library for Card Text Reading -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 @endsection

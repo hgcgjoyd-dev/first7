@@ -18,7 +18,9 @@
         <p class="rounded-xl bg-rose-50 p-3 text-sm text-rose-700">{{ $errors->first() }}</p>
     @endif
 
-    <p class="text-sm text-slate-600">Akun aktif: <strong>{{ $siswa->nama_siswa }}</strong></p>
+    @if (isset($siswa))
+        <p class="text-sm text-slate-600">Akun aktif: <strong>{{ $siswa->nama_siswa }}</strong></p>
+    @endif
     <form method="POST" action="{{ route('scan.post') }}" class="space-y-3">
         @csrf
         <label for="code" class="sr-only">Nomor kartu siswa</label>

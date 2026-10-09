@@ -17,7 +17,7 @@ class DatabaseRelationsTest extends TestCase
 
     public function test_guest_requests_to_student_routes_are_redirected_to_login(): void
     {
-        foreach (['/dashboard', '/scan', '/presensi', '/izin', '/riwayat', '/mapel', '/bk', '/piket', '/profil', '/cek-db'] as $path) {
+        foreach (['/dashboard', '/presensi', '/izin', '/riwayat', '/mapel', '/bk', '/piket', '/profil', '/cek-db'] as $path) {
             $this->get($path)->assertRedirect(route('login'));
         }
     }
