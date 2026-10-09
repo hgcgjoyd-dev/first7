@@ -64,3 +64,12 @@ Route::get('/dashboard-guru/absensi', function () {
 Route::get('/absensi-guru', function () {
     return view('dashboard guru.absensi');
 })->name('absensi.guru');
+
+// 10. Pelanggaran Siswa (Guru BK - Antrean Kasus & Penyesuaian Poin)
+Route::get('/dashboard-guru/pelanggaran', function () {
+    return view('dashboard guru.pelanggaran');
+})->name('guru.pelanggaran');
+
+Route::get('/pelanggaran', function () {
+    return view('dashboard guru.pelanggaran');
+})->name('pelanggaran');

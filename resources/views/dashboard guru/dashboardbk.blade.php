@@ -313,15 +313,15 @@
             <!-- ================================================================= -->
             <!-- ROW 2: Pelanggaran Siswa Card (Mockup Match)                       -->
             <!-- ================================================================= -->
-            <div @click="openAction('pelanggaran')" 
-                 class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-98 cursor-pointer flex items-center justify-center space-x-3 group">
+            <a href="{{ route('guru.pelanggaran') }}" 
+               class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-98 cursor-pointer flex items-center justify-center space-x-3 group block">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                     <i data-lucide="clipboard-list" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]"></i>
                 </div>
                 <h3 class="text-base sm:text-lg font-black text-slate-800 group-hover:text-blue-600 transition-colors">
                     Pelanggaran Siswa
                 </h3>
-            </div>
+            </a>
 
 
             <!-- ================================================================= -->
@@ -377,9 +377,9 @@
                             </div>
                             <h4 class="font-bold text-sm text-slate-900">Catatan Pelanggaran Siswa</h4>
                         </div>
-                        <button @click="openAction('pelanggaran')" class="text-xs font-bold text-rose-600 hover:underline">
-                            + Input Sanksi
-                        </button>
+                        <a href="{{ route('guru.pelanggaran') }}" class="text-xs font-bold text-rose-600 hover:underline">
+                            Kelola Pelanggaran →
+                        </a>
                     </div>
 
                     <div class="space-y-2.5">
