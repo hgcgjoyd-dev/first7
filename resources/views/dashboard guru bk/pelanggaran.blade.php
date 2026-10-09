@@ -471,7 +471,7 @@
                 </div>
 
                 <!-- Right Avatar with Profile Icon (Mockup Match) -->
-                <a href="{{ route('guru.bk') }}" 
+                <a href="{{ route('guru.profile') }}" 
                    title="Profil Guru BK"
                    class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg ring-2 ring-white/60 hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0">
                     <i data-lucide="user" class="w-5 h-5 sm:w-6 sm:h-6 stroke-[2.2]"></i>

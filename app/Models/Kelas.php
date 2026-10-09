@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Kelas extends Model
 {
@@ -21,17 +23,17 @@ class Kelas extends Model
         'tahun_ajaran',
     ];
 
-    public function waliKelas()
+    public function waliKelas(): BelongsTo
     {
         return $this->belongsTo(Guru::class, 'wali_kelas_id', 'id_guru');
     }
 
-    public function siswa()
+    public function siswa(): HasMany
     {
         return $this->hasMany(Siswa::class, 'id_kelas', 'id_kelas');
     }
 
-    public function jadwalPelajaran()
+    public function jadwalPelajaran(): HasMany
     {
         return $this->hasMany(JadwalPelajaran::class, 'id_kelas', 'id_kelas');
     }

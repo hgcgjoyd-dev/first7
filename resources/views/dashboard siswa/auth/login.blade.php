@@ -1,6 +1,6 @@
-@extends('dashboard siswa.auth.auth')
+@extends('layouts.auth')
 
-@section('title', 'Sign In Siswa')
+@section('title', 'Masuk')
 
 @section('content')
 <div class="bg-white rounded-3xl sm:rounded-[36px] p-6 sm:p-8 border border-slate-200/80 shadow-soft space-y-6"
@@ -24,21 +24,25 @@
         </div>
     </div>
 
-    @if(session('error'))
+    @if ($errors->any())
         <div class="bg-rose-50 border border-rose-200 text-rose-700 text-xs p-3.5 rounded-2xl flex items-center space-x-2">
             <i data-lucide="alert-circle" class="w-4 h-4 shrink-0 text-rose-500"></i>
-            <span>{{ session('error') }}</span>
+            <span>{{ $errors->first() }}</span>
+        </div>
+    @endif
+    @if (session('status'))
+        <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs p-3.5 rounded-2xl">
+            {{ session('status') }}
         </div>
     @endif
 
-    <!-- Login Form: Enters to Dashboard via Database Authentication -->
     <form action="{{ route('login.post') }}" method="POST" class="space-y-4">
         @csrf
         <div>
-            <label class="block text-xs font-extrabold uppercase text-slate-500 mb-1">EMAIL / NIS</label>
+            <label for="email" class="block text-xs font-extrabold uppercase text-slate-500 mb-1">EMAIL</label>
             <div class="relative">
                 <i data-lucide="mail" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
-                <input type="text" name="email" value="{{ old('email') }}" placeholder="Masukkan Email atau NIS" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-hidden transition-all">
+                <input id="email" type="email" name="email" value="{{ old('email') }}" placeholder="Masukkan email" autocomplete="username" required class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-4 py-3 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-hidden transition-all">
             </div>
         </div>
 
@@ -48,8 +52,8 @@
                 <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
                 <input :type="showPassword ? 'text' : 'password'" 
                        name="password" 
-                       value="" 
-                       placeholder="Masukkan Kata Sandi" 
+                       placeholder="Kata Sandi" 
+                       autocomplete="current-password"
                        required 
                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-11 py-3 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-hidden transition-all">
                 <!-- Eye icon button to toggle password visibility (menggunakan SVG langsung agar tidak duplikasi) -->
@@ -73,10 +77,10 @@
 
         <div class="flex items-center justify-between text-xs">
             <label class="flex items-center space-x-2 cursor-pointer text-slate-600">
-                <input type="checkbox" name="remember" class="rounded text-blue-600 focus:ring-blue-500">
+                <input type="checkbox" name="remember" value="1" class="rounded text-blue-600 focus:ring-blue-500">
                 <span>Simpan info akun</span>
             </label>
-            <a href="#" class="text-blue-600 hover:underline font-semibold">Lupa kata sandi?</a>
+            <span class="text-slate-400">Hubungi administrator untuk reset kata sandi.</span>
         </div>
 
         <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all active:scale-98 cursor-pointer">
@@ -85,14 +89,5 @@
         </button>
     </form>
 
-    <div class="flex items-center justify-center my-2">
-        <span class="text-xs font-bold text-slate-400 uppercase px-4 bg-white">OR</span>
-    </div>
-
-    <!-- Scan Card Option -->
-    <a href="{{ route('scan') }}" class="w-full bg-slate-50 hover:bg-slate-100 text-blue-600 border border-blue-200 font-extrabold py-3 rounded-2xl flex items-center justify-center space-x-2 transition-all text-xs block text-center">
-        <i data-lucide="scan" class="w-4 h-4 inline-block mr-1"></i>
-        <span>SCAN KARTU PELAJAR</span>
-    </a>
 </div>
 @endsection

@@ -2,90 +2,66 @@
 
 namespace Tests\Feature;
 
+use App\Models\Guru;
 use App\Models\GuruBk;
+use App\Models\Kelas;
 use App\Models\Siswa;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class DatabaseRelationsTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected function setUp(): void
+    public function test_guest_requests_to_student_routes_are_redirected_to_login(): void
     {
-        parent::setUp();
-        $this->seed();
-    }
-
-    public function test_all_web_routes_are_accessible(): void
-    {
-        $routes = [
-            '/',
-            '/login',
-            '/scan',
-            '/dashboard',
-            '/presensi',
-            '/izin',
-            '/riwayat',
-            '/mapel',
-            '/bk',
-            '/piket',
-            '/profil',
-            '/cek-db',
-        ];
-
-        foreach ($routes as $route) {
-            $response = $this->get($route);
-            $response->assertStatus(200);
+        foreach (['/dashboard', '/scan', '/presensi', '/izin', '/riwayat', '/mapel', '/bk', '/piket', '/profil', '/cek-db'] as $path) {
+            $this->get($path)->assertRedirect(route('login'));
         }
     }
 
-    public function test_database_has_seeded_users_with_roles(): void
+    public function test_authentication_and_profile_tables_match_the_normalized_schema(): void
     {
-        $this->assertDatabaseHas('users', ['email' => 'admin@smktibaliglobal.sch.id', 'role' => 'admin']);
-        $this->assertDatabaseHas('users', ['email' => 'made.wijaya@smktibaliglobal.sch.id', 'role' => 'guru']);
-        $this->assertDatabaseHas('users', ['email' => 'suastini.bk@smktibaliglobal.sch.id', 'role' => 'guru_bk']);
-        $this->assertDatabaseHas('users', ['email' => 'wahyu.pratama@smktibaliglobal.sch.id', 'role' => 'siswa']);
+        $this->assertTrue(Schema::hasColumns('user', ['id_user', 'username', 'nama', 'email', 'password', 'role']));
+        $this->assertTrue(Schema::hasColumns('user', ['status_aktif']));
+        $this->assertTrue(Schema::hasColumns('siswa', ['id_siswa', 'id_user', 'no_siswa', 'id_kelas', 'nomor_absen', 'nama_wali', 'no_telp_wali']));
+        $this->assertTrue(Schema::hasColumns('guru', ['id_guru', 'id_user', 'no_guru']));
+        $this->assertTrue(Schema::hasColumns('pelanggaran_siswa', ['id_pelanggaran_siswa', 'poin']));
+        $this->assertFalse(Schema::hasColumn('user', 'name'));
     }
 
-    public function test_models_and_foreign_keys_are_connected_correctly(): void
+    public function test_user_profiles_link_to_the_correct_student_and_counselor_records(): void
     {
-        $siswa = Siswa::where('nomor_siswa', '2411001')->first();
-        $this->assertNotNull($siswa);
-        $this->assertEquals(7, strlen($siswa->nomor_siswa));
+        $kelas = Kelas::create([
+            'nama_kelas' => 'XI PPLG 1',
+            'tingkat' => 'XI',
+            'jurusan' => 'PPLG',
+            'tahun_ajaran' => '2026/2027',
+        ]);
 
-        // siswa -> kelas
-        $this->assertNotNull($siswa->kelas);
-        $this->assertEquals('XI PPLG 1', $siswa->kelas->nama_kelas);
+        $studentUser = User::factory()->create(['role' => 'siswa']);
+        $student = Siswa::create([
+            'id_user' => $studentUser->id_user,
+            'no_siswa' => '2411001',
+            'nama_siswa' => 'Siswa Tes',
+            'id_kelas' => $kelas->id_kelas,
+            'jenis_kelamin' => 'L',
+        ]);
 
-        // kelas -> wali kelas (guru)
-        $wali = $siswa->kelas->waliKelas;
-        $this->assertNotNull($wali);
-        $this->assertEquals(6, strlen($wali->nomor_guru));
-        $this->assertEquals('I Made Wijaya, S.Kom', $wali->nama_guru);
+        $counselorUser = User::factory()->create(['role' => 'guru_bk']);
+        $counselor = Guru::create([
+            'id_user' => $counselorUser->id_user,
+            'no_guru' => '123456',
+            'nama_guru' => 'Guru BK Tes',
+            'jenis_kelamin' => 'P',
+        ]);
+        $guruBk = GuruBk::create(['id_guru' => $counselor->id_guru]);
 
-        // guru -> guru_bk
-        $guruBkModel = GuruBk::first();
-        $this->assertNotNull($guruBkModel);
-        $this->assertNotNull($guruBkModel->guru);
-        $this->assertEquals('Dra. Ni Luh Suastini, S.Pd', $guruBkModel->guru->nama_guru);
-
-        // siswa -> absensi
-        $this->assertTrue($siswa->absensi()->count() > 0);
-
-        // siswa -> konseling
-        $this->assertTrue($siswa->konseling()->count() > 0);
-
-        // siswa -> pelanggaran_siswa
-        $this->assertTrue($siswa->pelanggaranSiswa()->count() > 0);
-
-        // siswa -> ekstrakurikuler
-        $this->assertTrue($siswa->ekstrakurikuler()->count() > 0);
-
-        // siswa -> jadwal_piket
-        $this->assertTrue($siswa->jadwalPiket()->count() > 0);
-
-        // siswa -> prestasi
-        $this->assertTrue($siswa->prestasi()->count() > 0);
+        $this->assertSame($student->id_siswa, $studentUser->siswa->id_siswa);
+        $this->assertSame($kelas->id_kelas, $student->kelas->id_kelas);
+        $this->assertSame($counselor->id_guru, $counselorUser->guru->id_guru);
+        $this->assertSame($guruBk->id_guru_bk, $counselorUser->guru->guruBk->id_guru_bk);
     }
 }

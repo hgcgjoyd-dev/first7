@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Absensi;
 use App\Models\Bk;
 use App\Models\Izin;
 use App\Models\Mapel;
@@ -11,17 +12,22 @@ use App\Models\Siswa;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
+<<<<<<< HEAD
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
+=======
+>>>>>>> ce0b34fcfbc2585745e0a0a948d4a1ad01b273bb
 use Illuminate\Support\Facades\Schema;
+use Illuminate\View\View;
 
 class KesiswaanController extends Controller
 {
     /**
-     * Memastikan tabel kesiswaan di database siap digunakan.
+     * Mengambil profil siswa yang terhubung ke akun yang sedang login.
      */
-    protected function ensureDatabaseReady()
+    protected function getActiveSiswa(): Siswa
     {
+<<<<<<< HEAD
         try {
             if (! Schema::hasTable('siswa')) {
                 Artisan::call('migrate', ['--force' => true]);
@@ -86,14 +92,13 @@ class KesiswaanController extends Controller
     protected function getActiveSiswa()
     {
         $this->ensureDatabaseReady();
+=======
+        $student = request()->user()?->siswa;
+>>>>>>> ce0b34fcfbc2585745e0a0a948d4a1ad01b273bb
 
-        if (session()->has('siswa_id')) {
-            $siswa = Siswa::find(session('siswa_id'));
-            if ($siswa) {
-                return $siswa;
-            }
-        }
+        abort_unless($student instanceof Siswa, 403);
 
+<<<<<<< HEAD
         try {
             if (Schema::hasTable('siswa')) {
                 $siswa = Siswa::first();
@@ -118,6 +123,9 @@ class KesiswaanController extends Controller
             'poin_bk' => 15,
             'poin_prestasi' => 50,
         ];
+=======
+        return $student;
+>>>>>>> ce0b34fcfbc2585745e0a0a948d4a1ad01b273bb
     }
 
     /**
@@ -136,12 +144,12 @@ class KesiswaanController extends Controller
     /**
      * 1. Halaman Gateway Awal
      */
-    public function landing()
+    public function landing(): View
     {
-        $this->ensureDatabaseReady();
         if (view()->exists('dashboard siswa.auth.landing')) {
             return view('dashboard siswa.auth.landing');
         }
+<<<<<<< HEAD
 
         return view('auth.landing');
     }
@@ -237,6 +245,10 @@ class KesiswaanController extends Controller
         } catch (Exception $e) {
             return back()->with('error', 'Error database: '.$e->getMessage());
         }
+=======
+
+        return view('auth.landing');
+>>>>>>> ce0b34fcfbc2585745e0a0a948d4a1ad01b273bb
     }
 
     /**
@@ -256,6 +268,7 @@ class KesiswaanController extends Controller
      */
     public function postScan(Request $request)
     {
+<<<<<<< HEAD
         $this->ensureDatabaseReady();
 
         $code = $request->input('code');
@@ -295,7 +308,43 @@ class KesiswaanController extends Controller
             return response()->json(['success' => false, 'message' => 'Kartu tidak terdaftar di database siswa.'], 404);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+=======
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:50'],
+        ]);
+        $student = $this->getActiveSiswa();
+
+        abort_unless(hash_equals($student->no_siswa, $validated['code']), 403);
+
+        $today = Carbon::today();
+        $attendance = Absensi::query()
+            ->where('id_siswa', $student->id_siswa)
+            ->whereDate('tanggal', $today)
+            ->first();
+
+        if (! $attendance) {
+            $attendance = new Absensi([
+                'id_siswa' => $student->id_siswa,
+                'tanggal' => $today,
+                'jam_masuk' => Carbon::now()->toTimeString(),
+                'status' => Carbon::now()->hour >= 8 ? 'Terlambat' : 'Hadir',
+                'keterangan' => 'Scan kartu siswa',
+            ]);
+            $attendance->save();
         }
+
+        if (! $request->expectsJson()) {
+            return redirect()->route('dashboard.siswa')->with('success', 'Presensi berhasil dicatat.');
+>>>>>>> ce0b34fcfbc2585745e0a0a948d4a1ad01b273bb
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Presensi berhasil dicatat.',
+            'siswa' => $student,
+            'presensi' => $attendance,
+            'redirect' => route('dashboard.siswa'),
+        ]);
     }
 
     /**
@@ -386,11 +435,15 @@ class KesiswaanController extends Controller
 
         $viewName = view()->exists('dashboard siswa.presensi') ? 'dashboard siswa.presensi' : 'presensi.index';
 
+<<<<<<< HEAD
         return view($viewName, compact('siswa', 'presensiHariIni') + [
             'radiusMeter' => config('absensi.radius_meter'),
             'schoolLat' => config('absensi.school_lat'),
             'schoolLng' => config('absensi.school_lng'),
         ]);
+=======
+        return view($viewName, compact('siswa', 'presensiHariIni'));
+>>>>>>> ce0b34fcfbc2585745e0a0a948d4a1ad01b273bb
     }
 
     /**
@@ -398,11 +451,27 @@ class KesiswaanController extends Controller
      */
     public function storePresensi(Request $request)
     {
-        $this->ensureDatabaseReady();
-        $siswa = $this->getActiveSiswa();
+        $validated = $request->validate([
+            'tipe' => ['sometimes', 'string', 'in:datang,pulang'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
+            'foto' => ['nullable', 'string', 'max:255'],
+        ]);
+        $student = $this->getActiveSiswa();
         $today = Carbon::today()->toDateString();
         $nowTime = Carbon::now()->toTimeString();
+        $type = $validated['tipe'] ?? 'datang';
 
+        $attendance = Absensi::query()
+            ->where('id_siswa', $student->id_siswa)
+            ->whereDate('tanggal', $today)
+            ->first() ?? new Absensi([
+                'id_siswa' => $student->id_siswa,
+                'tanggal' => Carbon::today(),
+                'status' => Carbon::now()->hour >= 8 ? 'Terlambat' : 'Hadir',
+            ]);
+
+<<<<<<< HEAD
         $request->validate([
             'tipe' => 'nullable|string',
             'latitude' => 'required|numeric',
@@ -484,6 +553,24 @@ class KesiswaanController extends Controller
                 'message' => 'Gagal menyimpan presensi: '.$e->getMessage(),
             ], 500);
         }
+=======
+        if ($type === 'pulang') {
+            $attendance->jam_pulang = $nowTime;
+        } else {
+            $attendance->jam_masuk ??= $nowTime;
+        }
+
+        $attendance->latitude = $validated['latitude'] ?? $attendance->latitude;
+        $attendance->longitude = $validated['longitude'] ?? $attendance->longitude;
+        $attendance->foto_biometrik = $validated['foto'] ?? $attendance->foto_biometrik;
+        $attendance->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Presensi '.ucfirst($type).' berhasil disimpan.',
+            'data' => $attendance,
+        ]);
+>>>>>>> ce0b34fcfbc2585745e0a0a948d4a1ad01b273bb
     }
 
     /**
@@ -502,7 +589,6 @@ class KesiswaanController extends Controller
      */
     public function storeIzin(Request $request)
     {
-        $this->ensureDatabaseReady();
         $siswa = $this->getActiveSiswa();
 
         $request->validate([
@@ -702,6 +788,7 @@ class KesiswaanController extends Controller
     {
         $siswa = $this->getActiveSiswa();
         $viewName = view()->exists('dashboard siswa.profil') ? 'dashboard siswa.profil' : 'profil.index';
+<<<<<<< HEAD
 
         return view($viewName, compact('siswa'));
     }
@@ -721,5 +808,9 @@ class KesiswaanController extends Controller
         ]);
 
         return redirect()->route('login')->with('success', 'Berhasil keluar dari akun.');
+=======
+
+        return view($viewName, compact('siswa'));
+>>>>>>> ce0b34fcfbc2585745e0a0a948d4a1ad01b273bb
     }
 }

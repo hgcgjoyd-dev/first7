@@ -18,6 +18,13 @@ class GuruBk extends Model
         'status_aktif',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'status_aktif' => 'boolean',
+        ];
+    }
+
     public function guru()
     {
         return $this->belongsTo(Guru::class, 'id_guru', 'id_guru');

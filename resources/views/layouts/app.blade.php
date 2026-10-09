@@ -145,12 +145,67 @@
 
             <!-- Right: Quick Navigation & Profile Avatar (Pojok Kanan) -->
             <div class="flex items-center space-x-3">
-                <!-- User Profile Link Button -->
-                <a href="{{ route('profil') }}" 
-                   title="Buka Profil Siswa" 
-                   class="p-1 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center group">
-                    <div class="w-9 h-9 rounded-full bg-linear-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
+
+                <!-- Notifications Dropdown (Pojok Kanan Atas) -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" class="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors" title="Pemberitahuan">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+                    </button>
+
+                    <div x-show="open" @click.away="open = false" x-cloak
+                         class="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-100 py-3 z-50">
+
+                        <div class="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
+                            <span class="font-bold text-sm text-slate-800">Pemberitahuan Siswa</span>
+                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">3 Baru</span>
+                        </div>
+
+                        <div class="divide-y divide-slate-100 text-xs">
+                            <a href="{{ route('bk') }}" class="p-3 hover:bg-slate-50 flex items-start space-x-3 block">
+                                <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                                </div>
+
+                                <div>
+                                    <p class="font-semibold text-slate-900">Panggilan BK: Dra. Ni Luh Suastini</p>
+                                    <p class="text-slate-500 text-[11px] mt-0.5">Jadwal evaluasi kedisiplinan ruang BK (08:30 WITA)</p>
+                                </div>
+                            </a>
+
+                            <a href="{{ route('profil') }}" class="p-3 hover:bg-slate-50 flex items-start space-x-3 block">
+                                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="award" class="w-4 h-4"></i>
+                                </div>
+
+                                <div>
+                                    <p class="font-semibold text-slate-900">Reward Juara 2 LKS Web Tech</p>
+                                    <p class="text-slate-500 text-[11px] mt-0.5">Ditambahkan +30 poin penghargaan siswa</p>
+                                </div>
+                            </a>
+
+                            <a href="{{ route('mapel') }}" class="p-3 hover:bg-slate-50 flex items-start space-x-3 block">
+                                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                                    <i data-lucide="code" class="w-4 h-4"></i>
+                                </div>
+
+                                <div>
+                                    <p class="font-semibold text-slate-900">Tugas Web & Mobile: Besok!</p>
+                                    <p class="text-slate-500 text-[11px] mt-0.5">Deadline Slice UI Figma pukul 23:59 WITA</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Profile Link -->
+                <a href="{{ route('profil') }}" class="flex items-center space-x-2.5 p-1 rounded-xl hover:bg-slate-100 transition-colors text-left pl-2 border-l border-slate-200">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
                         <i data-lucide="graduation-cap" class="w-5 h-5"></i>
+                    </div>
+                    <div class="hidden sm:block">
+                        <p class="text-xs font-bold text-slate-900 leading-tight">{{ auth()->user()->nama }}</p>
+                        <p class="text-[10px] text-slate-500">{{ auth()->user()->siswa?->kelas?->nama_kelas }} • {{ auth()->user()->siswa?->no_siswa }}</p>
                     </div>
                 </a>
             </div>
@@ -173,9 +228,9 @@
                         </div>
 
                         <div>
-                            <h4 class="font-extrabold text-sm text-slate-900">Wahyu Pratama</h4>
+                            <h4 class="font-extrabold text-sm text-slate-900">{{ auth()->user()->nama }}</h4>
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">
-                                ● XI PPLG 1 (Aktif)
+                                ● {{ auth()->user()->siswa?->kelas?->nama_kelas }} (Aktif)
                             </span>
                         </div>
                     </div>
@@ -232,6 +287,18 @@
                             <span class="text-[10px] px-2 py-0.5 rounded-full font-bold {{ request()->routeIs('profil') ? 'bg-white text-blue-600' : 'bg-indigo-100 text-indigo-700' }}">+40 Reward</span>
                         </a>
                     </nav>
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-6 mb-3 px-3">Akun Siswa</p>
+                    <nav class="space-y-1.5">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-rose-600 hover:bg-rose-50">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                <span>Keluar / Ganti Akun</span>
+                            </div>
+                            </button>
+                        </form>
+                    </nav>
                 </div>
 
                 <!-- School Info Card with Logo PNG -->
@@ -251,7 +318,7 @@
     </div>
 
     <!-- MOBILE BOTTOM NAVIGATION (Hanya Tampil di Dashboard Sesuai Revisi) -->
-    @if(request()->routeIs('dashboard'))
+    @if(request()->routeIs('dashboard', 'dashboard.siswa'))
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-8 py-2.5 z-40 shadow-lg">
         <div class="max-w-md mx-auto flex items-center justify-between relative">
 

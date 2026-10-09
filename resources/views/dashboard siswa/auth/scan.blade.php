@@ -1,4 +1,4 @@
-@extends('dashboard siswa.auth.auth')
+@extends('layouts.auth')
 
 @section('title', 'Scan Kartu Pelajar')
 

@@ -1,0 +1,76 @@
+D	app/Console/Commands/CreateUserAccount.php
+A	app/Http/ControlerSiswa/DatabaseController.php
+A	app/Http/ControlerSiswa/KesiswaanController.php
+D	app/Http/Controllers/Admin/AbsensiController.php
+D	app/Http/Controllers/Admin/GuruController.php
+D	app/Http/Controllers/Admin/KelasController.php
+D	app/Http/Controllers/Admin/SiswaController.php
+D	app/Http/Controllers/Admin/UserController.php
+D	app/Http/Controllers/AuthController.php
+D	app/Http/Controllers/DashboardController.php
+M	app/Http/Controllers/DatabaseController.php
+D	app/Http/Controllers/GuruBk/PelanggaranSiswaController.php
+M	app/Http/Controllers/KesiswaanController.php
+D	app/Http/Middleware/EnsureUserHasRole.php
+D	app/Http/Middleware/EnsureUserIsActive.php
+R074	app/Models/Absensi.php	app/Models/Model Siswa/Absensi.php
+R100	app/Models/AnggotaEkskul.php	app/Models/Model Siswa/AnggotaEkskul.php
+R100	app/Models/Bk.php	app/Models/Model Siswa/Bk.php
+R100	app/Models/Ekstrakurikuler.php	app/Models/Model Siswa/Ekstrakurikuler.php
+R062	app/Models/Guru.php	app/Models/Model Siswa/Guru.php
+R085	app/Models/GuruBk.php	app/Models/Model Siswa/GuruBk.php
+R076	app/Models/Izin.php	app/Models/Model Siswa/Izin.php
+R100	app/Models/JadwalPelajaran.php	app/Models/Model Siswa/JadwalPelajaran.php
+R100	app/Models/JenisPelanggaran.php	app/Models/Model Siswa/JenisPelanggaran.php
+R073	app/Models/Kelas.php	app/Models/Model Siswa/Kelas.php
+R100	app/Models/Konseling.php	app/Models/Model Siswa/Konseling.php
+R100	app/Models/Mapel.php	app/Models/Model Siswa/Mapel.php
+R100	app/Models/MataPelajaran.php	app/Models/Model Siswa/MataPelajaran.php
+R081	app/Models/PelanggaranSiswa.php	app/Models/Model Siswa/PelanggaranSiswa.php
+R100	app/Models/Piket.php	app/Models/Model Siswa/Piket.php
+R100	app/Models/Presensi.php	app/Models/Model Siswa/Presensi.php
+R100	app/Models/Prestasi.php	app/Models/Model Siswa/Prestasi.php
+A	app/Models/Model Siswa/Siswa.php
+R059	app/Models/User.php	app/Models/Model Siswa/User.php
+D	app/Models/Siswa.php
+M	bootstrap/app.php
+M	composer.json
+M	database/factories/UserFactory.php
+M	database/migrations/2026_09_25_000001_create_kesiswaan_tables.php
+M	database/migrations/2026_10_08_000001_create_guru_table.php
+M	database/migrations/2026_10_08_000004_create_siswa_table.php
+D	database/migrations/2026_10_09_000001_create_izin_table.php
+D	database/migrations/2026_10_09_000002_add_unique_user_profile_links.php
+D	database/migrations/2026_10_09_001106_add_management_fields_and_constraints.php
+D	resources/views/admin/absensi-report.blade.php
+D	resources/views/admin/crud/form.blade.php
+D	resources/views/admin/crud/index.blade.php
+D	resources/views/admin/crud/show.blade.php
+D	resources/views/auth/landing.blade.php
+D	resources/views/auth/scan.blade.php
+D	resources/views/cek-db.blade.php
+A	resources/views/dashboard guru/dashboardbk.blade.php
+R090	resources/views/layouts/app.blade.php	resources/views/dashboard siswa/app.blade.php
+R100	resources/views/layouts/auth.blade.php	resources/views/dashboard siswa/auth/auth.blade.php
+M	resources/views/dashboard siswa/auth/landing.blade.php
+M	resources/views/dashboard siswa/auth/login.blade.php
+M	resources/views/dashboard siswa/auth/scan.blade.php
+M	resources/views/dashboard siswa/bk.blade.php
+M	resources/views/dashboard siswa/dashboard.blade.php
+M	resources/views/dashboard siswa/izin.blade.php
+M	resources/views/dashboard siswa/konseling.blade.php
+M	resources/views/dashboard siswa/mapel.blade.php
+M	resources/views/dashboard siswa/piket.blade.php
+M	resources/views/dashboard siswa/presensi.blade.php
+M	resources/views/dashboard siswa/profil.blade.php
+M	resources/views/dashboard siswa/riwayat.blade.php
+M	resources/views/dashboard.blade.php
+D	resources/views/dashboard/role.blade.php
+D	resources/views/layouts/dashboard.blade.php
+D	resources/views/piket/index.blade.php
+D	resources/views/profil/index.blade.php
+D	resources/views/riwayat/index.blade.php
+M	routes/web.php
+D	tests/Feature/Admin/CrudAuthorizationTest.php
+D	tests/Feature/AuthenticationTest.php
+M	tests/Feature/DatabaseRelationsTest.php

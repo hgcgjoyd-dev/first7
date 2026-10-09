@@ -1,4 +1,4 @@
-@extends('dashboard siswa.app')
+@extends('layouts.app')
 
 @section('title', 'Bimbingan Konseling & Kedisiplinan')
 
@@ -686,4 +686,3 @@
 
 </div>
 @endsection
-

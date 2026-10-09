@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Absensi extends Model
 {
@@ -33,12 +34,17 @@ class Absensi extends Model
         ];
     }
 
-    public function siswa()
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->status === 'Alpa' ? 'Alpha' : $this->status;
+    }
+
+    public function siswa(): BelongsTo
     {
         return $this->belongsTo(Siswa::class, 'id_siswa', 'id_siswa');
     }
 
-    public function guru()
+    public function guru(): BelongsTo
     {
         return $this->belongsTo(Guru::class, 'id_guru', 'id_guru');
     }

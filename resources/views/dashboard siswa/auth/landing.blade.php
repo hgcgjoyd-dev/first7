@@ -1,4 +1,4 @@
-@extends('dashboard siswa.auth.auth')
+@extends('layouts.auth')
 
 @section('title', 'Halaman Awal Gateway')
 
@@ -241,4 +241,3 @@
     </div>
 </div>
 @endsection
-
