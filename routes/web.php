@@ -47,53 +47,151 @@ Route::get('/profil', [KesiswaanController::class, 'profil'])->name('profil');
 // 7. Cek Koneksi Database
 Route::get('/cek-db', [DatabaseController::class, 'check'])->name('cek-db');
 
+// Helper view Guru BK (Mendukung folder 'dashboard guru bk' maupun fallback 'dashboard guru')
+if (!function_exists('renderBkView')) {
+    function renderBkView(string $viewName) {
+        if (view()->exists("dashboard guru bk.{$viewName}")) {
+            return view("dashboard guru bk.{$viewName}");
+        }
+        return view("dashboard guru.{$viewName}");
+    }
+}
+
 // 8. Dashboard Guru BK (Responsive Mobile & Desktop)
 Route::get('/dashboardbk', function () {
-    return view('dashboard guru.dashboardbk');
+    return renderBkView('dashboardbk');
 })->name('guru.bk');
 
-Route::get('/dashboard-guru/bk', function () {
-    return view('dashboard guru.dashboardbk');
+Route::get('/dashboard-guru-bk', function () {
+    return renderBkView('dashboardbk');
 })->name('dashboard.guru.bk');
 
+Route::get('/dashboard-gurubk', function () {
+    return renderBkView('dashboardbk');
+})->name('dashboard.gurubk');
+
+Route::get('/dashboard-guru/bk', function () {
+    return redirect()->route('guru.bk');
+});
+
+Route::get('/dashboard-guru', function () {
+    return redirect()->route('guru.bk');
+});
+
 // 9. Absensi Siswa Semua Kelas (Guru BK)
-Route::get('/dashboard-guru/absensi', function () {
-    return view('dashboard guru.absensi');
+Route::get('/dashboard-guru-bk/absensi', function () {
+    return renderBkView('absensi');
 })->name('guru.absensi');
 
+Route::get('/dashboard-gurubk/absensi', function () {
+    return renderBkView('absensi');
+})->name('gurubk.absensi');
+
+Route::get('/dashboardbk/absensi', function () {
+    return renderBkView('absensi');
+});
+
+Route::get('/absensi-bk', function () {
+    return renderBkView('absensi');
+})->name('absensi.bk');
+
+Route::get('/absensi-guru-bk', function () {
+    return renderBkView('absensi');
+});
+
+Route::get('/dashboard-guru/absensi', function () {
+    return redirect()->route('guru.absensi');
+});
+
 Route::get('/absensi-guru', function () {
-    return view('dashboard guru.absensi');
-})->name('absensi.guru');
+    return redirect()->route('guru.absensi');
+});
 
 // 10. Pelanggaran Siswa (Guru BK - Antrean Kasus & Penyesuaian Poin)
-Route::get('/dashboard-guru/pelanggaran', function () {
-    return view('dashboard guru.pelanggaran');
+Route::get('/dashboard-guru-bk/pelanggaran', function () {
+    return renderBkView('pelanggaran');
 })->name('guru.pelanggaran');
 
+Route::get('/dashboard-gurubk/pelanggaran', function () {
+    return renderBkView('pelanggaran');
+})->name('gurubk.pelanggaran');
+
+Route::get('/dashboardbk/pelanggaran', function () {
+    return renderBkView('pelanggaran');
+});
+
+Route::get('/pelanggaran-bk', function () {
+    return renderBkView('pelanggaran');
+})->name('pelanggaran.bk');
+
 Route::get('/pelanggaran', function () {
-    return view('dashboard guru.pelanggaran');
+    return renderBkView('pelanggaran');
 })->name('pelanggaran');
 
+Route::get('/dashboard-guru/pelanggaran', function () {
+    return redirect()->route('guru.pelanggaran');
+});
+
 // 11. Pengajuan Konseling & BK (Guru BK - Antrean & Penjadwalan)
-Route::get('/dashboard-guru/konseling', function () {
-    return view('dashboard guru.konseling');
+Route::get('/dashboard-guru-bk/konseling', function () {
+    return renderBkView('konseling');
 })->name('guru.konseling');
 
+Route::get('/dashboard-gurubk/konseling', function () {
+    return renderBkView('konseling');
+})->name('gurubk.konseling');
+
+Route::get('/dashboardbk/konseling', function () {
+    return renderBkView('konseling');
+});
+
+Route::get('/konseling-bk', function () {
+    return renderBkView('konseling');
+})->name('konseling.bk');
+
+Route::get('/konseling-guru-bk', function () {
+    return renderBkView('konseling');
+});
+
+Route::get('/dashboard-guru/konseling', function () {
+    return redirect()->route('guru.konseling');
+});
+
 Route::get('/konseling-guru', function () {
-    return view('dashboard guru.konseling');
-})->name('konseling.guru');
+    return redirect()->route('guru.konseling');
+});
 
 // 12. Profil Guru BK (Responsive Mobile & Desktop)
-Route::get('/profilebk', function () {
-    return view('dashboard guru.profilebk');
-})->name('profilebk');
-
-Route::get('/dashboard-guru/profile', function () {
-    return view('dashboard guru.profilebk');
+Route::get('/dashboard-guru-bk/profile', function () {
+    return renderBkView('profilebk');
 })->name('guru.profile');
 
-Route::get('/dashboard-guru/profilebk', function () {
-    return view('dashboard guru.profilebk');
+Route::get('/dashboard-gurubk/profile', function () {
+    return renderBkView('profilebk');
+})->name('gurubk.profile');
+
+Route::get('/dashboardbk/profile', function () {
+    return renderBkView('profilebk');
+});
+
+Route::get('/profilebk', function () {
+    return renderBkView('profilebk');
+})->name('profilebk');
+
+Route::get('/dashboard-guru-bk/profilebk', function () {
+    return renderBkView('profilebk');
 })->name('dashboard.guru.profilebk');
+
+Route::get('/dashboard-gurubk/profilebk', function () {
+    return renderBkView('profilebk');
+});
+
+Route::get('/dashboard-guru/profile', function () {
+    return redirect()->route('guru.profile');
+});
+
+Route::get('/dashboard-guru/profilebk', function () {
+    return redirect()->route('guru.profile');
+});
 
 

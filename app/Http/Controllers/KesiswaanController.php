@@ -171,7 +171,7 @@ class KesiswaanController extends Controller
             if (in_array($inputEmail, $guruIdentifiers)) {
                 if ($inputPassword === 'guru123' || $inputPassword === 'password123' || $inputPassword === 'admin123') {
                     session([
-                        'user_role'    => 'guru',
+                        'user_role'    => 'guru_bk',
                         'guru_nama'    => 'Dra. Ni Luh Suastini, S.Pd',
                         'guru_nip'     => '19780512 200501 2 008',
                         'guru_jabatan' => 'Koordinator Guru BK & Konselor Sekolah',
