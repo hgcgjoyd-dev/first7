@@ -62,6 +62,7 @@
                         videoEl.onloadedmetadata = () => {
                             videoEl.play().catch(e => console.warn(e));
                             this.cameraActive = true;
+                            this.setupFocus();
                             this.startAutoDetection();
                         };
                     }
@@ -141,6 +142,24 @@
             }
             const mean = sum / n;
             return (sumSq / n) - (mean * mean); // Laplacian variance
+        },
+
+        setupFocus() {
+            const videoEl = document.getElementById('scannerWebcam');
+            if (!videoEl || !videoEl.srcObject) return;
+
+            const tracks = videoEl.srcObject.getVideoTracks();
+            if (tracks.length === 0) return;
+
+            const capabilities = tracks[0].getCapabilities?.();
+            if (capabilities && capabilities.focusMode) {
+                try {
+                    tracks[0].applyConstraints({
+                        focusMode: 'continuous',
+                        advanced: [{ focusDistance: 0.3 }]
+                    }).catch(() => {});
+                } catch (e) {}
+            }
         },
 
         startAutoDetection() {
@@ -245,11 +264,6 @@
 
                     const ctx =
                         canvas.getContext('2d');
-
-                    if (this.facingMode === 'user') {
-                        ctx.translate(canvas.width, 0);
-                        ctx.scale(-1, 1);
-                    }
 
                     ctx.drawImage(
                         videoEl,
@@ -387,15 +401,16 @@
 
         <!-- Real Webcam Video Stream -->
         <video id="scannerWebcam"
-               autoplay
-               playsinline
-               muted
-               class="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300"
-               :class="{
-                   'opacity-100': cameraActive && !scanned,
-                   'opacity-0 pointer-events-none': !cameraActive || scanned,
-                   'scale-x-[-1]': facingMode === 'user'
-               }">
+autoplay
+                playsinline
+                muted
+                class="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300"
+                :class="{
+                    'opacity-100': cameraActive && !scanned,
+                    'opacity-0 pointer-events-none': !cameraActive || scanned
+                }"
+                style="touch-action: none;"
+                @loadedmetadata="setupFocus()">
         </video>
 
         <!-- Hidden Canvas -->
