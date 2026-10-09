@@ -4,22 +4,28 @@
 
 @section('content')
 <div class="w-full space-y-6" x-data="{
-    currentScreen: 'datang_camera', // 'datang_camera' or 'datang_result'
-    datangResultType: 'telat',      // 'tepat' or 'telat'
+    activeTab: '{{ request('tab') === 'pulang' ? 'pulang' : 'datang' }}',
+    currentScreen: '{{ request('tab') === 'pulang' ? 'pulang_confirm' : 'datang_camera' }}',
+    datangResultType: 'tepat',      // 'tepat' or 'telat'
     
     cameraActive: false,
     cameraError: false,
     errorMessage: '',
     webcamStream: null,
     isProcessing: false,
+    isProcessingPulang: false,
     capturedPhoto: null,
 
-    recordedTime: '07:06:22 WITA',
-    recordedDate: '',
-    currentClock: '',
-    currentHour: 0,
-    currentMinute: 0,
+    recordedTime: '07:05:00 WITA',
+    recordedDate: 'Kamis, 24 Sep 2026',
+    currentClock: '12:25:00 WITA',
+    currentHour: 12,
+    currentMinute: 25,
     currentSecond: 0,
+
+    pulangTime: '12:25',
+    pulangTimeFull: '12:25:44 WITA',
+    isPulangConfirmed: false,
 
     getGreeting() {
         const hr = new Date().getHours();
@@ -33,11 +39,29 @@
         this.updateClock();
         setInterval(() => this.updateClock(), 1000);
         
-        // Start live camera directly
-        this.$nextTick(() => {
-            this.startCamera();
-            if (window.lucide) lucide.createIcons();
-        });
+        // Cek apakah sudah pernah konfirmasi pulang sebelumnya
+        try {
+            const savedPulang = localStorage.getItem('presensi_pulang_done');
+            if (savedPulang === 'true') {
+                this.isPulangConfirmed = true;
+                const savedTime = localStorage.getItem('presensi_pulang_time');
+                if (savedTime) {
+                    this.pulangTime = savedTime;
+                    this.pulangTimeFull = savedTime + ':44 WITA';
+                }
+            }
+        } catch(e) {}
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        if (tabParam === 'pulang' || this.activeTab === 'pulang') {
+            this.switchTab('pulang');
+        } else {
+            this.$nextTick(() => {
+                this.startCamera();
+                if (window.lucide) lucide.createIcons();
+            });
+        }
     },
 
     updateClock() {
@@ -101,6 +125,74 @@
         this.cameraActive = false;
     },
 
+    switchTab(tab) {
+        this.activeTab = tab;
+        if (tab === 'pulang') {
+            this.stopCamera();
+            // Selalu bawa ke halaman konfirmasi pulang agar tombol selalu bisa dipencet
+            this.currentScreen = 'pulang_confirm';
+        } else {
+            if (this.capturedPhoto) {
+                this.currentScreen = 'datang_result';
+            } else {
+                this.currentScreen = 'datang_camera';
+                this.startCamera();
+            }
+        }
+        this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+    },
+
+    confirmPulang() {
+        if (this.isProcessingPulang) return;
+        this.isProcessingPulang = true;
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        this.pulangTime = `${h}:${m}`;
+        this.pulangTimeFull = `${h}:${m}:${s} WITA`;
+
+        try {
+            localStorage.setItem('presensi_pulang_done', 'true');
+            localStorage.setItem('presensi_pulang_time', this.pulangTime);
+            this.isPulangConfirmed = true;
+        } catch(e) {}
+
+        fetch('{{ route('presensi.store') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                tipe: 'pulang',
+                latitude: -8.6478,
+                longitude: 115.1764
+            })
+        }).catch(() => {});
+
+        setTimeout(() => {
+            this.isProcessingPulang = false;
+            this.currentScreen = 'pulang_result';
+            this.$nextTick(() => { 
+                if (window.lucide) lucide.createIcons(); 
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }, 500);
+    },
+
+    resetPulang() {
+        this.isPulangConfirmed = false;
+        try {
+            localStorage.removeItem('presensi_pulang_done');
+            localStorage.removeItem('presensi_pulang_time');
+        } catch(e) {}
+        this.currentScreen = 'pulang_confirm';
+        this.$nextTick(() => { 
+            if (window.lucide) lucide.createIcons(); 
+        });
+    },
+
     takePhotoAndSubmit() {
         this.isProcessing = true;
         const now = new Date();
@@ -111,7 +203,6 @@
         const mStr = String(m).padStart(2, '0');
         this.recordedTime = `${hStr}:${mStr}:${s} WITA`;
 
-        // 1. Ambil snapshot wajah asli dari video stream webcam
         const videoEl = document.getElementById('presensiWebcam');
         const canvas = document.getElementById('snapshotCanvas');
         if (videoEl && canvas && this.cameraActive) {
@@ -119,7 +210,6 @@
                 canvas.width = videoEl.videoWidth || 640;
                 canvas.height = videoEl.videoHeight || 480;
                 const ctx = canvas.getContext('2d');
-                // Mirror gambar horizontal agar sama dengan tampilan webcam
                 ctx.translate(canvas.width, 0);
                 ctx.scale(-1, 1);
                 ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
@@ -129,22 +219,19 @@
             }
         }
 
-        // 2. Evaluasi Aturan 07:05:
-        // Lebih dari 07.05 TELAT
-        // Kurang dari atau sama dengan 07.05 TEPAT WAKTU
         const isLate = (h > 7) || (h === 7 && m > 5);
         this.datangResultType = isLate ? 'telat' : 'tepat';
 
-        // 3. Simpan status ke localStorage agar otomatis tersinkron ke dashboard
         const todayDateStr = new Date().toISOString().slice(0, 10);
-        localStorage.setItem('presensi_date_today', todayDateStr);
-        localStorage.setItem('presensi_status_today', this.datangResultType);
-        localStorage.setItem('presensi_jam_today', this.recordedTime);
-        if (this.capturedPhoto) {
-            try { localStorage.setItem('presensi_foto_today', this.capturedPhoto); } catch(e) {}
-        }
+        try {
+            localStorage.setItem('presensi_date_today', todayDateStr);
+            localStorage.setItem('presensi_status_today', this.datangResultType);
+            localStorage.setItem('presensi_jam_today', this.recordedTime);
+            if (this.capturedPhoto) {
+                localStorage.setItem('presensi_foto_today', this.capturedPhoto);
+            }
+        } catch(e) {}
 
-        // 4. Simpan ke database via controller
         fetch('{{ route('presensi.store') }}', {
             method: 'POST',
             headers: {
@@ -237,12 +324,12 @@
                     </span>
                 </div>
 
-                <!-- Screen 4 & 5: Absen Pulang Time Pill -->
-                <div x-show="currentScreen === 'pulang_confirm' || currentScreen === 'pulang_result'" class="bg-blue-900/60 backdrop-blur-md border border-white/20 rounded-2xl px-3 sm:px-4 py-2 text-right">
-                    <span class="text-[10px] font-bold text-blue-200 uppercase tracking-wider block">ABSEN PULANG</span>
+                <!-- Screen 4 & 5: Absen Pulang Time Pill (Exact Mockup Match) -->
+                <div x-show="currentScreen === 'pulang_confirm' || currentScreen === 'pulang_result'" class="bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl px-3.5 py-1.5 sm:py-2 text-right">
+                    <span class="text-[9px] font-extrabold text-blue-100 uppercase tracking-wider block">ABSEN PULANG</span>
                     <div class="flex items-center space-x-1.5 text-xs sm:text-sm font-black text-white mt-0.5">
-                        <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-300"></i>
-                        <span x-text="currentHour + ':' + String(currentMinute).padStart(2, '0') + ' WITA'">12:25 WITA</span>
+                        <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-200"></i>
+                        <span x-text="(pulangTime || '12:25') + ' WITA'">12:25 WITA</span>
                     </div>
                 </div>
             </div>
@@ -259,21 +346,23 @@
         <!-- ===================================================================== -->
         <div class="lg:col-span-7 xl:col-span-8 space-y-5">
 
-            <!-- SUB-TABS: ABSEN DATANG VS ABSEN PULANG (Screens 1 & 4) -->
-            <div class="flex items-center space-x-3 w-full max-w-md mx-auto">
+            <!-- SUB-TABS: ABSEN DATENG VS ABSEN PULANG (Exact Mockup Match) -->
+            <div class="bg-white p-1.5 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs flex items-center max-w-md mx-auto w-full">
                 <button type="button" 
                         @click="switchTab('datang')"
-                        class="flex-1 py-3 px-5 rounded-2xl font-black text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center space-x-2 cursor-pointer"
-                        :class="activeTab === 'datang' ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50'">
-                    <i data-lucide="scan" class="w-4 h-4"></i>
-                    <span>Absen Datang</span>
+                        class="flex-1 py-3 px-4 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                        :class="activeTab === 'datang' 
+                            ? 'bg-[#10b981] text-white shadow-md shadow-emerald-500/25' 
+                            : 'text-slate-600 hover:text-slate-900 bg-transparent'">
+                    <span>Absen Dateng</span>
                 </button>
 
                 <button type="button" 
                         @click="switchTab('pulang')"
-                        class="flex-1 py-3 px-5 rounded-2xl font-black text-xs sm:text-sm transition-all shadow-sm flex items-center justify-center space-x-2 cursor-pointer"
-                        :class="activeTab === 'pulang' ? 'bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50'">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                        class="flex-1 py-3 px-4 rounded-xl sm:rounded-2xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center space-x-2 cursor-pointer"
+                        :class="activeTab === 'pulang' 
+                            ? 'bg-[#10b981] text-white shadow-md shadow-emerald-500/25' 
+                            : 'text-slate-600 hover:text-slate-900 bg-transparent'">
                     <span>Absen Pulang</span>
                 </button>
             </div>
@@ -359,19 +448,15 @@
                             @click="takePhotoAndSubmit()" 
                             :disabled="isProcessing"
                             class="w-full py-4 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer">
-                        <template x-if="!isProcessing">
-                            <span class="inline-flex items-center space-x-2">
-                                <i data-lucide="camera" class="w-5 h-5"></i>
-                                <span>Ambil Foto & Catat Absensi</span>
-                                <i data-lucide="eye" class="w-4 h-4 opacity-80"></i>
-                            </span>
-                        </template>
-                        <template x-if="isProcessing">
-                            <span class="inline-flex items-center space-x-2">
-                                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
-                                <span>Mengambil Foto Wajah & Merekam Jam...</span>
-                            </span>
-                        </template>
+                        <span x-show="!isProcessing" class="inline-flex items-center space-x-2">
+                            <i data-lucide="camera" class="w-5 h-5"></i>
+                            <span>Ambil Foto & Catat Absensi</span>
+                            <i data-lucide="eye" class="w-4 h-4 opacity-80"></i>
+                        </span>
+                        <span x-show="isProcessing" class="inline-flex items-center space-x-2" style="display: none;">
+                            <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                            <span>Mengambil Foto Wajah & Merekam Jam...</span>
+                        </span>
                     </button>
                 </div>
             </div>
@@ -564,122 +649,146 @@
             </div>
 
             <!-- ================================================================= -->
-            <!-- SCREEN 4: HALAMAN PULANG (Confirmation View)                      -->
+            <!-- SCREEN 4: HALAMAN PULANG (Confirmation View - Exact Mockup Left)  -->
             <!-- ================================================================= -->
-            <div x-show="currentScreen === 'pulang_confirm'" class="space-y-4 w-full max-w-md mx-auto">
-                <!-- Big Clock Card -->
-                <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-soft text-center space-y-3">
-                    <div class="flex items-center justify-between text-xs text-slate-500">
-                        <span class="font-extrabold text-emerald-600 flex items-center space-x-1">
+            <div x-show="currentScreen === 'pulang_confirm'" class="space-y-4 w-full max-w-md mx-auto animate-in fade-in duration-200">
+                
+                <!-- Waktu Kepulangan Card -->
+                <div class="bg-white rounded-3xl p-6 sm:p-7 border border-emerald-200/80 shadow-soft text-center space-y-4 relative overflow-hidden">
+                    <!-- Top row: Pill WAKTU KEPULANGAN di kiri, Tanggal di kanan -->
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <span>WAKTU KEPULANGAN</span>
                         </span>
-                        <span class="font-semibold" x-text="recordedDate">Kamis, 8 Okt 2026</span>
+                        <span class="font-semibold text-slate-500 text-xs" x-text="recordedDate">Kamis, 24 Sep 2026</span>
                     </div>
 
                     <!-- Big Clock Display -->
-                    <div class="py-2">
-                        <h2 class="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
-                            <span x-text="String(currentHour).padStart(2, '0') + ' : ' + String(currentMinute).padStart(2, '0')">12 : 25</span>
-                            <span class="text-sm font-bold text-slate-400">WITA</span>
-                        </h2>
+                    <div class="py-2 flex items-baseline justify-center space-x-2">
+                        <h2 class="text-5xl sm:text-6xl font-black text-emerald-600 tracking-tight" 
+                            x-text="pulangTime || '12:25'">12 : 25</h2>
+                        <span class="bg-emerald-100 text-emerald-800 font-extrabold text-xs px-2.5 py-1 rounded-lg">WITA</span>
                     </div>
 
-                    <!-- Pill: Tidak perlu scan wajah -->
-                    <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200/80">
-                        <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <!-- Pill: Tidak perlu scan wajah — Cukup konfirmasi -->
+                    <div class="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-white border border-emerald-200 text-slate-700 text-xs font-bold shadow-2xs">
+                        <i data-lucide="check" class="w-4 h-4 text-emerald-600 stroke-[3]"></i>
                         <span>Tidak perlu scan wajah — Cukup konfirmasi</span>
                     </div>
                 </div>
 
+                <!-- Info banner jika sudah pernah konfirmasi hari ini -->
+                <div x-show="isPulangConfirmed" class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs">
+                    <span class="text-emerald-800 font-bold flex items-center space-x-1.5">
+                        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+                        <span>Kepulangan tercatat pukul <strong x-text="pulangTime">12:25</strong> WITA</span>
+                    </span>
+                    <button type="button" @click="currentScreen = 'pulang_result'" class="text-emerald-700 font-extrabold underline cursor-pointer hover:text-emerald-950">
+                        Lihat Bukti Berhasil →
+                    </button>
+                </div>
+
                 <!-- Row 1: Absen Datang Pagi Status -->
-                <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between text-xs">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                            <i data-lucide="user-check" class="w-4 h-4"></i>
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                            <i data-lucide="user-check" class="w-5 h-5"></i>
                         </div>
-                        <div>
-                            <p class="text-[10px] font-extrabold uppercase text-slate-400">ABSEN DATANG PAGI</p>
-                            <p class="font-black text-slate-900 mt-0.5">07:05 • Hadir Tepat Waktu</p>
+                        <div class="text-left">
+                            <p class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">ABSEN DATANG PAGI</p>
+                            <p class="font-bold text-slate-900 mt-0.5 text-xs sm:text-sm">
+                                07:05 • <span class="text-emerald-600 font-extrabold">Hadir Tepat Waktu</span>
+                            </p>
                         </div>
                     </div>
-                    <span class="border border-emerald-400 text-emerald-700 bg-emerald-50 text-[11px] font-black px-3 py-1 rounded-full">
+                    <span class="border border-emerald-300 text-emerald-700 bg-emerald-50 text-[11px] font-bold px-3 py-1 rounded-full shrink-0">
                         Terverifikasi
                     </span>
                 </div>
 
                 <!-- Row 2: GPS Location Status -->
-                <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex items-center justify-between text-xs">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
-                            <i data-lucide="map-pin" class="w-4 h-4"></i>
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex items-center justify-between">
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0">
+                            <i data-lucide="map-pin" class="w-5 h-5"></i>
                         </div>
-                        <div>
-                            <p class="text-[10px] font-extrabold uppercase text-slate-400">POSISI ANDA SAAT INI</p>
-                            <p class="font-extrabold text-slate-900 mt-0.5">SMK TI BALI GLOBAL Badung</p>
-                            <p class="text-[10px] text-slate-500">Radius GPS 8 meter (Di Dalam Zona)</p>
+                        <div class="text-left">
+                            <p class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">POSISI ANDA SAAT INI</p>
+                            <p class="font-bold text-slate-900 mt-0.5 text-xs sm:text-sm">SMK TI BALI GLOBAL Badung</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5">Radius GPS: 8 meter (Di Dalam Zona)</p>
                         </div>
                     </div>
-                    <span class="bg-emerald-600 text-white font-black text-[11px] px-3 py-1 rounded-full shadow-2xs">
+                    <span class="bg-[#064e3b] text-white font-bold text-xs px-3.5 py-1.5 rounded-full shadow-2xs shrink-0">
                         Lokasi Valid
                     </span>
                 </div>
 
-                <!-- Confirm Button -->
+                <!-- Confirm Button (Always Clickable) -->
                 <button type="button" 
                         @click="confirmPulang()" 
-                        :disabled="isProcessing"
-                        class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer">
-                    <template x-if="!isProcessing">
-                        <span class="inline-flex items-center space-x-2">
-                            <i data-lucide="check" class="w-4 h-4"></i>
-                            <span>Konfirmasi Absen Pulang Sekarang →</span>
-                        </span>
-                    </template>
-                    <template x-if="isProcessing">
-                        <span class="inline-flex items-center space-x-2">
-                            <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-                            <span>Menyimpan Kepulangan...</span>
-                        </span>
-                    </template>
+                        :disabled="isProcessingPulang"
+                        class="w-full py-4 px-6 bg-[#10b981] hover:bg-emerald-600 active:scale-98 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer">
+                    <span x-show="!isProcessingPulang" class="inline-flex items-center space-x-2">
+                        <i data-lucide="check" class="w-5 h-5 stroke-[3]"></i>
+                        <span>Konfirmasi Absen Pulang Sekarang →</span>
+                    </span>
+                    <span x-show="isProcessingPulang" class="inline-flex items-center space-x-2" style="display: none;">
+                        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                        <span>Menyimpan Kepulangan...</span>
+                    </span>
                 </button>
             </div>
 
             <!-- ================================================================= -->
-            <!-- SCREEN 5: HALAMAN BERHASIL PULANG (Screen 5: HALAMAN BERHA...)     -->
+            <!-- SCREEN 5: HALAMAN BERHASIL PULANG (Exact Mockup Right)            -->
             <!-- ================================================================= -->
-            <div x-show="currentScreen === 'pulang_result'" class="space-y-4 w-full max-w-md mx-auto">
+            <div x-show="currentScreen === 'pulang_result'" class="space-y-4 w-full max-w-md mx-auto animate-in fade-in duration-200">
                 
-                <!-- Notification Banner -->
-                <div class="p-4 rounded-2xl bg-emerald-600 text-white shadow-xl shadow-emerald-600/20 flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                            <i data-lucide="shield-check" class="w-5 h-5 text-white"></i>
-                        </div>
-                        <h4 class="font-extrabold text-sm text-white">Absen Pulang Berhasil!</h4>
+                <!-- Notification Banner Card -->
+                <div class="bg-white rounded-2xl sm:rounded-3xl p-5 border border-slate-200/80 shadow-soft flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-2xl bg-[#10b981] text-white flex items-center justify-center shrink-0 shadow-md shadow-emerald-500/20">
+                        <i data-lucide="check" class="w-7 h-7 stroke-[3]"></i>
                     </div>
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-ping"></span>
+                    <div class="text-left">
+                        <h4 class="font-black text-base text-slate-900 flex items-center space-x-1.5">
+                            <span>Absen Pulang Berhasil!</span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                        </h4>
+                        <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                            Data kepulangan telah tercatat resmi di server sekolah, Selamat beristirahat!
+                        </p>
+                    </div>
                 </div>
 
-                <!-- Summary Card -->
+                <!-- Summary Card: ABSENSI -->
                 <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-soft space-y-4">
                     <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-400">ABSENSI</h4>
-                        <span class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">BERHASIL</span>
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="book-open" class="w-4 h-4 text-blue-600"></i>
+                            <h4 class="font-extrabold text-xs uppercase tracking-wider text-slate-800">ABSENSI</h4>
+                        </div>
+                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-black px-3 py-0.5 rounded-full uppercase">BERHASIL</span>
                     </div>
 
                     <!-- 2 Mini Cards: Masuk & Pulang -->
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
-                            <span class="text-[10px] font-black text-slate-400 uppercase">ABSEN MASUK PAGI</span>
-                            <h5 class="text-base font-black text-slate-900">07:05 <span class="text-[10px] text-slate-400 font-semibold">WITA</span></h5>
-                            <span class="inline-flex items-center text-[10px] font-extrabold text-emerald-600">● Tepat Waktu</span>
+                        <div class="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 space-y-1.5 text-left">
+                            <span class="text-[10px] font-black text-slate-400 uppercase tracking-wider block">ABSEN MASUK PAGI</span>
+                            <h5 class="text-base sm:text-lg font-black text-slate-900">07:05 <span class="text-[10px] text-slate-400 font-semibold">WITA</span></h5>
+                            <span class="inline-flex items-center space-x-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                <i data-lucide="check" class="w-3 h-3"></i>
+                                <span>Tepat Waktu</span>
+                            </span>
                         </div>
 
-                        <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-1">
-                            <span class="text-[10px] font-black text-emerald-700 uppercase">ABSEN PULANG</span>
-                            <h5 class="text-base font-black text-slate-900" x-text="recordedTime.substring(0, 5) + ' WITA'">12:25 WITA</h5>
-                            <span class="inline-flex items-center text-[10px] font-extrabold text-emerald-700">● Sesuai Jadwal</span>
+                        <div class="p-3.5 rounded-2xl bg-[#ecfdf5] border border-emerald-200 space-y-1.5 text-left">
+                            <span class="text-[10px] font-black text-emerald-700 uppercase tracking-wider block">ABSEN PULANG</span>
+                            <h5 class="text-base sm:text-lg font-black text-emerald-600" x-text="(pulangTime || '12:25') + ' WITA'">12:25 WITA</h5>
+                            <span class="inline-flex items-center space-x-1 bg-emerald-100/70 text-emerald-800 border border-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                <i data-lucide="info" class="w-3 h-3"></i>
+                                <span>Sesuai Jadwal</span>
+                            </span>
                         </div>
                     </div>
 
@@ -687,51 +796,68 @@
                     <div class="divide-y divide-slate-100 text-xs pt-1">
                         <div class="py-2.5 flex items-center justify-between">
                             <span class="text-slate-500">Hari & Tanggal</span>
-                            <span class="font-extrabold text-slate-900" x-text="recordedDate">Kamis, 8 Oktober 2026</span>
+                            <span class="font-extrabold text-slate-900" x-text="recordedDate">Kamis, 24 September 2026</span>
                         </div>
 
                         <div class="py-2.5 flex items-center justify-between">
                             <span class="text-slate-500">Total Waktu Belajar</span>
-                            <span class="font-black text-blue-600">5 Jam 20 Menit</span>
+                            <span class="font-extrabold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">5 Jam 20 Menit</span>
                         </div>
 
                         <div class="py-2.5 flex items-center justify-between">
                             <span class="text-slate-500">Posisi Lokasi</span>
                             <span class="font-extrabold text-emerald-700 flex items-center space-x-1">
-                                <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
+                                <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-600"></i>
                                 <span>Gerbang SMK TI (Valid)</span>
                             </span>
                         </div>
 
                         <div class="py-2.5 flex items-center justify-between">
                             <span class="text-slate-500">Status Konfirmasi</span>
-                            <span class="font-black text-slate-900">Terverifikasi</span>
+                            <span class="font-extrabold text-emerald-600">Terverifikasi</span>
                         </div>
 
-                        <div class="pt-2.5 flex items-center justify-between text-[11px]">
-                            <span class="text-slate-400 font-mono">ID VERIFIKASI DIGITAL</span>
-                            <span class="font-mono font-bold text-slate-600">OUT-{{ date('Ymd') }}-88119</span>
+                        <div class="pt-2.5 flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <div class="flex items-center space-x-2">
+                                <i data-lucide="qr-code" class="w-4 h-4 text-slate-500"></i>
+                                <div>
+                                    <p class="text-[9px] uppercase font-bold text-slate-400">ID VERIFIKASI DIGITAL</p>
+                                    <p class="font-mono font-bold text-slate-700 text-xs">OUT-20260924-88419</p>
+                                </div>
+                            </div>
+                            <span class="font-mono text-[10px] text-slate-400" x-text="pulangTimeFull || '12:25:44 WITA'">12:25:44 WITA</span>
                         </div>
                     </div>
 
                     <!-- WhatsApp Notification Card -->
-                    <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/90 flex items-center space-x-3 text-xs">
-                        <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0">
-                            <i data-lucide="message-circle" class="w-4 h-4"></i>
+                    <div class="p-4 rounded-2xl bg-[#ecfdf5] border border-emerald-200/90 flex items-center space-x-3.5 text-xs">
+                        <div class="w-10 h-10 rounded-2xl bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-xs">
+                            <i data-lucide="message-circle" class="w-5 h-5"></i>
                         </div>
-                        <div>
-                            <h6 class="font-extrabold text-emerald-950">Absen Terkirim</h6>
-                            <p class="text-[11px] text-emerald-800">Absensi Siswa Berhasil Terkirim Ke Orang Tua Siswa</p>
+                        <div class="text-left">
+                            <h6 class="font-black text-slate-900 text-xs">Notifikasi WhatsApp Terkirim</h6>
+                            <p class="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                                Pesan otomatis telah dikirim ke nomor orang tua / wali murid (+62 812-****-3391).
+                            </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Back to Dashboard -->
-                <a href="{{ route('dashboard') }}" 
-                   class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-lg shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all">
-                    <i data-lucide="home" class="w-4 h-4"></i>
-                    <span>Kembali ke Beranda</span>
-                </a>
+                <!-- Action Buttons: Kembali ke Beranda & Reset Simulasi -->
+                <div class="space-y-2">
+                    <a href="{{ route('dashboard') }}" 
+                       class="w-full py-4 px-6 bg-[#1d4ed8] hover:bg-blue-700 active:scale-98 text-white font-extrabold text-sm rounded-2xl shadow-lg shadow-blue-600/25 flex items-center justify-center space-x-2 transition-all">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        <span>Kembali ke Beranda</span>
+                    </a>
+
+                    <button type="button" 
+                            @click="resetPulang()" 
+                            class="w-full py-2.5 text-center text-xs font-bold text-slate-400 hover:text-slate-700 transition-colors flex items-center justify-center space-x-1.5 cursor-pointer">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        <span>Ulangi / Coba Konfirmasi Pulang Lagi</span>
+                    </button>
+                </div>
             </div>
 
         </div>

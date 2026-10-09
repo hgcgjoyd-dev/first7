@@ -282,8 +282,15 @@
                 </div>
             </a>
 
-            <div class="mt-5 text-xs font-semibold text-blue-200">
-                <span>Klik untuk Mulai Presensi Wajah & Biometrik</span>
+            <div class="mt-5 flex flex-wrap items-center justify-center gap-2.5 text-xs font-bold">
+                <a href="{{ route('presensi') }}" class="px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 backdrop-blur-md text-white transition-all flex items-center space-x-1.5">
+                    <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                    <span>Absen Datang</span>
+                </a>
+                <a href="{{ route('presensi', ['tab' => 'pulang']) }}" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-md shadow-emerald-500/25 transition-all flex items-center space-x-1.5">
+                    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                    <span>Absen Pulang (12:25) →</span>
+                </a>
             </div>
         </div>
     </div>
