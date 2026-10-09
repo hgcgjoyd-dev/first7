@@ -33,7 +33,7 @@
                 </div>
 
                 <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight" x-text="getGreeting()">Selamat Pagi,</h1>
-                <p class="text-2xl sm:text-3xl font-extrabold text-blue-100 mt-0.5">Nama Siswa (Wahyu Pratama)</p>
+                <p class="text-2xl sm:text-3xl font-extrabold text-blue-100 mt-0.5">{{ $siswa->nama_siswa }}</p>
                 
                 <div class="flex flex-wrap items-center gap-2 mt-4">
                     <!-- Status Absen Pill (Clickable) -->
@@ -216,7 +216,7 @@
                     <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                         <div class="bg-emerald-500 h-full w-1/2 rounded-full"></div>
                     </div>
-                    <p class="text-[11px] text-slate-500 pt-1">⭐ Koordinator: <span class="font-semibold text-slate-700">Wahyu Pratama (Anda)</span></p>
+                    <p class="text-[11px] text-slate-500 pt-1">⭐ Koordinator: <span class="font-semibold text-slate-700">{{ $siswa->nama_siswa }} (Anda)</span></p>
                 </div>
             </div>
 

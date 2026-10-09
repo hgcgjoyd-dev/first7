@@ -15,8 +15,8 @@
                 <i data-lucide="graduation-cap" class="w-7 h-7 sm:w-10 sm:h-10"></i>
             </div>
             <div>
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900">Halo, Wahyu Pratama</h2>
-                <p class="text-xs text-slate-500 font-semibold mt-0.5">Siswa • XI PPLG 1 • SMK TI Bali Global</p>
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900">Halo, {{ $siswa->nama_siswa }}</h2>
+                <p class="text-xs text-slate-500 font-semibold mt-0.5">Siswa • {{ $siswa->kelas->nama_kelas }} • SMK TI Bali Global</p>
             </div>
         </div>
         <button class="p-2.5 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 relative">
@@ -268,11 +268,13 @@
                     <p class="text-[11px] text-slate-500">Keluar dari sesi login dan kembali ke Halaman Awal portal</p>
                 </div>
             </div>
-            <a href="{{ route('logout') }}" 
-               class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-95">
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition-all active:scale-95">
                 <i data-lucide="log-out" class="w-4 h-4"></i>
                 <span>Keluar Akun (Logout)</span>
-            </a>
+                </button>
+            </form>
         </div>
     </div>
 </div>

@@ -156,7 +156,7 @@
             <div class="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 flex items-center space-x-3">
                 <div class="w-8 h-8 rounded-full bg-blue-600 text-white font-extrabold flex items-center justify-center">1</div>
                 <div>
-                    <p class="font-bold text-slate-900">{{ $siswa->nama ?? 'Wahyu Pratama' }}</p>
+                    <p class="font-bold text-slate-900">{{ $siswa->nama_siswa }}</p>
                     <span class="text-blue-600 font-extrabold text-[11px]">⭐ Koordinator</span>
                 </div>
             </div>

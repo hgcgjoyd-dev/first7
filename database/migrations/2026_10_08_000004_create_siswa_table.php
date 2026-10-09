@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('siswa', function (Blueprint $table) {
             $table->id('id_siswa');
-            $table->foreignId('id_user')->nullable()->constrained('users')->nullOnDelete();
-            $table->string('nomor_siswa', 7)->unique()->comment('Tepat 7 digit angka saja');
+            $table->foreignId('id_user')->nullable()->constrained('user', 'id_user')->nullOnDelete();
+            $table->string('no_siswa', 7)->unique()->comment('Tepat 7 digit angka saja');
             $table->string('nama_siswa', 100);
             $table->foreignId('id_kelas')->constrained('kelas', 'id_kelas')->cascadeOnDelete();
             $table->enum('jenis_kelamin', ['L', 'P']);
@@ -36,4 +36,3 @@ return new class extends Migration
         Schema::dropIfExists('siswa');
     }
 };
-

@@ -21,7 +21,7 @@
             </a>
             <div>
                 <p class="text-xs text-slate-500 font-semibold">Selamat Pagi,</p>
-                <h2 class="text-xl sm:text-2xl font-black text-slate-900">Nama Siswa (Wahyu Pratama)</h2>
+                <h2 class="text-xl sm:text-2xl font-black text-slate-900">{{ $siswa->nama_siswa }}</h2>
             </div>
         </div>
         <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-extrabold bg-blue-100 text-blue-700 self-start sm:self-auto">
@@ -184,4 +184,3 @@
     </div>
 </div>
 @endsection
-

@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -24,6 +25,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'status_aktif',
     ];
 
     /**
@@ -35,17 +37,45 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'status_aktif' => 'boolean',
         ];
     }
 
-    public function siswa()
+    public function siswa(): HasOne
     {
         return $this->hasOne(Siswa::class, 'id_user', 'id_user');
     }
 
-    public function guru()
+    public function guru(): HasOne
     {
         return $this->hasOne(Guru::class, 'id_user', 'id_user');
+    }
+
+    public function dashboardRoute(): string
+    {
+        return match ($this->role) {
+            'siswa' => 'dashboard.siswa',
+            'guru' => 'dashboard.guru',
+            'guru_bk' => 'dashboard.guru_bk',
+            'admin' => 'dashboard.admin',
+            default => abort(403),
+        };
+    }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return match ($this->role) {
+            'siswa' => 'Siswa',
+            'guru_bk' => 'Guru BK',
+            'guru' => 'Guru biasa',
+            'admin' => 'Admin',
+            default => 'Tidak dikenal',
+        };
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->status_aktif ? 'Aktif' : 'Nonaktif';
     }
 
     public function isAdmin(): bool

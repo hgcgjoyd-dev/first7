@@ -3,47 +3,74 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Siswa extends Authenticatable
+class Siswa extends Model
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
 
     protected $table = 'siswa';
 
+    protected $primaryKey = 'id_siswa';
+
     protected $fillable = [
-        'nis',
-        'nisn',
-        'nama',
-        'email',
-        'password',
-        'kelas',
-        'jurusan',
-        'rfid_card',
-        'foto',
-        'poin_bk',
-        'poin_prestasi',
+        'id_user',
+        'no_siswa',
+        'nomor_absen',
+        'nama_siswa',
+        'id_kelas',
+        'jenis_kelamin',
+        'tempat_lahir',
+        'tanggal_lahir',
+        'alamat',
+        'no_telp',
+        'nama_wali',
+        'no_telp_wali',
+        'poin_pelanggaran',
+        'poin_penghargaan',
     ];
 
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    public function presensi()
+    protected function casts(): array
     {
-        return $this->hasMany(Presensi::class, 'siswa_id');
+        return [
+            'tanggal_lahir' => 'date',
+        ];
     }
 
-    public function izin()
+    public function user(): BelongsTo
     {
-        return $this->hasMany(Izin::class, 'siswa_id');
+        return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
 
-    public function bk()
+    public function kelas(): BelongsTo
     {
-        return $this->hasMany(Bk::class, 'siswa_id');
+        return $this->belongsTo(Kelas::class, 'id_kelas', 'id_kelas');
+    }
+
+    public function absensi(): HasMany
+    {
+        return $this->hasMany(Absensi::class, 'id_siswa', 'id_siswa');
+    }
+
+    public function izin(): HasMany
+    {
+        return $this->hasMany(Izin::class, 'id_siswa', 'id_siswa');
+    }
+
+    public function konseling(): HasMany
+    {
+        return $this->hasMany(Konseling::class, 'id_siswa', 'id_siswa');
+    }
+
+    public function pelanggaranSiswa(): HasMany
+    {
+        return $this->hasMany(PelanggaranSiswa::class, 'id_siswa', 'id_siswa');
+    }
+
+    public function prestasi(): HasMany
+    {
+        return $this->hasMany(Prestasi::class, 'id_siswa', 'id_siswa');
     }
 }
-

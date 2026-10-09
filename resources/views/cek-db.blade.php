@@ -28,7 +28,7 @@
                     <p class="text-xs text-slate-400">SMK TI Bali Global Badung</p>
                 </div>
             </div>
-            @if($status === 'success' || $status === 'created')
+            @if($status === 'success')
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
                     Terhubung
@@ -55,14 +55,6 @@
                     <p class="text-emerald-400/80 text-xs mt-0.5">Database <code>{{ $targetDb }}</code> sudah aktif dan siap digunakan.</p>
                 </div>
             </div>
-        @elseif($status === 'created')
-            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 mb-6 flex items-start space-x-3">
-                <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
-                <div class="text-sm">
-                    <p class="font-semibold text-emerald-300">Database Berhasil Dibuat!</p>
-                    <p class="text-emerald-400/80 text-xs mt-0.5">Database <code>{{ $targetDb }}</code> baru saja otomatis dibuat di MySQL.</p>
-                </div>
-            </div>
         @elseif($status === 'not_found')
             <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 mb-6">
                 <div class="flex items-start space-x-3">
@@ -71,12 +63,6 @@
                         <p class="font-semibold text-amber-300">Database Belum Terdaftar</p>
                         <p class="text-amber-400/80 text-xs mt-0.5">Server MySQL aktif, tapi database <code>{{ $targetDb }}</code> belum dibuat.</p>
                     </div>
-                </div>
-                <div class="mt-4 pt-3 border-t border-amber-500/20 flex items-center justify-end">
-                    <a href="{{ route('cek-db', ['buat' => 1]) }}" class="inline-flex items-center space-x-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition-colors">
-                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
-                        <span>Buat Database '{{ $targetDb }}' Otomatis</span>
-                    </a>
                 </div>
             </div>
         @else
@@ -130,4 +116,3 @@
     </script>
 </body>
 </html>
-

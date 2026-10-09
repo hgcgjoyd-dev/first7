@@ -11,8 +11,10 @@ class Izin extends Model
 
     protected $table = 'izin';
 
+    protected $primaryKey = 'id_izin';
+
     protected $fillable = [
-        'siswa_id',
+        'id_siswa',
         'jenis',
         'tgl_mulai',
         'tgl_selesai',
@@ -24,7 +26,6 @@ class Izin extends Model
 
     public function siswa()
     {
-        return $this->belongsTo(Siswa::class, 'siswa_id');
+        return $this->belongsTo(Siswa::class, 'id_siswa', 'id_siswa');
     }
 }
-

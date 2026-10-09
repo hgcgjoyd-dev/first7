@@ -37,7 +37,7 @@
         <div class="w-24 h-24 mx-auto border-2 border-dashed border-blue-500 rounded-3xl flex items-center justify-center bg-blue-50/50 text-4xl font-black text-blue-600 shadow-inner">
             A
         </div>
-        <a href="{{ route('scan') }}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-2xl flex items-center justify-center space-x-2 transition-all block shadow-lg shadow-blue-500/20 active:scale-98">
+        <a href="{{ route('login') }}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-2xl flex items-center justify-center space-x-2 transition-all block shadow-lg shadow-blue-500/20 active:scale-98">
             <i data-lucide="camera" class="w-4 h-4"></i>
             <span>SCAN KARTU PELAJAR</span>
         </a>
@@ -60,4 +60,3 @@
     </div>
 </div>
 @endsection
-
