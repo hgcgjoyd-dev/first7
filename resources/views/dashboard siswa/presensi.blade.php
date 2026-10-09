@@ -1,6 +1,6 @@
 @extends('dashboard siswa.app')
 
-@section('title', 'Sistem Presensi Siswa')
+@section('title', 'Sistem Absensi Siswa')
 
 @section('content')
 <div class="w-full space-y-6" x-data="{
@@ -586,7 +586,7 @@
 
                                 <div>
                                     <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">
-                                        PRESENSI MASUK BERHASIL
+                                        ABSENSI MASUK BERHASIL
                                     </span>
                                     <h3 class="text-xl sm:text-2xl font-black text-slate-900 mt-0.5 leading-snug">
                                         Hadir Tepat Waktu
@@ -874,7 +874,7 @@
                         <i data-lucide="clock" class="w-5 h-5"></i>
                     </div>
                     <div>
-                        <h4 class="font-extrabold text-sm text-slate-900">Ketentuan Jam Presensi</h4>
+                        <h4 class="font-extrabold text-sm text-slate-900">Ketentuan Jam Absensi</h4>
                         <p class="text-[11px] text-slate-500">SMK TI Bali Global Badung</p>
                     </div>
                 </div>
@@ -883,7 +883,7 @@
                     <div class="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
                         <div>
                             <span class="font-extrabold text-emerald-900">≤ 07:05 WITA</span>
-                            <p class="text-[11px] text-emerald-700">Presensi Tepat Waktu</p>
+                            <p class="text-[11px] text-emerald-700">Absensi Tepat Waktu</p>
                         </div>
                         <span class="font-black text-emerald-800 bg-white px-2.5 py-0.5 rounded-full text-[10px]">Tepat</span>
                     </div>

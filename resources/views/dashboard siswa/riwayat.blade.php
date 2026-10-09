@@ -349,7 +349,7 @@
                             Hadir: {{ $totalHadir ?? 14 }} Kali
                         </h4>
                         <p class="text-[11px] sm:text-xs font-semibold text-emerald-600 mt-0.5">
-                            Total Presensi Masuk
+                            Total Absensi Masuk
                         </p>
                     </div>
                 </div>

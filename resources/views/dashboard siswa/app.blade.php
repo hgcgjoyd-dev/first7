@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Sistem Presensi & Kesiswaan') - SMK TI Bali Global Badung</title>
+    <title>@yield('title', 'Sistem Absensi & Kesiswaan') - SMK TI Bali Global Badung</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -134,13 +134,12 @@
             <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
                 <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-11 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
                 <div class="border-l border-slate-200 pl-3 hidden sm:block">
-                    <p class="text-xs font-bold text-slate-700 leading-tight">Presensi & Kesiswaan</p>
+                    <p class="text-xs font-bold text-slate-700 leading-tight">Absensi & Kesiswaan</p>
                 </div>
             </a>
 
-            <!-- Right: Quick Navigation, Profile & Notifications (Pojok Kanan) -->
+            <!-- Right: Quick Navigation & Profile Avatar (Pojok Kanan) -->
             <div class="flex items-center space-x-3">
-
                 <!-- User Profile Link Button -->
                 <a href="{{ route('profil') }}" 
                    title="Buka Profil Siswa" 
@@ -149,59 +148,6 @@
                         <i data-lucide="graduation-cap" class="w-5 h-5"></i>
                     </div>
                 </a>
-
-                <!-- Notifications Dropdown (Pojok Kanan Atas) -->
-                <div class="relative" x-data="{ open: false }">
-                    <button @click="open = !open" class="relative p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors" title="Pemberitahuan">
-                        <i data-lucide="bell" class="w-5 h-5"></i>
-                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
-                    </button>
-
-                    <div x-show="open" @click.away="open = false" x-cloak
-                         class="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-xl border border-slate-100 py-3 z-50">
-
-                        <div class="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
-                            <span class="font-bold text-sm text-slate-800">Pemberitahuan Siswa</span>
-                            <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">3 Baru</span>
-                        </div>
-
-                        <div class="divide-y divide-slate-100 text-xs">
-                            <a href="{{ route('bk') }}" class="p-3 hover:bg-slate-50 flex items-start space-x-3 block">
-                                <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
-                                    <i data-lucide="alert-circle" class="w-4 h-4"></i>
-                                </div>
-
-                                <div>
-                                    <p class="font-semibold text-slate-900">Panggilan BK: Dra. Ni Luh Suastini</p>
-                                    <p class="text-slate-500 text-[11px] mt-0.5">Jadwal evaluasi kedisiplinan ruang BK (08:30 WITA)</p>
-                                </div>
-                            </a>
-
-                            <a href="{{ route('profil') }}" class="p-3 hover:bg-slate-50 flex items-start space-x-3 block">
-                                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                                    <i data-lucide="award" class="w-4 h-4"></i>
-                                </div>
-
-                                <div>
-                                    <p class="font-semibold text-slate-900">Reward Juara 2 LKS Web Tech</p>
-                                    <p class="text-slate-500 text-[11px] mt-0.5">Ditambahkan +30 poin penghargaan siswa</p>
-                                </div>
-                            </a>
-
-                            <a href="{{ route('mapel') }}" class="p-3 hover:bg-slate-50 flex items-start space-x-3 block">
-                                <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
-                                    <i data-lucide="code" class="w-4 h-4"></i>
-                                </div>
-
-                                <div>
-                                    <p class="font-semibold text-slate-900">Tugas Web & Mobile: Besok!</p>
-                                    <p class="text-slate-500 text-[11px] mt-0.5">Deadline Slice UI Figma pukul 23:59 WITA</p>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
     </header>
@@ -285,14 +231,9 @@
 
                 <!-- School Info Card with Logo PNG -->
                 <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
-                    <div class="bg-white rounded-2xl p-2.5 mb-3 flex items-center justify-center shadow-xs">
+                    <div class="bg-white rounded-2xl p-2.5 flex items-center justify-center shadow-xs">
                         <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 w-auto object-contain">
                     </div>
-
-                    <p class="text-xs text-blue-100/90 leading-relaxed">
-                        Presensi dibuka 06:30 - 07:05 WITA, kepulangan 12:25 WITA. Keterlambatan dicatat otomatis dan mengirim notifikasi WhatsApp ke orang tua/wali.
-                    </p>
-
                 </div>
             </aside>
 
@@ -319,7 +260,7 @@
             <!-- 2. Floating Center Presensi Button -->
             <div class="relative -top-5">
                 <a href="{{ route('presensi') }}" 
-                   title="Presensi Masuk & Pulang"
+                   title="Absensi Masuk & Pulang"
                    class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all ring-4 ring-white">
                     <i data-lucide="scan-face" class="w-7 h-7"></i>
                 </a>

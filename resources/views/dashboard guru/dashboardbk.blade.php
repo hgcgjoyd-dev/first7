@@ -211,83 +211,14 @@
       }">
 
     <!-- ========================================================================= -->
-    <!-- DESKTOP TOP BAR (Only Visible on Large Screen in Responsive Mode)        -->
-    <!-- ========================================================================= -->
-    <header class="hidden lg:block bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-xs">
-        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-            <!-- Brand Left -->
-            <div class="flex items-center space-x-3">
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 w-auto object-contain">
-                <div>
-                    <h2 class="text-sm font-black text-slate-900 tracking-tight uppercase leading-none">SMK TI BALI GLOBAL BADUNG</h2>
-                    <span class="text-[11px] font-bold text-blue-600 tracking-wider">PORTAL GURU BK & KESISWAAN</span>
-                </div>
-            </div>
-
-            <!-- Navigation Links -->
-            <nav class="flex items-center space-x-1">
-                <button @click="activeTab = 'beranda'" 
-                        :class="activeTab === 'beranda' ? 'bg-blue-50 text-blue-700 font-bold' : 'text-slate-600 hover:text-slate-900 font-medium'"
-                        class="px-4 py-2 rounded-xl text-xs transition-colors flex items-center space-x-2">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-                    <span>Beranda BK</span>
-                </button>
-                <button @click="openAction('absensi')" 
-                        class="px-4 py-2 rounded-xl text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium transition-colors flex items-center space-x-2">
-                    <i data-lucide="user-check" class="w-4 h-4 text-blue-600"></i>
-                    <span>Absensi Siswa</span>
-                </button>
-                <button @click="openAction('konseling')" 
-                        class="px-4 py-2 rounded-xl text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium transition-colors flex items-center space-x-2">
-                    <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
-                    <span>Konseling & BK</span>
-                </button>
-                <button @click="openAction('pelanggaran')" 
-                        class="px-4 py-2 rounded-xl text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-100 font-medium transition-colors flex items-center space-x-2">
-                    <i data-lucide="clipboard-list" class="w-4 h-4 text-blue-600"></i>
-                    <span>Pelanggaran Siswa</span>
-                </button>
-            </nav>
-
-            <!-- Right Controls: Live Clock & Teacher Profile Avatar -->
-            <div class="flex items-center space-x-3">
-                <!-- Live Clock Pill -->
-                <div class="bg-blue-50 border border-blue-200/60 text-blue-700 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center space-x-2">
-                    <i data-lucide="clock" class="w-3.5 h-3.5 text-blue-600 animate-pulse"></i>
-                    <span x-text="liveFullTime">07:30:00 WITA</span>
-                </div>
-
-                <!-- Teacher Avatar & Info -->
-                <div @click="modalProfil = true" class="flex items-center space-x-2 pl-2 border-l border-slate-200 cursor-pointer group">
-                    <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs group-hover:scale-105 transition-transform">
-                        <i data-lucide="user" class="w-5 h-5"></i>
-                    </div>
-                    <div class="text-left hidden xl:block">
-                        <p class="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors" x-text="guru.nama">Dra. Ni Luh Suastini, S.Pd</p>
-                        <p class="text-[10px] text-slate-500 font-medium">Koordinator BK</p>
-                    </div>
-                </div>
-
-                <!-- Back to Student Portal Link -->
-                <a href="{{ route('dashboard') }}" 
-                   title="Beralih ke Dashboard Siswa" 
-                   class="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors">
-                    <i data-lucide="arrow-right-left" class="w-4 h-4"></i>
-                </a>
-            </div>
-        </div>
-    </header>
-
-
-    <!-- ========================================================================= -->
     <!-- MAIN CONTENT CONTAINER (Fully Responsive Mobile + Desktop)               -->
     <!-- ========================================================================= -->
     <main class="flex-1 w-full pb-24 lg:pb-12">
 
         <!-- ===================================================================== -->
-        <!-- 1. HERO HEADER (Exact Royal Blue Gradient with Curved Bottom)          -->
+        <!-- 1. HERO HEADER (Royal Blue Gradient with Curved Bottom)                -->
         <!-- ===================================================================== -->
-        <div class="relative bg-gradient-to-b from-[#1e40af] via-[#2563eb] to-[#1d4ed8] text-white rounded-b-[40px] sm:rounded-b-[48px] lg:rounded-b-[56px] pt-6 sm:pt-8 pb-14 sm:pb-16 px-5 sm:px-8 shadow-xl shadow-blue-600/15 overflow-hidden">
+        <div class="relative bg-gradient-to-b from-[#1e40af] via-[#2563eb] to-[#1d4ed8] text-white rounded-b-[40px] sm:rounded-b-[48px] lg:rounded-b-[56px] pt-6 sm:pt-8 pb-8 sm:pb-10 px-5 sm:px-8 shadow-xl shadow-blue-600/15 overflow-hidden">
             
             <!-- Ambient Glowing Lighting Circles -->
             <div class="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
@@ -306,8 +237,8 @@
                 </div>
 
                 <!-- Second Row: Greeting on Left & Teacher Avatar on Right (Mockup Match) -->
-                <div class="flex items-center justify-between pt-2">
-                    <!-- Left: Greeting & Teacher Name -->
+                <div class="flex items-center justify-between pt-1">
+                    <!-- Left: Greeting & Teacher Name & Badges (BK Aktif + Jam Real-time) -->
                     <div>
                         <p class="text-xs sm:text-sm text-blue-100 font-medium tracking-wide" x-text="greetingText">
                             Selamat Pagi,
@@ -315,11 +246,19 @@
                         <h1 class="text-xl sm:text-3xl font-black text-white tracking-tight mt-0.5" x-text="guru.nama">
                             Nama Guru BK
                         </h1>
-                        <!-- Desktop Subtitle Badge -->
-                        <div class="hidden lg:flex items-center space-x-2 mt-2">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
-                                BK Aktif • Ruang Bimbingan Konseling Lt. 2
+
+                        <!-- Badges: BK Aktif & Jam Real Time (Tidak Terpotong) -->
+                        <div class="flex flex-wrap items-center gap-2 mt-2.5">
+                            <!-- Badge BK Aktif -->
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-md shadow-xs border border-white/20">
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
+                                BK Aktif
+                            </span>
+
+                            <!-- Live Real-Time Clock Pill (Dekat BK Aktif) -->
+                            <span class="inline-flex items-center px-3.5 py-1 rounded-full text-xs font-extrabold bg-white text-blue-700 shadow-md border border-white/40">
+                                <i data-lucide="clock" class="w-3.5 h-3.5 mr-1.5 text-blue-600 animate-pulse"></i>
+                                <span x-text="'JAM ' + liveFullTime">JAM 07:30:00 WITA</span>
                             </span>
                         </div>
                     </div>
@@ -332,38 +271,30 @@
                     </button>
                 </div>
             </div>
-
-            <!-- Floating Clock Pill (Anchored at the bottom center of the hero card) -->
-            <div class="absolute -bottom-5 left-1/2 -translate-x-1/2 z-20">
-                <div class="inline-flex items-center space-x-2 bg-white text-blue-700 px-6 py-2.5 rounded-full shadow-floating border border-blue-100/80 font-black text-xs sm:text-sm select-none hover:scale-102 transition-transform">
-                    <i data-lucide="clock" class="w-4 h-4 text-blue-600"></i>
-                    <span x-text="'JAM ' + liveTime">JAM 07:30</span>
-                </div>
-            </div>
         </div>
 
 
         <!-- ===================================================================== -->
         <!-- 2. MAIN BODY / ACTION CARDS SECTION                                    -->
         <!-- ===================================================================== -->
-        <div class="max-w-4xl mx-auto px-5 sm:px-8 mt-10 sm:mt-12 space-y-4 sm:space-y-6">
+        <div class="max-w-4xl mx-auto px-5 sm:px-8 mt-6 sm:mt-8 space-y-4 sm:space-y-6">
 
             <!-- ================================================================= -->
             <!-- ROW 1: 2 MAIN CARDS (Absensi Siswa & Konseling BK) - MOCKUP MATCH  -->
             <!-- ================================================================= -->
             <div class="grid grid-cols-2 gap-4 sm:gap-6">
                 
-                <!-- CARD 1: Absensi Siswa -->
-                <div @click="openAction('absensi')" 
-                     class="bg-white rounded-[28px] sm:rounded-3xl p-6 sm:p-8 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-97 cursor-pointer flex flex-col items-center justify-center text-center group">
+                <!-- CARD 1: Absensi Siswa (Mengarahkan ke Halaman Pilih Kelas) -->
+                <a href="{{ route('guru.absensi') }}" 
+                   class="bg-white rounded-[28px] sm:rounded-3xl p-6 sm:p-8 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-97 cursor-pointer flex flex-col items-center justify-center text-center group block">
                     <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-blue-50/80 group-hover:bg-blue-100/90 text-blue-600 flex items-center justify-center transition-colors mb-3 sm:mb-4">
                         <i data-lucide="user-check" class="w-9 h-9 sm:w-11 sm:h-11 stroke-[2.2] group-hover:scale-110 transition-transform"></i>
                     </div>
                     <h3 class="text-sm sm:text-lg font-black text-slate-800 group-hover:text-blue-600 transition-colors">
                         Absensi Siswa
                     </h3>
-                    <p class="hidden sm:block text-xs text-slate-400 mt-1">Rekap kehadiran harian & izin kelas</p>
-                </div>
+                    <p class="hidden sm:block text-xs text-slate-400 mt-1">Pilih kelas & lihat absensi siswa</p>
+                </a>
 
                 <!-- CARD 2: Konseling & BK -->
                 <div @click="openAction('konseling')" 
@@ -394,15 +325,15 @@
 
 
             <!-- ================================================================= -->
-            <!-- ROW 3: Siswa Hadir: 95% Pill Card (Mockup Match)                  -->
+            <!-- ROW 3: Siswa Hadir: 95% Pill Card (Mengarahkan ke Pilih Kelas)    -->
             <!-- ================================================================= -->
-            <div @click="openAction('absensi')" 
-                 class="bg-white rounded-2xl sm:rounded-full py-4 px-6 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center space-x-3 group">
-                <i data-lucide="user-check" class="w-5 h-5 text-blue-600 shrink-0 group-hover:scale-110 transition-transform"></i>
+            <a href="{{ route('guru.absensi') }}" 
+               class="bg-white rounded-2xl sm:rounded-full py-4 px-6 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center space-x-3 group block">
+                <i data-lucide="user-check" class="w-5 h-5 text-blue-600 shrink-0 group-hover:scale-110 transition-transform inline-block"></i>
                 <span class="text-base sm:text-lg font-black text-blue-700 tracking-tight">
                     Siswa Hadir: 95%
                 </span>
-            </div>
+            </a>
 
 
             <!-- ================================================================= -->
@@ -465,14 +396,6 @@
                 </div>
             </div>
 
-            <!-- Quick Switcher to Student Dashboard (Helpful footer on both mobile & desktop) -->
-            <div class="pt-4 text-center">
-                <a href="{{ route('dashboard') }}" 
-                   class="inline-flex items-center space-x-2 text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors py-2 px-4 rounded-xl hover:bg-slate-200/50">
-                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                    <span>Kembali ke Portal Siswa SMK TI Bali Global Badung</span>
-                </a>
-            </div>
         </div>
     </main>
 
@@ -751,11 +674,8 @@
                 </div>
             </div>
 
-            <div class="flex space-x-2">
-                <a href="{{ route('dashboard') }}" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors text-center">
-                    Dashboard Siswa
-                </a>
-                <button @click="modalProfil = false" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-xs transition-colors">
+            <div class="pt-1">
+                <button @click="modalProfil = false" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors">
                     Tutup
                 </button>
             </div>
