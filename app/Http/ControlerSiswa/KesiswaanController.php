@@ -68,7 +68,7 @@ class KesiswaanController extends Controller
     }
 
     /**
-     * Proses Scan Kartu Pelajar — login langsung via nama di kartu
+     * Proses Scan Kartu Pelajar — login langsung via nama di kartu (OCR tolerant)
      */
     public function postScan(Request $request)
     {
@@ -78,8 +78,34 @@ class KesiswaanController extends Controller
 
         $code = trim($validated['code']);
 
-        // Cari siswa berdasarkan nama lengkap (nama_siswa)
-        $siswa = Siswa::where('nama_siswa', $validated['code'])->first();
+        // Normalisasi input: lowercase, trim, collapse whitespace
+        $normalized = mb_strtolower(preg_replace('/\s+/', ' ', trim($code)));
+
+        // 1) Exact match (setelah normalisasi)
+        $siswa = Siswa::whereRaw('LOWER(TRIM(REGEXP_REPLACE(nama_siswa, \'\\s+\', \' \'))) = ?', [$normalized])
+            ->first();
+
+        // 2) Fallback: fuzzy match via Levenshtein (jika exact gagal)
+        if (! $siswa) {
+            $all = Siswa::select('id_siswa', 'nama_siswa', 'id_user')
+                ->with('user')
+                ->get();
+
+            $bestMatch = null;
+            $bestDist = PHP_INT_MAX;
+            $threshold = 3; // ambang batas jarak Levenshtein
+
+            foreach ($all as $candidate) {
+                $candNorm = mb_strtolower(preg_replace('/\s+/', ' ', trim($candidate->nama_siswa)));
+                $dist = levenshtein($normalized, $candNorm);
+                if ($dist < $bestDist && $dist <= $threshold) {
+                    $bestDist = $dist;
+                    $bestMatch = $candidate;
+                }
+            }
+
+            $siswa = $bestMatch;
+        }
 
         if (! $siswa) {
             return response()->json([

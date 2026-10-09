@@ -15,22 +15,13 @@
         scanFailed: false,
         scanErrorMessage: '',
         isBlurry: false,
-        lastDetectedCode: null,
         capturedPhoto: null,
-        detector: null,
         detectInterval: null,
+        ocrWorker: null,
+        ocrLoading: false,
+        ocrStatus: '',
 
         init() {
-            if ('BarcodeDetector' in window) {
-                try {
-                    this.detector = new BarcodeDetector({
-                        formats: ['qr_code', 'code_128', 'code_39', 'ean_13', 'upc_a']
-                    });
-                } catch(e) {
-                    console.log('BarcodeDetector format error:', e);
-                }
-            }
-
             this.$nextTick(() => {
                 this.startCamera();
                 if (window.lucide) lucide.createIcons();
@@ -48,8 +39,8 @@
                 navigator.mediaDevices.getUserMedia({
                     video: {
                         facingMode: this.facingMode,
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
                     },
                     audio: false
                 })
@@ -63,7 +54,7 @@
                             videoEl.play().catch(e => console.warn(e));
                             this.cameraActive = true;
                             this.setupFocus();
-                            this.startAutoDetection();
+                            // Tidak perlu auto-detection OCR di background — cukup saat tombol diklik
                         };
                     }
                 })
@@ -128,6 +119,7 @@
                 const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2];
                 gray[i] = 0.299 * r + 0.587 * g + 0.114 * b;
             }
+
             let sum = 0, sumSq = 0, n = 0;
             for (let y = 1; y < 119; y++) {
                 for (let x = 1; x < 159; x++) {
@@ -162,54 +154,118 @@
             }
         },
 
-        startAutoDetection() {
-            if (this.detectInterval) {
-                clearInterval(this.detectInterval);
+        async initOcrWorker() {
+            if (this.ocrWorker) return;
+            this.ocrLoading = true;
+            this.ocrStatus = 'Memuat mesin OCR...';
+            try {
+                this.ocrWorker = await Tesseract.createWorker('eng', 1, {
+                    logger: m => console.log(m),
+                    cacheMethod: 'write'
+                });
+                this.ocrLoading = false;
+                this.ocrStatus = '';
+            } catch (e) {
+                console.error('OCR init error:', e);
+                this.ocrLoading = false;
+                this.ocrStatus = 'Gagal memuat OCR. Coba refresh halaman.';
+            }
+        },
+
+        async performOcr() {
+            // Cek ketajaman dulu
+            const videoEl = document.getElementById('scannerWebcam');
+            const sharpness = this.computeSharpness(videoEl);
+            this.isBlurry = sharpness < 150;
+
+            if (this.isBlurry) {
+                this.scanFailed = true;
+                this.scanErrorMessage = 'Layar burem, fokuskan kartu agar terbaca';
+                return;
             }
 
-            this.detectInterval = setInterval(() => {
-                if (
-                    !this.cameraActive ||
-                    this.scanned ||
-                    this.scanning
-                ) {
+            this.scanFailed = false;
+            this.scanErrorMessage = '';
+            this.scanning = true;
+            this.scanFailed = false;
+            this.scanErrorMessage = '';
+
+            // Ambil frame dari video ke canvas (upscale 2x untuk akurasi OCR)
+            const videoEl = document.getElementById('scannerWebcam');
+            const ocrCanvas = this.$refs.ocrCanvas;
+            const w = videoEl.videoWidth * 2;
+            const h = videoEl.videoHeight * 2;
+            ocrCanvas.width = w;
+            ocrCanvas.height = h;
+            const ctx = ocrCanvas.getContext('2d');
+            ctx.drawImage(videoEl, 0, 0, w, h);
+
+            // Inisialisasi OCR worker jika belum
+            await this.initOcrWorker();
+            if (!this.ocrWorker) {
+                this.scanFailed = true;
+                this.scanErrorMessage = 'Mesin OCR gagal dimuat. Coba refresh halaman.';
+                this.scanning = false;
+                return;
+            }
+
+            this.ocrStatus = 'Membaca nama...';
+            this.scanning = true;
+            this.scanFailed = false;
+            this.scanErrorMessage = '';
+
+            try {
+                const { data: { text } } = await this.ocrWorker.recognize(this.$refs.ocrCanvas, {
+                    rectangle: { top: 0, left: 0, width: this.$refs.ocrCanvas.width, height: this.$refs.ocrCanvas.height }
+                });
+
+                const name = text.trim().replace(/\s+/g, ' ');
+                console.log('OCR result:', name);
+
+                if (!name || name.length < 3) {
+                    this.scanFailed = true;
+                    this.scanErrorMessage = 'Nama tidak terbaca. Coba lagi dengan pencahayaan lebih baik.';
+                    this.scanning = false;
                     return;
                 }
 
-                const videoEl = document.getElementById('scannerWebcam');
+                // Kirim ke server
+                const res = await fetch('{{ route('scan.post') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ code: name })
+                });
 
-                if (
-                    this.detector &&
-                    videoEl &&
-                    videoEl.readyState >= 2
-                ) {
-                    // Cek ketajaman (blur detection) via Laplacian variance
-                    const sharpness = this.computeSharpness(videoEl);
-                    this.isBlurry = sharpness < 150; // threshold
+                const data = await res.json();
 
-                    if (this.isBlurry) {
-                        // Cuma set flag, jangan deteksi saat burem
-                        return;
-                    }
+                this.scanning = false;
 
-                    this.detector.detect(videoEl)
-                        .then(barcodes => {
-                            if (
-                                barcodes &&
-                                barcodes.length > 0
-                            ) {
-                                const detectedCode = barcodes[0].rawValue?.trim();
-                                if (detectedCode) {
-                                    this.lastDetectedCode = detectedCode;
-                                    this.triggerScanSuccess(detectedCode);
-                                }
-                            }
-                        })
-                        .catch(() => {});
+                if (data.success) {
+                    this.scanned = true;
+                    this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+                    setTimeout(() => {
+                        window.location.href = data.redirect || '{{ route('dashboard.siswa') }}';
+                    }, 900);
+                } else {
+                    this.scanFailed = true;
+                    this.scanErrorMessage = data.message || 'Scan gagal. Coba lagi.';
+                    this.scanned = false;
                 }
-            }, 350);
+            } catch (e) {
+                console.error('OCR/Scan error:', e);
+                this.scanning = false;
+                this.scanFailed = true;
+                this.scanErrorMessage = 'Terjadi kesalahan saat membaca kartu. Coba lagi.';
+            }
         },
 
+        triggerScanSuccess() {
+            if (this.scanning || this.scanned) return;
+            this.performOcr();
+        },
         playBeep() {
             try {
                 const AudioCtx =
@@ -397,6 +453,10 @@
              : ''">
 
         <canvas id="sharpnessCanvas"
+                class="hidden"></canvas>
+
+        <!-- OCR Canvas (hidden, for text recognition) -->
+        <canvas x-ref="ocrCanvas"
                 class="hidden"></canvas>
 
         <!-- Real Webcam Video Stream -->
@@ -633,4 +693,5 @@ autoplay
     </a>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 @endsection
