@@ -97,4 +97,9 @@ class User extends Authenticatable
     {
         return $this->role === 'guru_bk';
     }
+
+    public function isActive(): bool
+    {
+        return ! array_key_exists('status_aktif', $this->getAttributes()) || (bool) $this->status_aktif;
+    }
 }

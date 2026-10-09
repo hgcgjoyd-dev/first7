@@ -16,7 +16,7 @@ class EnsureUserIsActive
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user()?->status_aktif) {
+        if ($request->user()?->isActive()) {
             return $next($request);
         }
 

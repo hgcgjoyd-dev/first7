@@ -7,8 +7,10 @@ use App\Models\GuruBk;
 use App\Models\Kelas;
 use App\Models\Siswa;
 use App\Models\User;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -83,22 +85,48 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
-    public function test_login_rejects_accounts_with_missing_or_misclassified_profiles(): void
+    public function test_student_without_profile_can_login_only_to_an_incomplete_student_dashboard(): void
     {
         $orphanStudent = User::factory()->create(['role' => 'siswa']);
+
         $this->post(route('login.post'), [
             'email' => $orphanStudent->email,
             'password' => 'password123',
-        ])->assertSessionHasErrors('email');
-        $this->assertGuest();
+        ])->assertRedirect(route('dashboard.siswa'));
+
+        $this->assertAuthenticatedAs($orphanStudent);
+        $this->get(route('dashboard.siswa'))
+            ->assertOk()
+            ->assertSee($orphanStudent->nama)
+            ->assertSee('Profil siswa')
+            ->assertSee('Belum dilengkapi');
+        $this->get(route('profil'))->assertForbidden();
 
         $counselorMisclassifiedAsTeacher = $this->createAccount('guru_bk');
         $counselorMisclassifiedAsTeacher->update(['role' => 'guru']);
+
+        $this->post(route('logout'));
         $this->post(route('login.post'), [
             'email' => $counselorMisclassifiedAsTeacher->email,
             'password' => 'password123',
         ])->assertSessionHasErrors('email');
         $this->assertGuest();
+    }
+
+    public function test_login_supports_existing_user_tables_without_an_activation_column(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        Schema::table('user', function (Blueprint $table): void {
+            $table->dropColumn('status_aktif');
+        });
+
+        $this->post(route('login.post'), [
+            'email' => $admin->email,
+            'password' => 'password123',
+        ])->assertRedirect(route('dashboard.admin'));
+
+        $this->assertAuthenticatedAs($admin);
+        $this->get(route('dashboard.admin'))->assertOk();
     }
 
     public function test_missing_and_invalid_email_inputs_are_rejected(): void

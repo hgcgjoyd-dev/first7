@@ -31,7 +31,7 @@ class AuthController extends Controller
 
         $user = $request->user();
 
-        if (! $user instanceof User || ! $user->status_aktif || ! $this->hasValidProfile($user)) {
+        if (! $user instanceof User || ! $user->isActive() || ! $this->hasValidProfile($user)) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -61,7 +61,7 @@ class AuthController extends Controller
     {
         return match ($user->role) {
             'admin' => true,
-            'siswa' => $user->siswa()->exists(),
+            'siswa' => true,
             'guru' => $user->guru()
                 ->whereDoesntHave('guruBk', fn ($query) => $query->where('status_aktif', true))
                 ->exists(),

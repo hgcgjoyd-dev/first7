@@ -26,7 +26,17 @@ class DashboardController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 403);
 
-        $siswa = $user->siswa()->with('kelas')->firstOrFail();
+        $siswa = $user->siswa()->with('kelas')->first();
+
+        if (! $siswa) {
+            return view('dashboard.role', [
+                'roleLabel' => 'Siswa',
+                'name' => $user->nama,
+                'profileDetails' => ['Profil siswa' => 'Belum dilengkapi'],
+                'metrics' => [],
+                'students' => collect(),
+            ]);
+        }
 
         return view('dashboard.role', [
             'roleLabel' => 'Siswa',

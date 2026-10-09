@@ -11,6 +11,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Database dibiarkan kosong sesuai permintaan: tanpa dummy data & tanpa INSERT
+        $this->call(UserSeeder::class);
     }
 }
