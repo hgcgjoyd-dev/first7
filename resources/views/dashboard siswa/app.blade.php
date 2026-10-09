@@ -285,14 +285,9 @@
 
                 <!-- School Info Card with Logo PNG -->
                 <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
-                    <div class="bg-white rounded-2xl p-2.5 mb-3 flex items-center justify-center shadow-xs">
+                    <div class="bg-white rounded-2xl p-2.5 flex items-center justify-center shadow-xs">
                         <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 w-auto object-contain">
                     </div>
-
-                    <p class="text-xs text-blue-100/90 leading-relaxed">
-                        Presensi dibuka 06:30 - 07:05 WITA, kepulangan 12:25 WITA. Keterlambatan dicatat otomatis dan mengirim notifikasi WhatsApp ke orang tua/wali.
-                    </p>
-
                 </div>
             </aside>
 

@@ -18,8 +18,11 @@ Route::get('/scan', [KesiswaanController::class, 'scan'])->name('scan');
 Route::post('/scan', [KesiswaanController::class, 'postScan'])->name('scan.post');
 Route::get('/logout', [KesiswaanController::class, 'logout'])->name('logout');
 
-// 2. Dashboard & Fitur Siswa
-Route::get('/dashboard', [KesiswaanController::class, 'dashboard'])->name('dashboard');
+// 2. Dashboard & Fitur Siswa (URL resmi diubah menjadi /dashboardsiswa)
+Route::get('/dashboardsiswa', [KesiswaanController::class, 'dashboard'])->name('dashboard');
+Route::get('/dashboard', function () {
+    return redirect()->route('dashboard');
+});
 Route::get('/presensi', [KesiswaanController::class, 'presensi'])->name('presensi');
 Route::post('/presensi', [KesiswaanController::class, 'storePresensi'])->name('presensi.store');
 
