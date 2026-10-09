@@ -312,10 +312,13 @@
                         class="w-full py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
                     Batal
                 </button>
-                <a href="{{ route('logout') }}" 
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
+                    @csrf
+                    <button type="submit"
                    class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors flex items-center justify-center">
                     Ya, Keluar
-                </a>
+                    </button>
+                </form>
             </div>
         </div>
     </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Sistem Presensi & Kesiswaan') - SMK TI Bali Global Badung</title>
+    <title>@yield('title', 'Sistem Absensi & Kesiswaan') - SMK TI Bali Global Badung</title>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -132,23 +132,14 @@
 
             <!-- Left: Brand Logo PNG (Sudah berisi tulisan SMK TI Bali Global Badung) -->
             <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-10 sm:h-11 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
+                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 sm:h-14 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
                 <div class="border-l border-slate-200 pl-3 hidden sm:block">
-                    <p class="text-xs font-bold text-slate-700 leading-tight">Presensi & Kesiswaan</p>
+                    <p class="text-xl sm:text-2xl font-extrabold text-slate-800 leading-tight tracking-tight">Absensi & Kesiswaan</p>
                 </div>
             </a>
 
-            <!-- Right: Quick Navigation, Profile & Notifications (Pojok Kanan) -->
+            <!-- Right: Quick Navigation & Profile Avatar (Pojok Kanan) -->
             <div class="flex items-center space-x-3">
-
-                <!-- User Profile Link Button -->
-                <a href="{{ route('profil') }}" 
-                   title="Buka Profil Siswa" 
-                   class="p-1 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center group">
-                    <div class="w-9 h-9 rounded-full bg-linear-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs group-hover:scale-105 active:scale-95 transition-transform">
-                        <i data-lucide="graduation-cap" class="w-5 h-5"></i>
-                    </div>
-                </a>
 
                 <!-- Notifications Dropdown (Pojok Kanan Atas) -->
                 <div class="relative" x-data="{ open: false }">
@@ -307,14 +298,9 @@
 
                 <!-- School Info Card with Logo PNG -->
                 <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
-                    <div class="bg-white rounded-2xl p-2.5 mb-3 flex items-center justify-center shadow-xs">
+                    <div class="bg-white rounded-2xl p-2.5 flex items-center justify-center shadow-xs">
                         <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 w-auto object-contain">
                     </div>
-
-                    <p class="text-xs text-blue-100/90 leading-relaxed">
-                        Presensi dibuka 06:30 - 07:05 WITA, kepulangan 12:25 WITA. Keterlambatan dicatat otomatis dan mengirim notifikasi WhatsApp ke orang tua/wali.
-                    </p>
-
                 </div>
             </aside>
 
@@ -327,7 +313,7 @@
     </div>
 
     <!-- MOBILE BOTTOM NAVIGATION (Hanya Tampil di Dashboard Sesuai Revisi) -->
-    @if(request()->routeIs('dashboard'))
+    @if(request()->routeIs('dashboard', 'dashboard.siswa'))
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-8 py-2.5 z-40 shadow-lg">
         <div class="max-w-md mx-auto flex items-center justify-between relative">
 
@@ -341,7 +327,7 @@
             <!-- 2. Floating Center Presensi Button -->
             <div class="relative -top-5">
                 <a href="{{ route('presensi') }}" 
-                   title="Presensi Masuk & Pulang"
+                   title="Absensi Masuk & Pulang"
                    class="w-14 h-14 rounded-full bg-gradient-to-tr from-blue-700 to-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 hover:scale-105 active:scale-95 transition-all ring-4 ring-white">
                     <i data-lucide="scan-face" class="w-7 h-7"></i>
                 </a>

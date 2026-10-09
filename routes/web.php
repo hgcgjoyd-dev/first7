@@ -41,6 +41,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         ->name('dashboard.admin');
 
     Route::middleware('role:siswa')->group(function (): void {
+        Route::redirect('/dashboardsiswa', '/dashboard/siswa')->name('dashboard.siswa.legacy');
         Route::get('/scan', [KesiswaanController::class, 'scan'])->name('scan');
         Route::post('/scan', [KesiswaanController::class, 'postScan'])->name('scan.post');
         Route::get('/presensi', [KesiswaanController::class, 'presensi'])->name('presensi');
@@ -70,14 +71,49 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         ->middleware('role:admin')
         ->name('cek-db');
 
-    Route::middleware('role:guru_bk,admin')->prefix('bk')->name('bk.')->group(function (): void {
-        Route::resource('pelanggaran', PelanggaranSiswaController::class);
+    Route::middleware('role:guru')->group(function (): void {
+        Route::redirect('/dashboardguru', '/dashboard/guru')->name('guru.dashboard');
+        Route::redirect('/dashboard-guru', '/dashboard/guru')->name('dashboard.guru.legacy');
+        Route::redirect('/guru', '/dashboard/guru');
     });
 
     Route::middleware('role:guru_bk,admin')->group(function (): void {
         Route::get('/dashboardbk', [DashboardController::class, 'guruBk'])->name('guru.bk');
         Route::get('/dashboard-guru/bk', [DashboardController::class, 'guruBk'])->name('dashboard.guru.bk');
-        Route::view('/dashboard-guru/absensi', 'dashboard guru.absensi')->name('guru.absensi');
-        Route::view('/absensi-guru', 'dashboard guru.absensi')->name('absensi.guru');
+        Route::redirect('/dashboard-guru-bk', '/dashboard/guru-bk')->name('dashboard.gurubk');
+        Route::redirect('/dashboard-gurubk', '/dashboard/guru-bk');
+        Route::redirect('/dashboardbk/absensi', '/dashboard-guru-bk/absensi');
+        Route::redirect('/dashboard-guru/absensi', '/dashboard-guru-bk/absensi');
+        Route::redirect('/absensi-guru', '/dashboard-guru-bk/absensi')->name('absensi.guru');
+        Route::view('/dashboard-guru-bk/absensi', 'dashboard guru bk.absensi')->name('guru.absensi');
+        Route::redirect('/dashboard-gurubk/absensi', '/dashboard-guru-bk/absensi')->name('gurubk.absensi');
+        Route::redirect('/absensi-bk', '/dashboard-guru-bk/absensi')->name('absensi.bk');
+        Route::redirect('/absensi-guru-bk', '/dashboard-guru-bk/absensi');
+
+        Route::redirect('/dashboard-guru-bk/pelanggaran', '/bk/pelanggaran')->name('guru.pelanggaran');
+        Route::redirect('/dashboard-gurubk/pelanggaran', '/bk/pelanggaran')->name('gurubk.pelanggaran');
+        Route::redirect('/dashboardbk/pelanggaran', '/bk/pelanggaran');
+        Route::redirect('/pelanggaran-bk', '/bk/pelanggaran')->name('pelanggaran.bk');
+        Route::redirect('/pelanggaran', '/bk/pelanggaran')->name('pelanggaran');
+
+        Route::view('/dashboard-guru-bk/konseling', 'dashboard guru bk.konseling')->name('guru.konseling');
+        Route::redirect('/dashboard-gurubk/konseling', '/dashboard-guru-bk/konseling')->name('gurubk.konseling');
+        Route::redirect('/dashboardbk/konseling', '/dashboard-guru-bk/konseling');
+        Route::redirect('/konseling-bk', '/dashboard-guru-bk/konseling')->name('konseling.bk');
+        Route::redirect('/konseling-guru-bk', '/dashboard-guru-bk/konseling');
+        Route::redirect('/dashboard-guru/konseling', '/dashboard-guru-bk/konseling');
+        Route::redirect('/konseling-guru', '/dashboard-guru-bk/konseling');
+
+        Route::view('/dashboard-guru-bk/profile', 'dashboard guru bk.profilebk')->name('guru.profile');
+        Route::redirect('/dashboard-gurubk/profile', '/dashboard-guru-bk/profile')->name('gurubk.profile');
+        Route::redirect('/dashboardbk/profile', '/dashboard-guru-bk/profile');
+        Route::redirect('/profilebk', '/dashboard-guru-bk/profile')->name('profilebk');
+        Route::redirect('/dashboard-guru-bk/profilebk', '/dashboard-guru-bk/profile')->name('dashboard.guru.profilebk');
+        Route::redirect('/dashboard-gurubk/profilebk', '/dashboard-guru-bk/profile');
+        Route::redirect('/dashboard-guru/profile', '/dashboard-guru-bk/profile');
+        Route::redirect('/dashboard-guru/profilebk', '/dashboard-guru-bk/profile');
+
+        Route::resource('bk/pelanggaran', PelanggaranSiswaController::class)
+            ->names('bk.pelanggaran');
     });
 });

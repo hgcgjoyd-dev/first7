@@ -188,7 +188,7 @@
                     :class="activeSlide === 2 ? 'border-blue-600 shadow-md ring-2 ring-blue-500/30' : 'border-transparent opacity-65 hover:opacity-100'">
                 <img src="{{ asset('images/images3.png') }}" alt="Area & Lapangan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-2 flex flex-col justify-end">
-                    <span class="text-[10px] sm:text-[11px] font-bold text-white truncate">Area Kampus</span>
+                    <span class="text-[10px] sm:text-[11px] font-bold text-white truncate">Halaman Sekolah</span>
                 </div>
             </button>
         </div>

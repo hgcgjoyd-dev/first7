@@ -267,16 +267,8 @@
         }
      }">
 
-    <!-- Top Nav Back -->
+    <!-- Top Status Header -->
     <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-
-        <a href="{{ route('landing') }}"
-           class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 transition-colors"
-           title="Kembali ke Halaman Awal">
-
-            <i data-lucide="arrow-left"
-               class="w-5 h-5"></i>
-        </a>
 
         <div class="flex items-center space-x-1.5">
 

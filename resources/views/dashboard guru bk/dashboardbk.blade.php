@@ -264,11 +264,11 @@
                     </div>
 
                     <!-- Right: White Circular Avatar with User Icon (Mockup Match) -->
-                    <button @click="modalProfil = true" 
-                            title="Buka Profil Guru BK"
-                            class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0">
+                    <a href="{{ route('guru.profile') }}" 
+                       title="Buka Halaman Profil Guru BK"
+                       class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0">
                         <i data-lucide="user" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]"></i>
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
@@ -297,8 +297,8 @@
                 </a>
 
                 <!-- CARD 2: Konseling & BK -->
-                <div @click="openAction('konseling')" 
-                     class="bg-white rounded-[28px] sm:rounded-3xl p-6 sm:p-8 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-97 cursor-pointer flex flex-col items-center justify-center text-center group">
+                <a href="{{ route('guru.konseling') }}" 
+                   class="bg-white rounded-[28px] sm:rounded-3xl p-6 sm:p-8 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-97 cursor-pointer flex flex-col items-center justify-center text-center group block">
                     <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-blue-50/80 group-hover:bg-blue-100/90 text-blue-600 flex items-center justify-center transition-colors mb-3 sm:mb-4">
                         <i data-lucide="users" class="w-9 h-9 sm:w-11 sm:h-11 stroke-[2.2] group-hover:scale-110 transition-transform"></i>
                     </div>
@@ -306,22 +306,22 @@
                         Konseling & BK
                     </h3>
                     <p class="hidden sm:block text-xs text-slate-400 mt-1">Jadwal bimbingan & konseling siswa</p>
-                </div>
+                </a>
             </div>
 
 
             <!-- ================================================================= -->
             <!-- ROW 2: Pelanggaran Siswa Card (Mockup Match)                       -->
             <!-- ================================================================= -->
-            <div @click="openAction('pelanggaran')" 
-                 class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-98 cursor-pointer flex items-center justify-center space-x-3 group">
+            <a href="{{ route('guru.pelanggaran') }}" 
+               class="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-98 cursor-pointer flex items-center justify-center space-x-3 group block">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                     <i data-lucide="clipboard-list" class="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]"></i>
                 </div>
                 <h3 class="text-base sm:text-lg font-black text-slate-800 group-hover:text-blue-600 transition-colors">
                     Pelanggaran Siswa
                 </h3>
-            </div>
+            </a>
 
 
             <!-- ================================================================= -->
@@ -350,9 +350,9 @@
                             </div>
                             <h4 class="font-bold text-sm text-slate-900">Jadwal Konseling Hari Ini</h4>
                         </div>
-                        <button @click="openAction('konseling')" class="text-xs font-bold text-blue-600 hover:underline">
-                            + Tambah Sesi
-                        </button>
+                        <a href="{{ route('guru.konseling') }}" class="text-xs font-bold text-blue-600 hover:underline">
+                            Kelola Konseling →
+                        </a>
                     </div>
 
                     <div class="space-y-2.5">
@@ -377,9 +377,9 @@
                             </div>
                             <h4 class="font-bold text-sm text-slate-900">Catatan Pelanggaran Siswa</h4>
                         </div>
-                        <button @click="openAction('pelanggaran')" class="text-xs font-bold text-rose-600 hover:underline">
-                            + Input Sanksi
-                        </button>
+                        <a href="{{ route('guru.pelanggaran') }}" class="text-xs font-bold text-rose-600 hover:underline">
+                            Kelola Pelanggaran →
+                        </a>
                     </div>
 
                     <div class="space-y-2.5">
@@ -413,12 +413,11 @@
         </button>
 
         <!-- Tab 2: Profile (Inactive Gray) -->
-        <button @click="modalProfil = true" 
-                :class="modalProfil ? 'text-blue-600 font-bold' : 'text-slate-400 hover:text-slate-600'"
-                class="flex flex-col items-center justify-center space-y-1 transition-all">
+        <a href="{{ route('guru.profile') }}" 
+           class="flex flex-col items-center justify-center space-y-1 text-slate-400 hover:text-blue-600 transition-all">
             <i data-lucide="user" class="w-6 h-6 stroke-[2.2]"></i>
             <span class="text-[11px]">Profile</span>
-        </button>
+        </a>
     </nav>
 
 
@@ -681,10 +680,13 @@
             </div>
 
             <div class="pt-2 border-t border-slate-100">
-                <a href="{{ route('logout') }}" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5">
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
+                    @csrf
+                    <button type="submit" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center space-x-1.5">
                     <i data-lucide="log-out" class="w-4 h-4"></i>
                     <span>Keluar Akun / Logout</span>
-                </a>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
@@ -709,4 +711,3 @@
 
 </body>
 </html>
-
