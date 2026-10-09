@@ -73,3 +73,13 @@ Route::get('/dashboard-guru/pelanggaran', function () {
 Route::get('/pelanggaran', function () {
     return view('dashboard guru.pelanggaran');
 })->name('pelanggaran');
+
+// 11. Pengajuan Konseling & BK (Guru BK - Antrean & Penjadwalan)
+Route::get('/dashboard-guru/konseling', function () {
+    return view('dashboard guru.konseling');
+})->name('guru.konseling');
+
+Route::get('/konseling-guru', function () {
+    return view('dashboard guru.konseling');
+})->name('konseling.guru');
+

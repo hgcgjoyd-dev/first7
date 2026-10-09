@@ -297,8 +297,8 @@
                 </a>
 
                 <!-- CARD 2: Konseling & BK -->
-                <div @click="openAction('konseling')" 
-                     class="bg-white rounded-[28px] sm:rounded-3xl p-6 sm:p-8 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-97 cursor-pointer flex flex-col items-center justify-center text-center group">
+                <a href="{{ route('guru.konseling') }}" 
+                   class="bg-white rounded-[28px] sm:rounded-3xl p-6 sm:p-8 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-97 cursor-pointer flex flex-col items-center justify-center text-center group block">
                     <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-blue-50/80 group-hover:bg-blue-100/90 text-blue-600 flex items-center justify-center transition-colors mb-3 sm:mb-4">
                         <i data-lucide="users" class="w-9 h-9 sm:w-11 sm:h-11 stroke-[2.2] group-hover:scale-110 transition-transform"></i>
                     </div>
@@ -306,7 +306,7 @@
                         Konseling & BK
                     </h3>
                     <p class="hidden sm:block text-xs text-slate-400 mt-1">Jadwal bimbingan & konseling siswa</p>
-                </div>
+                </a>
             </div>
 
 
@@ -350,9 +350,9 @@
                             </div>
                             <h4 class="font-bold text-sm text-slate-900">Jadwal Konseling Hari Ini</h4>
                         </div>
-                        <button @click="openAction('konseling')" class="text-xs font-bold text-blue-600 hover:underline">
-                            + Tambah Sesi
-                        </button>
+                        <a href="{{ route('guru.konseling') }}" class="text-xs font-bold text-blue-600 hover:underline">
+                            Kelola Konseling →
+                        </a>
                     </div>
 
                     <div class="space-y-2.5">
