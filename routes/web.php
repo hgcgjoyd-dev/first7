@@ -47,6 +47,19 @@ Route::get('/profil', [KesiswaanController::class, 'profil'])->name('profil');
 // 7. Cek Koneksi Database
 Route::get('/cek-db', [DatabaseController::class, 'check'])->name('cek-db');
 
+// 7b. Dashboard Guru Mapel (resources/views/dashboard guru/dashboardguru.blade.php)
+Route::get('/dashboardguru', function () {
+    return view('dashboard guru.dashboardguru');
+})->name('guru.dashboard');
+
+Route::get('/dashboard-guru', function () {
+    return view('dashboard guru.dashboardguru');
+})->name('dashboard.guru');
+
+Route::get('/guru', function () {
+    return view('dashboard guru.dashboardguru');
+});
+
 // Helper view Guru BK (Mendukung folder 'dashboard guru bk' maupun fallback 'dashboard guru')
 if (!function_exists('renderBkView')) {
     function renderBkView(string $viewName) {
@@ -71,10 +84,6 @@ Route::get('/dashboard-gurubk', function () {
 })->name('dashboard.gurubk');
 
 Route::get('/dashboard-guru/bk', function () {
-    return redirect()->route('guru.bk');
-});
-
-Route::get('/dashboard-guru', function () {
     return redirect()->route('guru.bk');
 });
 
