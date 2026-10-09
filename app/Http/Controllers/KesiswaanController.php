@@ -75,7 +75,7 @@ class KesiswaanController extends Controller
         $today = Carbon::today()->toDateString();
         $presensiHariIni = $siswa->absensi()->whereDate('tanggal', $today)->first();
 
-        return view('presensi.index', compact('siswa', 'presensiHariIni'));
+        return view('dashboard siswa.presensi', compact('siswa', 'presensiHariIni'));
     }
 
     /**
@@ -146,7 +146,7 @@ class KesiswaanController extends Controller
     {
         $siswa = $this->getActiveSiswa();
 
-        return view('izin.index', compact('siswa'));
+        return view('dashboard siswa.izin', compact('siswa'));
     }
 
     /**
@@ -190,8 +190,9 @@ class KesiswaanController extends Controller
         $siswa = $this->getActiveSiswa();
         $daftarPresensi = [];
         $daftarIzin = [];
-        $persenHadir = 95;
-        $totalIzin = 0;
+        $totalHadir = 14;
+        $persenHadir = 93;
+        $totalIzin = 3;
 
         if (Schema::hasTable('absensi')) {
             $daftarPresensi = $siswa->absensi()
@@ -223,7 +224,7 @@ class KesiswaanController extends Controller
                 ->sum('durasi_hari') ?: 0;
         }
 
-        return view('riwayat.index', compact('siswa', 'daftarPresensi', 'daftarIzin', 'persenHadir', 'totalIzin'));
+        return view('dashboard siswa.riwayat', compact('siswa', 'daftarPresensi', 'daftarIzin', 'totalHadir', 'persenHadir', 'totalIzin'));
     }
 
     /**
@@ -238,7 +239,7 @@ class KesiswaanController extends Controller
             $daftarMapel = Mapel::orderBy('deadline', 'asc')->get();
         }
 
-        return view('mapel.index', compact('siswa', 'daftarMapel'));
+        return view('dashboard siswa.mapel', compact('siswa', 'daftarMapel'));
     }
 
     /**
@@ -252,7 +253,24 @@ class KesiswaanController extends Controller
             ->orderByDesc('tanggal_kejadian')
             ->get();
 
-        return view('bk.index', compact('siswa', 'daftarBk'));
+        return view('dashboard siswa.bk', compact('siswa', 'daftarBk'));
+    }
+
+    /**
+     * 9b. Halaman Konseling Siswa (Baru Sesuai Mockup)
+     */
+    public function konseling()
+    {
+        $siswa = $this->getActiveSiswa();
+        $daftarBk = [];
+
+        if (Schema::hasTable('konseling')) {
+            $daftarBk = $siswa->konseling()
+                ->orderByDesc('tanggal_konseling')
+                ->get();
+        }
+
+        return view('dashboard siswa.konseling', compact('siswa', 'daftarBk'));
     }
 
     /**
@@ -277,7 +295,7 @@ class KesiswaanController extends Controller
                 ->first();
         }
 
-        return view('piket.index', compact('siswa', 'daftarPiket', 'piketHariIni'));
+        return view('dashboard siswa.piket', compact('siswa', 'daftarPiket', 'piketHariIni'));
     }
 
     /**

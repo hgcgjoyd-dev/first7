@@ -50,6 +50,7 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         Route::get('/riwayat', [KesiswaanController::class, 'riwayat'])->name('riwayat');
         Route::get('/mapel', [KesiswaanController::class, 'mapel'])->name('mapel');
         Route::get('/bk', [KesiswaanController::class, 'bk'])->name('bk');
+        Route::get('/konseling', [KesiswaanController::class, 'konseling'])->name('konseling');
         Route::get('/piket', [KesiswaanController::class, 'piket'])->name('piket');
         Route::post('/piket/confirm', [KesiswaanController::class, 'confirmPiket'])->name('piket.confirm');
         Route::post('/piket/{id}/toggle', [KesiswaanController::class, 'updatePiket'])->name('piket.toggle');

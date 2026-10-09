@@ -18,7 +18,7 @@
 }">
     
     <!-- Header Greeting Hero Card (Exact from Image 2 Left with Logo PNG) -->
-    <div class="header-gradient text-white rounded-3xl p-6 sm:p-8 shadow-soft relative overflow-hidden">
+    <div class="header-gradient text-white rounded-3xl sm:rounded-[36px] p-6 sm:p-8 shadow-soft relative overflow-hidden">
         <!-- Ambient background glow -->
         <div class="absolute -top-12 -right-12 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
         <div class="absolute bottom-0 right-1/4 w-44 h-44 rounded-full bg-blue-400/20 blur-xl pointer-events-none"></div>
@@ -67,7 +67,7 @@
     </div>
 
     <!-- 5 MENU LAYANAN CEPAT SISWA (Exact from Image 2 Left - Fully Clickable & Responsive) -->
-    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft">
+    <div class="bg-white rounded-3xl sm:rounded-[32px] p-6 sm:p-8 border border-slate-200/80 shadow-soft">
         <div class="flex items-center justify-between mb-5">
             <h3 class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-400">PILIHAN MENU CEPAT</h3>
             <span class="text-xs font-semibold text-blue-600">Klik ikon untuk membuka</span>
@@ -155,7 +155,7 @@
     </div>
 
     <!-- HERO ACTION SECTION: "Absen Disini" Fingerprint Trigger (Exact from Image 2) -->
-    <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 rounded-3xl p-8 text-white text-center shadow-xl shadow-blue-500/15 relative overflow-hidden flex flex-col items-center justify-center">
+    <div class="bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 rounded-3xl sm:rounded-[36px] p-8 text-white text-center shadow-xl shadow-blue-500/15 relative overflow-hidden flex flex-col items-center justify-center">
         <!-- Decoration circles -->
         <div class="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/10 blur-xl"></div>
         <div class="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-xl"></div>
@@ -168,7 +168,7 @@
             
             <h2 class="text-2xl sm:text-3xl font-black mb-2">Absen Disini</h2>
             <p class="text-xs sm:text-sm text-blue-100 mb-6 font-medium">
-                Posisikan diri di area kampus sekolah SMK TI Bali Global Badung lalu klik tombol scan di bawah ini.
+                Posisikan diri di area sekolah SMK TI Bali Global Badung lalu klik tombol sidik jari di bawah ini.
             </p>
 
             <!-- Arrow Down Indicator -->
@@ -176,11 +176,11 @@
                 <i data-lucide="arrow-down" class="w-5 h-5 mx-auto"></i>
             </div>
 
-            <!-- Scan Button: Click navigates to /presensi -->
-            <a href="{{ route('presensi') }}" title="Mulai Presensi Biometrik & Scan" class="relative group block">
+            <!-- Fingerprint Pulse Button: Click navigates to /presensi -->
+            <a href="{{ route('presensi') }}" title="Mulai Presensi Biometrik" class="relative group block">
                 <div class="absolute -inset-4 bg-white/25 rounded-full blur-xl group-hover:bg-white/40 transition-all animate-pulse-ring"></div>
                 <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white text-blue-600 flex items-center justify-center shadow-2xl relative z-10 group-hover:scale-105 active:scale-95 transition-all">
-                    <i data-lucide="scan" class="w-12 h-12 sm:w-14 sm:h-14"></i>
+                    <i data-lucide="fingerprint" class="w-12 h-12 sm:w-14 sm:h-14"></i>
                 </div>
             </a>
 
@@ -221,7 +221,7 @@
             </div>
 
             <div class="pt-4 mt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span class="text-slate-500">Area: Lab RPL 2 & Kelas</span>
+                <span class="text-slate-500">Area Lingkungan: Lab RPL & Kelas</span>
                 <a href="{{ route('piket') }}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold px-3 py-1.5 rounded-xl transition-colors">
                     Buka Checklist →
                 </a>

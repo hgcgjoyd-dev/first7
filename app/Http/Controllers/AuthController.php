@@ -12,7 +12,7 @@ class AuthController extends Controller
 {
     public function create(): View
     {
-        return view('auth.login');
+        return view('dashboard siswa.auth.login');
     }
 
     public function store(Request $request): RedirectResponse

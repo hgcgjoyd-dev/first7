@@ -8,7 +8,7 @@
     <div class="text-center space-y-3">
         <!-- Logo Resmi SMK TI Bali Global Badung -->
         <div class="flex items-center justify-center">
-            <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="w-24 sm:w-28 h-auto object-contain drop-shadow-sm">
+            <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-16 sm:h-20 w-auto object-contain drop-shadow-sm">
         </div>
 
         <div>
@@ -56,17 +56,21 @@
                        autocomplete="current-password"
                        required 
                        class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-10 pr-11 py-3 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-hidden transition-all">
-                <!-- Eye icon button to toggle password visibility -->
+                <!-- Eye icon button to toggle password visibility (menggunakan SVG langsung agar tidak duplikasi) -->
                 <button type="button" 
-                        @click="showPassword = !showPassword; $nextTick(() => lucide.createIcons())" 
+                        @click="showPassword = !showPassword" 
                         class="absolute right-3.5 top-3 text-slate-400 hover:text-blue-600 focus:outline-none transition-colors cursor-pointer p-0.5" 
                         title="Lihat / Sembunyikan Kata Sandi">
-                    <template x-if="!showPassword">
-                        <i data-lucide="eye" class="w-4 h-4"></i>
-                    </template>
-                    <template x-if="showPassword">
-                        <i data-lucide="eye-off" class="w-4 h-4 text-blue-600"></i>
-                    </template>
+                    <svg x-show="!showPassword" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                        <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <svg x-show="showPassword" x-cloak xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-blue-600">
+                        <path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/>
+                        <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/>
+                        <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/>
+                        <path d="m2 2 20 20"/>
+                    </svg>
                 </button>
             </div>
         </div>
