@@ -293,7 +293,7 @@
     <!-- ========================================================================= -->
     <div x-show="confirmLogout" 
          x-cloak 
-         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
          @keydown.escape.window="confirmLogout = false">
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100"
              @click.away="confirmLogout = false">

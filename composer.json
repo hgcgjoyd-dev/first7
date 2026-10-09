@@ -27,7 +27,7 @@
             "Database\\Seeders\\": "database/seeders/"
         },
         "classmap": [
-            "app/Http/ControlerSiswa/"
+            "app/Models/Model Siswa/"
         ]
     },
     "autoload-dev": {

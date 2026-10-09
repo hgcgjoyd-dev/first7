@@ -11,6 +11,9 @@ class Siswa extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $table = 'siswa';
+    protected $primaryKey = 'id_siswa';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
         'nis',

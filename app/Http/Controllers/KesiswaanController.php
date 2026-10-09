@@ -12,7 +12,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
@@ -24,42 +23,42 @@ class KesiswaanController extends Controller
     protected function ensureDatabaseReady()
     {
         try {
-            if (!Schema::hasTable('siswa')) {
+            if (! Schema::hasTable('siswa')) {
                 Artisan::call('migrate', ['--force' => true]);
             }
 
             // Jika tabel siswa masih kosong, buat data awal
             if (Schema::hasTable('siswa') && Siswa::count() === 0) {
                 $siswa = Siswa::create([
-                    'nis'           => '102938',
-                    'nisn'          => '0071234567',
-                    'nama'          => 'Wahyu Pratama',
-                    'email'         => 'wahyu.pratama@smktibaliglobal.sch.id',
-                    'password'      => Hash::make('password123'),
-                    'kelas'         => 'XI PPLG 1',
-                    'jurusan'       => 'PPLG',
-                    'rfid_card'     => 'SMKTI-2026-001',
-                    'poin_bk'       => 15,
+                    'nis' => '102938',
+                    'nisn' => '0071234567',
+                    'nama' => 'Wahyu Pratama',
+                    'email' => 'wahyu.pratama@smktibaliglobal.sch.id',
+                    'password' => Hash::make('password123'),
+                    'kelas' => 'XI PPLG 1',
+                    'jurusan' => 'PPLG',
+                    'rfid_card' => 'SMKTI-2026-001',
+                    'poin_bk' => 15,
                     'poin_prestasi' => 50,
                 ]);
 
                 // Buat data mapel awal jika kosong
                 if (Schema::hasTable('mapel') && Mapel::count() === 0) {
                     Mapel::create([
-                        'nama_mapel'  => 'Pemrograman Web & Mobile',
-                        'guru'        => 'Pak Guru PPLG',
+                        'nama_mapel' => 'Pemrograman Web & Mobile',
+                        'guru' => 'Pak Guru PPLG',
                         'judul_tugas' => 'Slice UI Figma Dashboard ke HTML/CSS',
-                        'deskripsi'   => 'Implementasikan tata letak mobile frame dengan Tailwind CSS dan tombol fungsi.',
-                        'deadline'    => Carbon::tomorrow(),
-                        'status'      => 'Aktif',
+                        'deskripsi' => 'Implementasikan tata letak mobile frame dengan Tailwind CSS dan tombol fungsi.',
+                        'deadline' => Carbon::tomorrow(),
+                        'status' => 'Aktif',
                     ]);
                     Mapel::create([
-                        'nama_mapel'  => 'Basis Data Relasional',
-                        'guru'        => 'Ibu Guru Basis Data',
+                        'nama_mapel' => 'Basis Data Relasional',
+                        'guru' => 'Ibu Guru Basis Data',
                         'judul_tugas' => 'Perancangan ERD Sistem Presensi',
-                        'deskripsi'   => 'Buat tabel relasi untuk siswa, presensi, dan izin sekolah.',
-                        'deadline'    => Carbon::now()->addDays(3),
-                        'status'      => 'Aktif',
+                        'deskripsi' => 'Buat tabel relasi untuk siswa, presensi, dan izin sekolah.',
+                        'deadline' => Carbon::now()->addDays(3),
+                        'status' => 'Aktif',
                     ]);
                 }
 
@@ -68,10 +67,10 @@ class KesiswaanController extends Controller
                     $hariList = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
                     foreach ($hariList as $hari) {
                         Piket::create([
-                            'hari'    => $hari,
-                            'kelas'   => 'XI PPLG 1',
+                            'hari' => $hari,
+                            'kelas' => 'XI PPLG 1',
                             'anggota' => 'Wahyu Pratama, Budi Santoso, Siti Rahma, Ayu Dewi',
-                            'status'  => 'Belum Selesai',
+                            'status' => 'Belum Selesai',
                         ]);
                     }
                 }
@@ -100,23 +99,38 @@ class KesiswaanController extends Controller
                 $siswa = Siswa::first();
                 if ($siswa) {
                     session(['siswa_id' => $siswa->id]);
+
                     return $siswa;
                 }
             }
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         // Fallback objek jika database belum ada data sama sekali
-        return (object)[
-            'id'            => 1,
-            'nis'           => '102938',
-            'nisn'          => '0071234567',
-            'nama'          => 'Wahyu Pratama',
-            'email'         => 'wahyu.pratama@smktibaliglobal.sch.id',
-            'kelas'         => 'XI PPLG 1',
-            'jurusan'       => 'PPLG',
-            'poin_bk'       => 15,
+        return (object) [
+            'id' => 1,
+            'nis' => '102938',
+            'nisn' => '0071234567',
+            'nama' => 'Wahyu Pratama',
+            'email' => 'wahyu.pratama@smktibaliglobal.sch.id',
+            'kelas' => 'XI PPLG 1',
+            'jurusan' => 'PPLG',
+            'poin_bk' => 15,
             'poin_prestasi' => 50,
         ];
+    }
+
+    /**
+     * Menghitung jarak dua koordinat dalam meter (rumus Haversine).
+     */
+    protected function hitungJarakMeter(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $r = 6371000;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+
+        return 2 * $r * asin(sqrt($a));
     }
 
     /**
@@ -128,6 +142,7 @@ class KesiswaanController extends Controller
         if (view()->exists('dashboard siswa.auth.landing')) {
             return view('dashboard siswa.auth.landing');
         }
+
         return view('auth.landing');
     }
 
@@ -139,6 +154,7 @@ class KesiswaanController extends Controller
         if (view()->exists('dashboard siswa.auth.login')) {
             return view('dashboard siswa.auth.login');
         }
+
         return view('auth.login');
     }
 
@@ -150,7 +166,7 @@ class KesiswaanController extends Controller
         $this->ensureDatabaseReady();
 
         $request->validate([
-            'email'    => 'required',
+            'email' => 'required',
             'password' => 'required',
         ]);
 
@@ -171,12 +187,13 @@ class KesiswaanController extends Controller
             if (in_array($inputEmail, $guruIdentifiers)) {
                 if ($inputPassword === 'guru123' || $inputPassword === 'password123' || $inputPassword === 'admin123') {
                     session([
-                        'user_role'    => 'guru',
-                        'guru_nama'    => 'Dra. Ni Luh Suastini, S.Pd',
-                        'guru_nip'     => '19780512 200501 2 008',
+                        'user_role' => 'guru',
+                        'guru_nama' => 'Dra. Ni Luh Suastini, S.Pd',
+                        'guru_nip' => '19780512 200501 2 008',
                         'guru_jabatan' => 'Koordinator Guru BK & Konselor Sekolah',
-                        'guru_email'   => 'guru.bk@smktibaliglobal.sch.id',
+                        'guru_email' => 'guru.bk@smktibaliglobal.sch.id',
                     ]);
+
                     return redirect()->route('guru.bk')->with('success', 'Selamat datang Guru BK, Dra. Ni Luh Suastini, S.Pd!');
                 } else {
                     return back()->with('error', 'Kata Sandi untuk akun Guru BK salah. Gunakan password: guru123')->withInput();
@@ -191,31 +208,34 @@ class KesiswaanController extends Controller
             if ($siswa && Hash::check($request->password, $siswa->password)) {
                 session([
                     'user_role' => 'siswa',
-                    'siswa_id'  => $siswa->id,
+                    'siswa_id' => $siswa->id,
                 ]);
-                return redirect()->route('dashboard')->with('success', 'Selamat datang, ' . $siswa->nama);
+
+                return redirect()->route('dashboard')->with('success', 'Selamat datang, '.$siswa->nama);
             }
 
             if ($siswa && ($siswa->password === $request->password || $request->password === 'password123')) {
                 session([
                     'user_role' => 'siswa',
-                    'siswa_id'  => $siswa->id,
+                    'siswa_id' => $siswa->id,
                 ]);
-                return redirect()->route('dashboard')->with('success', 'Selamat datang, ' . $siswa->nama);
+
+                return redirect()->route('dashboard')->with('success', 'Selamat datang, '.$siswa->nama);
             }
 
             // 3. Fallback Demo Siswa (Wahyu Pratama) jika data belum termigrasi
             if (in_array($inputEmail, ['wahyu.pratama@smktibaliglobal.sch.id', '102938', 'siswa', 'wahyu']) && ($inputPassword === 'password123' || $inputPassword === 'siswa123')) {
                 session([
                     'user_role' => 'siswa',
-                    'siswa_id'  => 1,
+                    'siswa_id' => 1,
                 ]);
+
                 return redirect()->route('dashboard')->with('success', 'Selamat datang, Wahyu Pratama!');
             }
 
             return back()->with('error', 'Email/NIS atau Kata Sandi tidak cocok. Silakan gunakan akun demo yang tersedia.')->withInput();
         } catch (Exception $e) {
-            return back()->with('error', 'Error database: ' . $e->getMessage());
+            return back()->with('error', 'Error database: '.$e->getMessage());
         }
     }
 
@@ -227,6 +247,7 @@ class KesiswaanController extends Controller
         if (view()->exists('dashboard siswa.auth.scan')) {
             return view('dashboard siswa.auth.scan');
         }
+
         return view('auth.scan');
     }
 
@@ -239,7 +260,7 @@ class KesiswaanController extends Controller
 
         $code = $request->input('code');
 
-        if (!$code) {
+        if (! $code) {
             return response()->json(['success' => false, 'message' => 'Kode kartu tidak terdeteksi.'], 400);
         }
 
@@ -257,17 +278,17 @@ class KesiswaanController extends Controller
                     ['siswa_id' => $siswa->id, 'tanggal' => $today],
                     [
                         'jam_masuk' => Carbon::now()->toTimeString(),
-                        'status'    => Carbon::now()->hour >= 8 ? 'Terlambat' : 'Hadir',
-                        'keterangan'=> 'Scan Kartu Pelajar RFID/Barcode'
+                        'status' => Carbon::now()->hour >= 8 ? 'Terlambat' : 'Hadir',
+                        'keterangan' => 'Scan Kartu Pelajar RFID/Barcode',
                     ]
                 );
 
                 return response()->json([
-                    'success'  => true,
-                    'message'  => 'Kartu terverifikasi! Presensi berhasil dicatat.',
-                    'siswa'    => $siswa,
+                    'success' => true,
+                    'message' => 'Kartu terverifikasi! Presensi berhasil dicatat.',
+                    'siswa' => $siswa,
                     'presensi' => $presensi,
-                    'redirect' => route('dashboard')
+                    'redirect' => route('dashboard'),
                 ]);
             }
 
@@ -325,14 +346,16 @@ class KesiswaanController extends Controller
             if (Schema::hasTable('piket')) {
                 $indonesianDays = [
                     'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa',
-                    'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu'
+                    'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu',
                 ];
                 $currentDayName = $indonesianDays[Carbon::now()->format('l')] ?? 'Senin';
                 $piketHariIni = Piket::where('hari', $currentDayName)->first();
             }
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         $viewName = view()->exists('dashboard siswa.dashboard') ? 'dashboard siswa.dashboard' : 'dashboard';
+
         return view($viewName, compact(
             'siswa',
             'presensiHariIni',
@@ -358,10 +381,16 @@ class KesiswaanController extends Controller
                     ->whereDate('tanggal', $today)
                     ->first();
             }
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         $viewName = view()->exists('dashboard siswa.presensi') ? 'dashboard siswa.presensi' : 'presensi.index';
-        return view($viewName, compact('siswa', 'presensiHariIni'));
+
+        return view($viewName, compact('siswa', 'presensiHariIni') + [
+            'radiusMeter' => config('absensi.radius_meter'),
+            'schoolLat' => config('absensi.school_lat'),
+            'schoolLng' => config('absensi.school_lng'),
+        ]);
     }
 
     /**
@@ -375,13 +404,30 @@ class KesiswaanController extends Controller
         $nowTime = Carbon::now()->toTimeString();
 
         $request->validate([
-            'tipe'      => 'nullable|string',
-            'latitude'  => 'nullable|string',
-            'longitude' => 'nullable|string',
-            'foto'      => 'nullable|string',
+            'tipe' => 'nullable|string',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'foto' => 'nullable|string',
         ]);
 
         try {
+            $lat = (float) $request->latitude;
+            $lng = (float) $request->longitude;
+
+            $schoolLat = config('absensi.school_lat');
+            $schoolLng = config('absensi.school_lng');
+            $radius = config('absensi.radius_meter');
+
+            $jarak = $this->hitungJarakMeter($lat, $lng, $schoolLat, $schoolLng);
+            if ($jarak > $radius) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Anda berada di luar radius sekolah ({$jarak} m). Radius yang diizinkan {$radius} m.",
+                    'jarak' => round($jarak),
+                    'radius' => $radius,
+                ], 403);
+            }
+
             $presensi = Presensi::where('siswa_id', $siswa->id)
                 ->whereDate('tanggal', $today)
                 ->first();
@@ -395,13 +441,13 @@ class KesiswaanController extends Controller
                     ]);
                 } else {
                     $presensi = Presensi::create([
-                        'siswa_id'   => $siswa->id,
-                        'tanggal'    => $today,
+                        'siswa_id' => $siswa->id,
+                        'tanggal' => $today,
                         'jam_pulang' => $nowTime,
-                        'status'     => 'Hadir',
-                        'latitude'   => $request->latitude,
-                        'longitude'  => $request->longitude,
-                        'foto'       => $request->foto,
+                        'status' => 'Hadir',
+                        'latitude' => $request->latitude,
+                        'longitude' => $request->longitude,
+                        'foto' => $request->foto,
                     ]);
                 }
             } else {
@@ -409,33 +455,33 @@ class KesiswaanController extends Controller
 
                 if ($presensi) {
                     $presensi->update([
-                        'jam_masuk'  => $presensi->jam_masuk ?: $nowTime,
-                        'latitude'   => $request->latitude ?: $presensi->latitude,
-                        'longitude'  => $request->longitude ?: $presensi->longitude,
-                        'foto'       => $request->foto ?: $presensi->foto,
+                        'jam_masuk' => $presensi->jam_masuk ?: $nowTime,
+                        'latitude' => $request->latitude ?: $presensi->latitude,
+                        'longitude' => $request->longitude ?: $presensi->longitude,
+                        'foto' => $request->foto ?: $presensi->foto,
                     ]);
                 } else {
                     $presensi = Presensi::create([
-                        'siswa_id'   => $siswa->id,
-                        'tanggal'    => $today,
-                        'jam_masuk'  => $nowTime,
-                        'status'     => $statusKehadiran,
-                        'latitude'   => $request->latitude,
-                        'longitude'  => $request->longitude,
-                        'foto'       => $request->foto,
+                        'siswa_id' => $siswa->id,
+                        'tanggal' => $today,
+                        'jam_masuk' => $nowTime,
+                        'status' => $statusKehadiran,
+                        'latitude' => $request->latitude,
+                        'longitude' => $request->longitude,
+                        'foto' => $request->foto,
                     ]);
                 }
             }
 
             return response()->json([
-                'success'  => true,
-                'message'  => 'Presensi ' . ucfirst($tipe) . ' berhasil disimpan ke database!',
-                'data'     => $presensi,
+                'success' => true,
+                'message' => 'Presensi '.ucfirst($tipe).' berhasil disimpan ke database!',
+                'data' => $presensi,
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menyimpan presensi: ' . $e->getMessage()
+                'message' => 'Gagal menyimpan presensi: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -447,6 +493,7 @@ class KesiswaanController extends Controller
     {
         $siswa = $this->getActiveSiswa();
         $viewName = view()->exists('dashboard siswa.izin') ? 'dashboard siswa.izin' : 'izin.index';
+
         return view($viewName, compact('siswa'));
     }
 
@@ -459,11 +506,11 @@ class KesiswaanController extends Controller
         $siswa = $this->getActiveSiswa();
 
         $request->validate([
-            'jenis'       => 'required|string',
-            'tgl_mulai'   => 'required|date',
+            'jenis' => 'required|string',
+            'tgl_mulai' => 'required|date',
             'tgl_selesai' => 'required|date',
-            'alasan'      => 'required|string',
-            'bukti_file'  => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'alasan' => 'required|string',
+            'bukti_file' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
         ]);
 
         try {
@@ -472,24 +519,24 @@ class KesiswaanController extends Controller
             $namaFile = null;
             if ($request->hasFile('bukti_file')) {
                 $file = $request->file('bukti_file');
-                $namaFile = time() . '_' . $file->getClientOriginalName();
+                $namaFile = time().'_'.$file->getClientOriginalName();
                 $file->move(public_path('uploads/izin'), $namaFile);
             }
 
             $izin = Izin::create([
-                'siswa_id'    => $siswa->id,
-                'jenis'       => $request->jenis,
-                'tgl_mulai'   => $request->tgl_mulai,
+                'siswa_id' => $siswa->id,
+                'jenis' => $request->jenis,
+                'tgl_mulai' => $request->tgl_mulai,
                 'tgl_selesai' => $request->tgl_selesai,
                 'durasi_hari' => $durasi,
-                'alasan'      => $request->alasan,
-                'bukti_file'  => $namaFile,
-                'status'      => 'Menunggu',
+                'alasan' => $request->alasan,
+                'bukti_file' => $namaFile,
+                'status' => 'Menunggu',
             ]);
 
             return redirect()->route('riwayat')->with('success', "Pengajuan {$request->jenis} berhasil disimpan ke database!");
         } catch (Exception $e) {
-            return back()->with('error', 'Gagal menyimpan pengajuan: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Gagal menyimpan pengajuan: '.$e->getMessage())->withInput();
         }
     }
 
@@ -535,9 +582,11 @@ class KesiswaanController extends Controller
                     ->whereMonth('tgl_mulai', Carbon::now()->month)
                     ->sum('durasi_hari') ?: 0;
             }
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         $viewName = view()->exists('dashboard siswa.riwayat') ? 'dashboard siswa.riwayat' : 'riwayat.index';
+
         return view($viewName, compact('siswa', 'daftarPresensi', 'daftarIzin', 'persenHadir', 'totalIzin'));
     }
 
@@ -553,9 +602,11 @@ class KesiswaanController extends Controller
             if (Schema::hasTable('mapel')) {
                 $daftarMapel = Mapel::orderBy('deadline', 'asc')->get();
             }
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         $viewName = view()->exists('dashboard siswa.mapel') ? 'dashboard siswa.mapel' : 'mapel.index';
+
         return view($viewName, compact('siswa', 'daftarMapel'));
     }
 
@@ -573,9 +624,11 @@ class KesiswaanController extends Controller
                     ->orderBy('tanggal', 'desc')
                     ->get();
             }
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         $viewName = view()->exists('dashboard siswa.bk') ? 'dashboard siswa.bk' : 'bk.index';
+
         return view($viewName, compact('siswa', 'daftarBk'));
     }
 
@@ -593,9 +646,11 @@ class KesiswaanController extends Controller
                     ->orderBy('tanggal', 'desc')
                     ->get();
             }
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         $viewName = view()->exists('dashboard siswa.konseling') ? 'dashboard siswa.konseling' : (view()->exists('dashboard siswa.bk') ? 'dashboard siswa.bk' : 'bk.index');
+
         return view($viewName, compact('siswa', 'daftarBk'));
     }
 
@@ -611,9 +666,11 @@ class KesiswaanController extends Controller
             if (Schema::hasTable('piket')) {
                 $daftarPiket = Piket::all();
             }
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+        }
 
         $viewName = view()->exists('dashboard siswa.piket') ? 'dashboard siswa.piket' : 'piket.index';
+
         return view($viewName, compact('siswa', 'daftarPiket'));
     }
 
@@ -634,7 +691,7 @@ class KesiswaanController extends Controller
 
             return back()->with('success', 'Status piket kebersihan berhasil diperbarui!');
         } catch (Exception $e) {
-            return back()->with('error', 'Gagal memperbarui status piket: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memperbarui status piket: '.$e->getMessage());
         }
     }
 
@@ -645,6 +702,7 @@ class KesiswaanController extends Controller
     {
         $siswa = $this->getActiveSiswa();
         $viewName = view()->exists('dashboard siswa.profil') ? 'dashboard siswa.profil' : 'profil.index';
+
         return view($viewName, compact('siswa'));
     }
 
@@ -659,9 +717,9 @@ class KesiswaanController extends Controller
             'guru_nama',
             'guru_nip',
             'guru_jabatan',
-            'guru_email'
+            'guru_email',
         ]);
+
         return redirect()->route('login')->with('success', 'Berhasil keluar dari akun.');
     }
 }
-

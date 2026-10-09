@@ -15,6 +15,54 @@
     isProcessing: false,
     isProcessingPulang: false,
     capturedPhoto: null,
+    isInRadius: false,
+    currentLat: null,
+    currentLng: null,
+    currentDistance: null,
+    schoolLat: {{ $schoolLat }},
+    schoolLng: {{ $schoolLng }},
+    radiusMeter: {{ $radiusMeter }},
+    geoUnavailable: false,
+
+    getCoords() {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error('GPS tidak didukung browser ini.'));
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+        });
+    },
+
+    async checkRadius() {
+        try {
+            const pos = await this.getCoords();
+            this.currentLat = pos.coords.latitude;
+            this.currentLng = pos.coords.longitude;
+
+            const r = 6371000;
+            const dLat = (this.schoolLat - this.currentLat) * Math.PI / 180;
+            const dLng = (this.schoolLng - this.currentLng) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2
+                + Math.cos(this.currentLat * Math.PI / 180) * Math.cos(this.schoolLat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+            const jarak = 2 * r * Math.asin(Math.sqrt(a));
+
+            this.currentDistance = Math.round(jarak);
+            this.isInRadius = jarak <= this.radiusMeter;
+
+            if (!this.isInRadius) {
+                throw new Error(`Anda berada di luar radius sekolah (${Math.round(jarak)} m). Radius yang diizinkan ${this.radiusMeter} m.`);
+            }
+        } catch (e) {
+            this.geoUnavailable = !e.message || !e.message.includes('radius');
+            this.isInRadius = false;
+            throw e;
+        }
+    },
 
     recordedTime: '07:05:00 WITA',
     recordedDate: 'Kamis, 24 Sep 2026',
@@ -152,33 +200,58 @@
         this.pulangTime = `${h}:${m}`;
         this.pulangTimeFull = `${h}:${m}:${s} WITA`;
 
-        try {
-            localStorage.setItem('presensi_pulang_done', 'true');
-            localStorage.setItem('presensi_pulang_time', this.pulangTime);
-            this.isPulangConfirmed = true;
-        } catch(e) {}
+        const submit = () => {
+            try {
+                localStorage.setItem('presensi_pulang_done', 'true');
+                localStorage.setItem('presensi_pulang_time', this.pulangTime);
+                this.isPulangConfirmed = true;
+            } catch(e) {}
 
-        fetch('{{ route('presensi.store') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                tipe: 'pulang',
-                latitude: -8.6478,
-                longitude: 115.1764
+            fetch('{{ route('presensi.store') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    tipe: 'pulang',
+                    latitude: this.currentLat,
+                    longitude: this.currentLng
+                })
             })
-        }).catch(() => {});
-
-        setTimeout(() => {
-            this.isProcessingPulang = false;
-            this.currentScreen = 'pulang_result';
-            this.$nextTick(() => { 
-                if (window.lucide) lucide.createIcons(); 
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok || !data.success) {
+                    this.isProcessingPulang = false;
+                    alert(data.message || 'Absen pulang gagal. Pastikan Anda berada dalam radius sekolah.');
+                    return;
+                }
+                this.isProcessingPulang = false;
+                this.currentScreen = 'pulang_result';
+                this.$nextTick(() => { 
+                    if (window.lucide) lucide.createIcons(); 
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            })
+            .catch(() => {
+                this.isProcessingPulang = false;
+                this.currentScreen = 'pulang_result';
+                this.$nextTick(() => { 
+                    if (window.lucide) lucide.createIcons(); 
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
             });
-        }, 500);
+        };
+
+        this.checkRadius().then(() => submit()).catch((e) => {
+            this.isProcessingPulang = false;
+            if (e && e.message && e.message.includes('radius')) {
+                alert(e.message);
+            } else {
+                alert('Tidak dapat mengakses GPS. Izinkan akses lokasi untuk absen pulang.');
+            }
+            this.geoUnavailable = true;
+        });
     },
 
     resetPulang() {
@@ -222,36 +295,59 @@
         const isLate = (h > 7) || (h === 7 && m > 5);
         this.datangResultType = isLate ? 'telat' : 'tepat';
 
-        const todayDateStr = new Date().toISOString().slice(0, 10);
-        try {
-            localStorage.setItem('presensi_date_today', todayDateStr);
-            localStorage.setItem('presensi_status_today', this.datangResultType);
-            localStorage.setItem('presensi_jam_today', this.recordedTime);
-            if (this.capturedPhoto) {
-                localStorage.setItem('presensi_foto_today', this.capturedPhoto);
-            }
-        } catch(e) {}
+        const submit = () => {
+            const todayDateStr = new Date().toISOString().slice(0, 10);
+            try {
+                localStorage.setItem('presensi_date_today', todayDateStr);
+                localStorage.setItem('presensi_status_today', this.datangResultType);
+                localStorage.setItem('presensi_jam_today', this.recordedTime);
+                if (this.capturedPhoto) {
+                    localStorage.setItem('presensi_foto_today', this.capturedPhoto);
+                }
+            } catch(e) {}
 
-        fetch('{{ route('presensi.store') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                tipe: 'datang',
-                foto: this.capturedPhoto || null,
-                latitude: -8.6478,
-                longitude: 115.1764
+            fetch('{{ route('presensi.store') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    tipe: 'datang',
+                    foto: this.capturedPhoto || null,
+                    latitude: this.currentLat,
+                    longitude: this.currentLng
+                })
             })
-        }).catch(() => {});
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok || !data.success) {
+                    this.isProcessing = false;
+                    alert(data.message || 'Absen gagal. Pastikan Anda berada dalam radius sekolah.');
+                    return;
+                }
+                this.isProcessing = false;
+                this.stopCamera();
+                this.currentScreen = 'datang_result';
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            })
+            .catch(() => {
+                this.isProcessing = false;
+                this.stopCamera();
+                this.currentScreen = 'datang_result';
+                this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
+            });
+        };
 
-        setTimeout(() => {
+        this.checkRadius().then(() => submit()).catch((e) => {
             this.isProcessing = false;
-            this.stopCamera();
-            this.currentScreen = 'datang_result';
-            this.$nextTick(() => { if (window.lucide) lucide.createIcons(); });
-        }, 800);
+            if (e && e.message && e.message.includes('radius')) {
+                alert(e.message);
+            } else {
+                alert('Tidak dapat mengakses GPS. Izinkan akses lokasi untuk absen.');
+            }
+            this.geoUnavailable = true;
+        });
     },
 
     setResultType(type) {
@@ -421,10 +517,16 @@
                     <div class="relative z-30 w-full max-w-sm bg-slate-900/90 backdrop-blur-md border border-slate-700/80 px-3.5 py-2 rounded-2xl flex items-center justify-between text-xs text-white shadow-lg">
                         <div class="flex items-center space-x-2">
                             <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400"></i>
-                            <span class="font-bold text-[11px] sm:text-xs text-slate-200">SMK TI BALI GLOBAL Badung (Radius 12m)</span>
+                            <span class="font-bold text-[11px] sm:text-xs text-slate-200">SMK TI BALI GLOBAL Badung (Radius {{ $radiusMeter ?? 50 }}m)</span>
                         </div>
-                        <span class="bg-emerald-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase">
+                        <span x-show="!isInRadius && geoUnavailable" class="bg-rose-500 text-white font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase">
+                            GPS Tidak Aktif
+                        </span>
+                        <span x-show="isInRadius" class="bg-emerald-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase">
                             Lokasi Valid
+                        </span>
+                        <span x-show="!isInRadius && !geoUnavailable" class="bg-amber-500 text-white font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase">
+                            Menunggu GPS
                         </span>
                     </div>
                 </div>
@@ -716,10 +818,10 @@
                         <div class="text-left">
                             <p class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">POSISI ANDA SAAT INI</p>
                             <p class="font-bold text-slate-900 mt-0.5 text-xs sm:text-sm">SMK TI BALI GLOBAL Badung</p>
-                            <p class="text-[11px] text-slate-500 mt-0.5">Radius GPS: 8 meter (Di Dalam Zona)</p>
+                            <p class="text-[11px] text-slate-500 mt-0.5" x-text="isInRadius ? 'Radius GPS: ' + currentDistance + ' meter (Di Dalam Zona)' : 'Menunggu akses GPS...'">Radius GPS: 8 meter (Di Dalam Zona)</p>
                         </div>
                     </div>
-                    <span class="bg-[#064e3b] text-white font-bold text-xs px-3.5 py-1.5 rounded-full shadow-2xs shrink-0">
+                    <span class="bg-[#064e3b] text-white font-bold text-xs px-3.5 py-1.5 rounded-full shadow-2xs shrink-0" x-text="isInRadius ? 'Lokasi Valid' : 'Cek GPS'">
                         Lokasi Valid
                     </span>
                 </div>
@@ -906,11 +1008,11 @@
                 </div>
                 <h4 class="font-black text-base text-white">Status Lokasi Siswa</h4>
                 <p class="text-xs text-blue-200/90 leading-relaxed">
-                    Sistem memvalidasi koordinat GPS dalam radius <strong>50 meter</strong> dari gerbang sekolah.
+                    Sistem memvalidasi koordinat GPS dalam radius <strong>{{ $radiusMeter ?? 50 }} meter</strong> dari gerbang sekolah.
                 </p>
                 <div class="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
                     <span class="text-slate-300">Akurasi GPS:</span>
-                    <span class="font-bold text-emerald-400">8 Meter (Valid)</span>
+                    <span class="font-bold" :class="isInRadius ? 'text-emerald-400' : 'text-amber-400'" x-text="isInRadius ? (currentDistance + ' Meter (Valid)') : (geoUnavailable ? 'Tidak Terjangkau' : 'Menunggu GPS...')">8 Meter (Valid)</span>
                 </div>
             </div>
 

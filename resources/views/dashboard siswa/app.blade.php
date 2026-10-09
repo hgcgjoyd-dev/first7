@@ -8,7 +8,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -18,6 +18,7 @@
                 extend: {
                     fontFamily: {
                         sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['Inter', '"Plus Jakarta Sans"', 'sans-serif'],
                         mono: ['"JetBrains Mono"', 'monospace'],
                     },
                     colors: {
@@ -131,10 +132,14 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
             <!-- Left: Brand Logo PNG (Sudah berisi tulisan SMK TI Bali Global Badung) -->
-            <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 sm:h-14 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition-transform">
-                <div class="border-l border-slate-200 pl-3 hidden sm:block">
-                    <p class="text-xl sm:text-2xl font-extrabold text-slate-800 leading-tight tracking-tight">Absensi & Kesiswaan</p>
+            <a href="{{ route('dashboard') }}" class="flex items-center space-x-4 group">
+                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 sm:h-16 w-auto object-contain drop-shadow-md group-hover:scale-105 transition-transform">
+                <div class="border-l-2 border-slate-200 pl-4">
+                    <p class="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-none tracking-tight text-slate-900 drop-shadow-sm">Absensi &amp; Kesiswaan</p>
+                    <p class="mt-1.5 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-400 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-linear-to-r from-indigo-500 to-sky-400"></span>
+                        Sistem Informasi
+                    </p>
                 </div>
             </a>
 
@@ -224,7 +229,7 @@
                                 <i data-lucide="user-cog" class="w-4 h-4"></i>
                                 <span>Profil & Kedisiplinan</span>
                             </div>
-                            <span class="text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold">+40 Reward</span>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full font-bold {{ request()->routeIs('profil') ? 'bg-white text-blue-600' : 'bg-indigo-100 text-indigo-700' }}">+40 Reward</span>
                         </a>
                     </nav>
                 </div>
