@@ -25,7 +25,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "classmap": [
+            "app/Http/ControlerSiswa/"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
