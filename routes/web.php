@@ -52,3 +52,12 @@ Route::get('/dashboardbk', function () {
 Route::get('/dashboard-guru/bk', function () {
     return view('dashboard guru.dashboardbk');
 })->name('dashboard.guru.bk');
+
+// 9. Absensi Siswa Semua Kelas (Guru BK)
+Route::get('/dashboard-guru/absensi', function () {
+    return view('dashboard guru.absensi');
+})->name('guru.absensi');
+
+Route::get('/absensi-guru', function () {
+    return view('dashboard guru.absensi');
+})->name('absensi.guru');

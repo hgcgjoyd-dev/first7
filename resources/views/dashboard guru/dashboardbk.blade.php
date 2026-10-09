@@ -284,17 +284,17 @@
             <!-- ================================================================= -->
             <div class="grid grid-cols-2 gap-4 sm:gap-6">
                 
-                <!-- CARD 1: Absensi Siswa -->
-                <div @click="openAction('absensi')" 
-                     class="bg-white rounded-[28px] sm:rounded-3xl p-6 sm:p-8 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-97 cursor-pointer flex flex-col items-center justify-center text-center group">
+                <!-- CARD 1: Absensi Siswa (Mengarahkan ke Halaman Pilih Kelas) -->
+                <a href="{{ route('guru.absensi') }}" 
+                   class="bg-white rounded-[28px] sm:rounded-3xl p-6 sm:p-8 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-lg transition-all duration-200 active:scale-97 cursor-pointer flex flex-col items-center justify-center text-center group block">
                     <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-blue-50/80 group-hover:bg-blue-100/90 text-blue-600 flex items-center justify-center transition-colors mb-3 sm:mb-4">
                         <i data-lucide="user-check" class="w-9 h-9 sm:w-11 sm:h-11 stroke-[2.2] group-hover:scale-110 transition-transform"></i>
                     </div>
                     <h3 class="text-sm sm:text-lg font-black text-slate-800 group-hover:text-blue-600 transition-colors">
                         Absensi Siswa
                     </h3>
-                    <p class="hidden sm:block text-xs text-slate-400 mt-1">Rekap kehadiran harian & izin kelas</p>
-                </div>
+                    <p class="hidden sm:block text-xs text-slate-400 mt-1">Pilih kelas & lihat absensi siswa</p>
+                </a>
 
                 <!-- CARD 2: Konseling & BK -->
                 <div @click="openAction('konseling')" 
@@ -325,15 +325,15 @@
 
 
             <!-- ================================================================= -->
-            <!-- ROW 3: Siswa Hadir: 95% Pill Card (Mockup Match)                  -->
+            <!-- ROW 3: Siswa Hadir: 95% Pill Card (Mengarahkan ke Pilih Kelas)    -->
             <!-- ================================================================= -->
-            <div @click="openAction('absensi')" 
-                 class="bg-white rounded-2xl sm:rounded-full py-4 px-6 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center space-x-3 group">
-                <i data-lucide="user-check" class="w-5 h-5 text-blue-600 shrink-0 group-hover:scale-110 transition-transform"></i>
+            <a href="{{ route('guru.absensi') }}" 
+               class="bg-white rounded-2xl sm:rounded-full py-4 px-6 shadow-soft border border-slate-200/70 hover:border-blue-300 hover:shadow-md transition-all active:scale-98 cursor-pointer flex items-center justify-center space-x-3 group block">
+                <i data-lucide="user-check" class="w-5 h-5 text-blue-600 shrink-0 group-hover:scale-110 transition-transform inline-block"></i>
                 <span class="text-base sm:text-lg font-black text-blue-700 tracking-tight">
                     Siswa Hadir: 95%
                 </span>
-            </div>
+            </a>
 
 
             <!-- ================================================================= -->
