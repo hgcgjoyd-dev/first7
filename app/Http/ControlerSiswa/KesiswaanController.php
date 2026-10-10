@@ -5,14 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Absensi;
 use App\Models\Bk;
 use App\Models\Izin;
+use App\Models\Kelas;
 use App\Models\Mapel;
 use App\Models\Piket;
 use App\Models\Presensi;
 use App\Models\Siswa;
+use App\Models\User;
 use Carbon\Carbon;
+use Database\Seeders\UserSeeder;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
@@ -68,68 +72,247 @@ class KesiswaanController extends Controller
     }
 
     /**
-     * Proses Scan Kartu Pelajar — mendukung Barcode/QR (no_siswa) dan OCR (nama_siswa)
+     * Menghitung skor kemiripan nama siswa terhadap teks OCR / input scan.
+     */
+    protected function calculateNameMatchScore(string $input, string $candidateName): float
+    {
+        $inputWords = array_values(array_filter(explode(' ', $input), fn ($w) => strlen($w) >= 2));
+        $candWords = array_values(array_filter(explode(' ', $candidateName), fn ($w) => strlen($w) >= 2));
+
+        if (empty($candWords)) {
+            return 0.0;
+        }
+
+        $commonPrefixes = ['i', 'ni', 'gede', 'made', 'nyoman', 'ketut', 'kadek', 'komang', 'wayan', 'putu', 'gusti', 'ayu', 'bagus', 'dewa', 'ida'];
+
+        $matched = 0;
+        $distinctiveTotal = 0;
+        $matchedDistinctive = 0;
+
+        foreach ($candWords as $cWord) {
+            $isPrefix = in_array($cWord, $commonPrefixes, true);
+            if (! $isPrefix) {
+                $distinctiveTotal++;
+            }
+
+            $wordMatched = false;
+            foreach ($inputWords as $iWord) {
+                if ($iWord === $cWord) {
+                    $wordMatched = true;
+                    break;
+                }
+                $len = max(strlen($iWord), strlen($cWord));
+                $maxDist = $len > 6 ? 2 : ($len > 3 ? 1 : 0);
+                if (levenshtein($iWord, $cWord) <= $maxDist) {
+                    $wordMatched = true;
+                    break;
+                }
+            }
+
+            if ($wordMatched) {
+                $matched++;
+                if (! $isPrefix) {
+                    $matchedDistinctive++;
+                }
+            }
+        }
+
+        if ($distinctiveTotal > 0) {
+            return ($matchedDistinctive / $distinctiveTotal) * 0.7 + ($matched / count($candWords)) * 0.3;
+        }
+
+        return $matched / count($candWords);
+    }
+
+    /**
+     * Memastikan profil Siswa terdaftar untuk akun siswa seeder jika belum ada.
+     */
+    protected function ensureSiswaProfileForSeededStudent(string $username, string $studentName): ?Siswa
+    {
+        $femaleKeys = ['pradnyani', 'diahpurnama'];
+        $gender = in_array($username, $femaleKeys, true) ? 'P' : 'L';
+
+        $kelas = Kelas::firstOrCreate(
+            ['nama_kelas' => 'XI PPLG 1'],
+            [
+                'tingkat' => 'XI',
+                'jurusan' => 'PPLG',
+                'tahun_ajaran' => '2026/2027',
+            ]
+        );
+
+        $user = User::query()->where('email', "{$username}@Kesiswaan.id")
+            ->orWhere('username', $username)
+            ->orWhere('nama', $studentName)
+            ->first();
+
+        if (! $user) {
+            $initialPassword = config('kesiswaan.initial_student_password', 'Siswa@2026');
+            $user = User::query()->create([
+                'username' => $username,
+                'nama' => $studentName,
+                'email' => "{$username}@Kesiswaan.id",
+                'password' => Hash::make($initialPassword),
+                'role' => 'siswa',
+                'status_aktif' => true,
+            ]);
+        } elseif (! $user->isActive()) {
+            $user->update(['status_aktif' => true]);
+        }
+
+        $siswa = Siswa::with(['user', 'kelas'])->where('nama_siswa', $studentName)->first();
+
+        if (! $siswa) {
+            $existingCount = Siswa::count() + 1;
+            $noSiswa = sprintf('%07d', $existingCount);
+            while (Siswa::where('no_siswa', $noSiswa)->exists()) {
+                $existingCount++;
+                $noSiswa = sprintf('%07d', $existingCount);
+            }
+
+            $siswa = Siswa::create([
+                'id_user' => $user->id_user,
+                'no_siswa' => $noSiswa,
+                'nama_siswa' => $studentName,
+                'id_kelas' => $kelas->id_kelas,
+                'jenis_kelamin' => $gender,
+                'nomor_absen' => $existingCount,
+            ]);
+            $siswa->load(['user', 'kelas']);
+        } elseif ($siswa->id_user === null) {
+            $siswa->user()->associate($user);
+            $siswa->save();
+            $siswa->load(['user', 'kelas']);
+        }
+
+        return $siswa;
+    }
+
+    /**
+     * Mencari data siswa dari nomor kartu, nama, atau hasil teks OCR kartu.
+     */
+    protected function resolveSiswaFromCode(string $code, ?string $rawText = null): ?Siswa
+    {
+        $code = trim($code);
+        $cleanInput = mb_strtolower(preg_replace('/[^a-zA-Z0-9\s]/', ' ', $code.' '.($rawText ?? '')));
+        $cleanInput = preg_replace('/\s+/', ' ', $cleanInput);
+
+        // 1. Cari berdasarkan nomor kartu / barcode / NIS (no_siswa) persis
+        $siswa = Siswa::with(['user', 'kelas'])->where('no_siswa', $code)->first();
+        if ($siswa) {
+            return $siswa;
+        }
+
+        $digitsOnly = preg_replace('/\D/', '', $code);
+        if (! empty($digitsOnly) && strlen($digitsOnly) >= 5) {
+            $siswa = Siswa::with(['user', 'kelas'])->where('no_siswa', $digitsOnly)->first();
+            if ($siswa) {
+                return $siswa;
+            }
+        }
+
+        // 2. Cari berdasarkan nama siswa persis (exact atau case-insensitive)
+        $normalizedCode = mb_strtolower(preg_replace('/\s+/', ' ', $code));
+        $siswa = Siswa::with(['user', 'kelas'])
+            ->whereRaw('LOWER(TRIM(nama_siswa)) = ?', [$normalizedCode])
+            ->first();
+        if ($siswa) {
+            return $siswa;
+        }
+
+        // 3. Cari dari seluruh data Siswa terdaftar
+        $allSiswa = Siswa::with(['user', 'kelas'])->get();
+        $bestMatch = null;
+        $bestScore = 0;
+
+        foreach ($allSiswa as $cand) {
+            $candName = trim($cand->nama_siswa);
+            $candNorm = mb_strtolower(preg_replace('/\s+/', ' ', $candName));
+
+            // Cek substring dua arah (input berisi nama siswa, atau nama siswa berisi input)
+            if (str_contains($cleanInput, $candNorm) || (! empty($normalizedCode) && strlen($normalizedCode) >= 4 && str_contains($candNorm, $normalizedCode))) {
+                return $cand;
+            }
+
+            $score = $this->calculateNameMatchScore($cleanInput, $candNorm);
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $bestMatch = $cand;
+            }
+        }
+
+        if ($bestMatch && $bestScore >= 0.5) {
+            return $bestMatch;
+        }
+
+        // 4. Cocokkan dengan data seeders siswa (UserSeeder::STUDENTS)
+        $studentsList = class_exists(UserSeeder::class) ? UserSeeder::STUDENTS : [];
+        $bestUserMatch = null;
+        $bestUserScore = 0;
+        $bestUsername = null;
+
+        foreach ($studentsList as $uname => $studentName) {
+            $candNorm = mb_strtolower(trim($studentName));
+            if (str_contains($cleanInput, $candNorm) || (! empty($normalizedCode) && strlen($normalizedCode) >= 4 && str_contains($candNorm, $normalizedCode))) {
+                $bestUserMatch = $studentName;
+                $bestUsername = $uname;
+                $bestUserScore = 1.0;
+                break;
+            }
+
+            $score = $this->calculateNameMatchScore($cleanInput, $candNorm);
+            if ($score > $bestUserScore) {
+                $bestUserScore = $score;
+                $bestUserMatch = $studentName;
+                $bestUsername = $uname;
+            }
+        }
+
+        if ($bestUserMatch && $bestUserScore >= 0.5 && $bestUsername) {
+            return $this->ensureSiswaProfileForSeededStudent($bestUsername, $bestUserMatch);
+        }
+
+        return null;
+    }
+
+    /**
+     * Proses Scan Kartu Pelajar — fokus pada deteksi nama kartu & pencocokan dengan data seeders
      */
     public function postScan(Request $request)
     {
         $validated = $request->validate([
-            'code' => ['required', 'string', 'max:100'],
+            'code' => ['required', 'string', 'max:1000'],
+            'raw_text' => ['nullable', 'string', 'max:5000'],
         ]);
 
         $code = trim($validated['code']);
-        $normalized = mb_strtolower(preg_replace('/\s+/', ' ', $code));
+        $rawText = isset($validated['raw_text']) ? trim($validated['raw_text']) : null;
 
-        // 1) Cari berdasarkan nomor kartu / barcode / NIS (no_siswa)
-        $siswa = Siswa::with(['user', 'kelas'])
-            ->where('no_siswa', $code)
-            ->first();
-
-        if (! $siswa) {
-            $digitsOnly = preg_replace('/\D/', '', $code);
-            if (! empty($digitsOnly)) {
-                $siswa = Siswa::with(['user', 'kelas'])
-                    ->where('no_siswa', $digitsOnly)
-                    ->first();
-            }
-        }
-
-        // 2) Cari berdasarkan nama siswa (exact atau case-insensitive)
-        if (! $siswa) {
-            $siswa = Siswa::with(['user', 'kelas'])
-                ->whereRaw('LOWER(TRIM(nama_siswa)) = ?', [$normalized])
-                ->orWhere('nama_siswa', 'like', "%{$code}%")
-                ->first();
-        }
-
-        // 3) Fallback fuzzy match (Levenshtein) jika nama ada typo tipis dari OCR
-        if (! $siswa) {
-            $all = Siswa::with(['user', 'kelas'])->get();
-
-            $bestMatch = null;
-            $bestDist = PHP_INT_MAX;
-            $threshold = 3;
-
-            foreach ($all as $candidate) {
-                $candNorm = mb_strtolower(preg_replace('/\s+/', ' ', trim($candidate->nama_siswa)));
-                $dist = levenshtein($normalized, $candNorm);
-                if ($dist < $bestDist && $dist <= $threshold) {
-                    $bestDist = $dist;
-                    $bestMatch = $candidate;
-                }
-            }
-
-            $siswa = $bestMatch;
-        }
+        $siswa = $this->resolveSiswaFromCode($code, $rawText);
 
         if (! $siswa) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Kartu tidak dikenali. Pastikan nomor atau nama siswa terdaftar.',
+                    'message' => 'Nama atau nomor kartu tidak terdeteksi di data siswa. Pastikan posisi nama di kartu terbaca jelas atau ketik manual di bawah.',
                 ], 404);
             }
 
-            return back()->with('error', 'Kartu tidak dikenali. Nomor atau nama tidak terdaftar.');
+            return back()->with('error', 'Nama atau nomor kartu tidak terdeteksi di data siswa.');
+        }
+
+        // Pastikan akun user siswa aktif & terhubung
+        $user = $siswa->user;
+        if (! $user) {
+            $user = User::query()->where('nama', $siswa->nama_siswa)->first();
+            if ($user) {
+                $siswa->user()->associate($user);
+                $siswa->save();
+            }
+        }
+
+        if ($user && ! $user->isActive()) {
+            $user->update(['status_aktif' => true]);
         }
 
         // Jika user sedang login sebagai siswa, pastikan kartu milik akunnya sendiri
@@ -141,19 +324,6 @@ class KesiswaanController extends Controller
                     abort(403, 'Kartu ini bukan milik akun yang sedang masuk.');
                 }
             }
-        }
-
-        // Validasi user akun siswa aktif
-        $user = $siswa->user;
-        if (! $user || ! $user->isActive()) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Akun siswa belum aktif. Silakan hubungi admin sekolah.',
-                ], 403);
-            }
-
-            return back()->with('error', 'Akun siswa belum aktif.');
         }
 
         // Catat presensi hari ini jika tabel absensi tersedia

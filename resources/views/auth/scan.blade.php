@@ -23,10 +23,9 @@
     @endif
     <form method="POST" action="{{ route('scan.post') }}" class="space-y-3">
         @csrf
-        <label for="code" class="sr-only">Nomor kartu siswa</label>
-        <input id="code" name="code" value="{{ old('code') }}" required maxlength="20" autocomplete="off"
+        <input id="code" name="code" value="{{ old('code') }}" required maxlength="100" autocomplete="off"
                class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-               placeholder="Nomor kartu siswa">
+               placeholder="Nomor kartu (NIS) atau nama siswa">
         <button type="submit" class="w-full rounded-xl bg-blue-600 py-3 font-bold text-white hover:bg-blue-700">
             Catat presensi
         </button>

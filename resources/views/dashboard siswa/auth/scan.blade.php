@@ -26,13 +26,30 @@
         autoScanInterval: null,
         ocrWorker: null,
         ocrLoading: false,
+        seededStudents: {{ \Illuminate\Support\Js::from(array_values(\Database\Seeders\UserSeeder::STUDENTS)) }},
 
         init() {
             this.$nextTick(() => {
                 this.initBarcodeDetector();
                 this.startCamera();
+                this.initOcr();
                 if (window.lucide) lucide.createIcons();
             });
+        },
+
+        async initOcr() {
+            if (!this.ocrWorker && window.Tesseract) {
+                try {
+                    this.ocrLoading = true;
+                    this.ocrWorker = await Tesseract.createWorker('eng', 1, {
+                        cacheMethod: 'write'
+                    });
+                    this.ocrLoading = false;
+                } catch (e) {
+                    console.warn('OCR Preload error:', e);
+                    this.ocrLoading = false;
+                }
+            }
         },
 
         initBarcodeDetector() {
@@ -155,6 +172,140 @@
             }, 450);
         },
 
+        preprocessCanvas(sourceCanvas) {
+            const w = sourceCanvas.width;
+            const h = sourceCanvas.height;
+            const pCanvas = document.createElement('canvas');
+            pCanvas.width = w;
+            pCanvas.height = h;
+            const pctx = pCanvas.getContext('2d');
+            pctx.drawImage(sourceCanvas, 0, 0);
+
+            try {
+                const imgData = pctx.getImageData(0, 0, w, h);
+                const d = imgData.data;
+                const contrast = 1.35;
+                const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
+
+                for (let i = 0; i < d.length; i += 4) {
+                    const gray = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                    const adjusted = Math.min(255, Math.max(0, factor * (gray - 128) + 128));
+                    d[i] = adjusted;
+                    d[i + 1] = adjusted;
+                    d[i + 2] = adjusted;
+                }
+                pctx.putImageData(imgData, 0, 0);
+                return pCanvas;
+            } catch (e) {
+                return sourceCanvas;
+            }
+        },
+
+        levenshtein(a, b) {
+            if (a === b) return 0;
+            if (a.length === 0) return b.length;
+            if (b.length === 0) return a.length;
+
+            const matrix = [];
+            for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+            for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+            for (let i = 1; i <= b.length; i++) {
+                for (let j = 1; j <= a.length; j++) {
+                    if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                        matrix[i][j] = matrix[i - 1][j - 1];
+                    } else {
+                        matrix[i][j] = Math.min(
+                            matrix[i - 1][j - 1] + 1,
+                            matrix[i][j - 1] + 1,
+                            matrix[i - 1][j] + 1
+                        );
+                    }
+                }
+            }
+            return matrix[b.length][a.length];
+        },
+
+        matchStudentName(rawText) {
+            if (!rawText) return null;
+            const clean = rawText.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+            if (clean.length < 2) return null;
+
+            const commonPrefixes = ['i', 'ni', 'gede', 'made', 'nyoman', 'ketut', 'kadek', 'komang', 'wayan', 'putu', 'gusti', 'ayu', 'bagus', 'dewa', 'ida'];
+
+            // 1. Cek baris "Nama : [Nama Siswa]"
+            const nameMatch = rawText.match(/(?:nama|name)\s*[:.\-]?\s*([a-zA-Z\s]{3,})/i);
+            let extractedNameClean = '';
+            if (nameMatch && nameMatch[1]) {
+                extractedNameClean = nameMatch[1].toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+
+            // 2. Cek kecocokan persis substring nama dari data seeder
+            for (const student of this.seededStudents) {
+                const sNorm = student.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+                if (clean.includes(sNorm)) {
+                    return { name: student, score: 1.0 };
+                }
+                if (extractedNameClean && (extractedNameClean.includes(sNorm) || sNorm.includes(extractedNameClean))) {
+                    return { name: student, score: 0.95 };
+                }
+            }
+
+            // 3. Pencocokan token / kata kunci fuzzy
+            const inputWords = clean.split(' ').filter(w => w.length >= 2);
+            let bestMatch = null;
+            let bestScore = 0;
+
+            for (const student of this.seededStudents) {
+                const sNorm = student.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+                const candWords = sNorm.split(' ').filter(w => w.length >= 2);
+                if (candWords.length === 0) continue;
+
+                let matched = 0;
+                let distinctiveTotal = 0;
+                let matchedDistinctive = 0;
+
+                for (const cWord of candWords) {
+                    const isPrefix = commonPrefixes.includes(cWord);
+                    if (!isPrefix) distinctiveTotal++;
+
+                    let wordMatched = false;
+                    for (const iWord of inputWords) {
+                        if (iWord === cWord) {
+                            wordMatched = true;
+                            break;
+                        }
+                        const maxLen = Math.max(iWord.length, cWord.length);
+                        const maxDist = maxLen > 6 ? 2 : (maxLen > 3 ? 1 : 0);
+                        if (this.levenshtein(iWord, cWord) <= maxDist) {
+                            wordMatched = true;
+                            break;
+                        }
+                    }
+
+                    if (wordMatched) {
+                        matched++;
+                        if (!isPrefix) matchedDistinctive++;
+                    }
+                }
+
+                const score = distinctiveTotal > 0
+                    ? (matchedDistinctive / distinctiveTotal) * 0.7 + (matched / candWords.length) * 0.3
+                    : matched / candWords.length;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = student;
+                }
+            }
+
+            if (bestMatch && bestScore >= 0.5) {
+                return { name: bestMatch, score: bestScore };
+            }
+
+            return null;
+        },
+
         async triggerScan() {
             if (this.scanning || this.scanned) return;
 
@@ -181,7 +332,10 @@
 
             try {
                 this.capturedPhoto = canvas.toDataURL('image/jpeg', 0.85);
-            } catch(e) {}
+            } catch (e) {}
+
+            // Preprocess canvas untuk OCR yang jauh lebih tajam
+            const processedCanvas = this.preprocessCanvas(canvas);
 
             // 1. Coba Barcode/QR Detector
             if (this.barcodeDetector) {
@@ -200,8 +354,8 @@
                 }
             }
 
-            // 2. Fallback ke OCR Tesseract jika barcode tidak ada
-            this.scanStatusMessage = 'Membaca teks nama/NIS kartu...';
+            // 2. OCR Tesseract — Fokus Deteksi Nama Kartu Pelajar Cocokkan Data Seeders
+            this.scanStatusMessage = 'Membaca nama di kartu pelajar...';
             try {
                 if (!this.ocrWorker && window.Tesseract) {
                     this.scanStatusMessage = 'Menyiapkan modul pembaca kartu...';
@@ -211,29 +365,28 @@
                 }
 
                 if (this.ocrWorker) {
-                    this.scanStatusMessage = 'Mengenali teks kartu pelajar...';
-                    const { data: { text } } = await this.ocrWorker.recognize(canvas);
+                    this.scanStatusMessage = 'Mengenali teks nama kartu pelajar...';
+                    const { data: { text } } = await this.ocrWorker.recognize(processedCanvas);
                     const rawText = text ? text.trim() : '';
 
-                    // Prioritas: cari digit angka (NIS / No Siswa, min 5 digit)
-                    const numMatch = rawText.match(/\b\d{5,10}\b/);
+                    // 1) PRIORITAS UTAMA: Cocokkan nama dengan data seeder siswa
+                    const match = this.matchStudentName(rawText);
+                    if (match && match.name) {
+                        this.scanStatusMessage = `Nama terdeteksi: ${match.name}! Memverifikasi...`;
+                        await this.processCode(match.name, rawText);
+                        return;
+                    }
+
+                    // 2) Jika tidak cocok nama seeder, coba cek digit NIS 7-digit
+                    const numMatch = rawText.match(/\b\d{7}\b/) || rawText.match(/\b\d{5,10}\b/);
                     if (numMatch) {
-                        await this.processCode(numMatch[0]);
+                        await this.processCode(numMatch[0], rawText);
                         return;
                     }
 
-                    // Atau cari baris nama siswa
-                    const lines = rawText.split('\n')
-                        .map(l => l.trim().replace(/[^a-zA-Z\s]/g, ''))
-                        .filter(l => l.length >= 3 && !/kartu|pelajar|smk|bali|global|siswa/i.test(l));
-
-                    if (lines.length > 0) {
-                        await this.processCode(lines[0]);
-                        return;
-                    }
-
+                    // 3) Kirim teks OCR yang terbaca ke backend untuk pencocokan multi-tier
                     if (rawText.length >= 3) {
-                        await this.processCode(rawText);
+                        await this.processCode(rawText, rawText);
                         return;
                     }
                 }
@@ -241,13 +394,13 @@
                 console.warn('OCR error:', ocrErr);
             }
 
-            // Jika keduanya gagal menemukan teks/barcode yang jelas
+            // Jika gagal menemukan nama atau kartu yang jelas
             this.scanning = false;
             this.scanFailed = true;
-            this.scanErrorMessage = 'Kartu belum terbaca jelas. Posisikan lebih dekat & terang, atau ketik nomor kartu manual di bawah.';
+            this.scanErrorMessage = 'Kartu belum terbaca jelas. Posisikan nama di kartu lebih terang & dekat, atau ketik nama kartu manual di bawah.';
         },
 
-        async processCode(code) {
+        async processCode(code, rawText = '') {
             if (!code || this.scanned) return;
 
             this.scanning = true;
@@ -264,7 +417,10 @@
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ code: code.trim() })
+                    body: JSON.stringify({
+                        code: code.trim(),
+                        raw_text: (rawText || '').trim()
+                    })
                 });
 
                 const data = await res.json();
@@ -284,7 +440,7 @@
                     }, 1100);
                 } else {
                     this.scanFailed = true;
-                    this.scanErrorMessage = data.message || 'Kartu tidak dikenali atau belum terdaftar.';
+                    this.scanErrorMessage = data.message || 'Nama kartu belum cocok dengan data siswa.';
                     this.scanned = false;
                 }
             } catch (err) {
@@ -297,12 +453,15 @@
         },
 
         submitManual() {
-            if (!this.manualCode.trim()) {
+            const input = this.manualCode.trim();
+            if (!input) {
                 this.scanFailed = true;
                 this.scanErrorMessage = 'Ketik nomor siswa atau nama lengkap Anda terlebih dahulu.';
                 return;
             }
-            this.processCode(this.manualCode.trim());
+            const match = this.matchStudentName(input);
+            const finalCode = match ? match.name : input;
+            this.processCode(finalCode, input);
         },
 
         handleFileUpload(event) {
@@ -335,31 +494,43 @@
                                     return;
                                 }
                             }
-                        } catch(e) {}
+                        } catch (e) {}
                     }
+
+                    const processedCanvas = this.preprocessCanvas(canvas);
 
                     try {
                         if (!this.ocrWorker && window.Tesseract) {
                             this.ocrWorker = await Tesseract.createWorker('eng', 1);
                         }
                         if (this.ocrWorker) {
-                            const { data: { text } } = await this.ocrWorker.recognize(canvas);
+                            const { data: { text } } = await this.ocrWorker.recognize(processedCanvas);
                             const cleaned = text ? text.trim() : '';
-                            const num = cleaned.match(/\b\d{5,10}\b/);
-                            if (num) {
-                                await this.processCode(num[0]);
+
+                            // 1) Prioritas Nama Seeder
+                            const match = this.matchStudentName(cleaned);
+                            if (match && match.name) {
+                                await this.processCode(match.name, cleaned);
                                 return;
                             }
+
+                            // 2) Nomor NIS
+                            const num = cleaned.match(/\b\d{7}\b/) || cleaned.match(/\b\d{5,10}\b/);
+                            if (num) {
+                                await this.processCode(num[0], cleaned);
+                                return;
+                            }
+
                             if (cleaned.length >= 3) {
-                                await this.processCode(cleaned);
+                                await this.processCode(cleaned, cleaned);
                                 return;
                             }
                         }
-                    } catch(e) {}
+                    } catch (e) {}
 
                     this.scanning = false;
                     this.scanFailed = true;
-                    this.scanErrorMessage = 'Foto kartu tidak dapat terbaca. Gunakan foto yang lebih tajam atau ketik nomor manual.';
+                    this.scanErrorMessage = 'Foto kartu tidak dapat terbaca. Gunakan foto yang lebih tajam atau ketik nama kartu manual.';
                 };
                 img.src = e.target.result;
             };
