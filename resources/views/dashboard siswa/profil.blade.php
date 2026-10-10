@@ -3,17 +3,20 @@
 @section('title', 'Profil & Kedisiplinan Siswa')
 
 @section('content')
-<div class="w-full space-y-6" x-data="{
-    confirmLogout: false,
+<div class="w-full space-y-6" 
+     x-data="{
+         confirmLogout: false,
 
-    getGreeting() {
-        const hr = new Date().getHours();
-        if (hr >= 4 && hr < 11) return 'Selamat Pagi,';
-        if (hr >= 11 && hr < 15) return 'Selamat Siang,';
-        if (hr >= 15 && hr < 18) return 'Selamat Sore,';
-        return 'Selamat Malam,';
-    }
-}">
+         getGreeting() {
+             const hr = new Date().getHours();
+             if (hr >= 4 && hr < 11) return 'Selamat Pagi,';
+             if (hr >= 11 && hr < 15) return 'Selamat Siang,';
+             if (hr >= 15 && hr < 18) return 'Selamat Sore,';
+             return 'Selamat Malam,';
+         }
+     }"
+     @open-logout.window="confirmLogout = true"
+     x-init="window.__triggerLogoutModal = () => { confirmLogout = true; }">
 
     <!-- ========================================================================= -->
     <!-- 1. TOP HEADER HERO (Identical Across Dashboard Siswa Modules)              -->
@@ -51,11 +54,11 @@
             <div>
                 <p class="text-xs sm:text-sm text-blue-100 font-medium" x-text="getGreeting()">Selamat Pagi,</p>
                 <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight mt-0.5">
-                    {{ $siswa->nama ?? 'Wahyu Pratama' }}
+                    {{ $siswa->nama_siswa ?? $siswa->nama ?? 'Siswa' }}
                 </h1>
                 <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 font-extrabold text-[11px] sm:text-xs shadow-sm mt-2">
                     <span class="w-2 h-2 rounded-full bg-rose-600"></span>
-                    <span>Kelas {{ $siswa->kelas?->nama_kelas ?? $siswa->kelas ?? 'XI PPLG 1' }} • NIS: {{ $siswa->no_siswa ?? $siswa->nis ?? '2401' }}</span>
+                    <span>Kelas {{ $siswa->kelas?->nama_kelas ?? $siswa->kelas ?? 'XI PPLG 1' }} • NIS: {{ $siswa->no_siswa ?? $siswa->nis ?? '-' }}</span>
                 </div>
             </div>
 
@@ -70,15 +73,15 @@
     <!-- 2. QUICK STATS SUMMARY BANNER                                             -->
     <!-- ========================================================================= -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
-        <!-- Stat 1: Total Kehadiran (Dihitung dari Berapa Kali Hadir) -->
+        <!-- Stat 1: Total Kehadiran -->
         <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-soft flex items-center space-x-3.5">
             <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                 <i data-lucide="check-circle" class="w-6 h-6"></i>
             </div>
             <div>
                 <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Kehadiran</p>
-                <h4 class="text-lg font-black text-slate-900 leading-tight">{{ $totalHadir ?? 14 }} Kali Hadir</h4>
-                <p class="text-[10px] text-emerald-600 font-bold mt-0.5">Disiplin: {{ $persenHadir ?? 93 }}%</p>
+                <h4 class="text-lg font-black text-slate-900 leading-tight">{{ (int) ($totalHadir ?? 0) }} Kali Hadir</h4>
+                <p class="text-[10px] text-emerald-600 font-bold mt-0.5">Tingkat Disiplin: {{ (int) ($persenHadir ?? 100) }}%</p>
             </div>
         </div>
 
@@ -89,8 +92,8 @@
             </div>
             <div>
                 <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Akumulasi Izin</p>
-                <h4 class="text-lg font-black text-slate-900 leading-tight">{{ $totalIzin ?? 3 }} Hari Izin</h4>
-                <p class="text-[10px] text-amber-600 font-bold mt-0.5">Surat Terverifikasi</p>
+                <h4 class="text-lg font-black text-slate-900 leading-tight">{{ (int) ($totalIzin ?? 0) }} Hari Izin</h4>
+                <p class="text-[10px] text-amber-600 font-bold mt-0.5">Surat Keterangan</p>
             </div>
         </div>
 
@@ -101,8 +104,8 @@
             </div>
             <div>
                 <p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Poin Prestasi</p>
-                <h4 class="text-lg font-black text-slate-900 leading-tight">+{{ $siswa->poin_prestasi ?? 50 }} Poin</h4>
-                <p class="text-[10px] text-indigo-600 font-bold mt-0.5">BK: {{ $siswa->poin_bk ?? 15 }} Poin</p>
+                <h4 class="text-lg font-black text-slate-900 leading-tight">+{{ $siswa->poin_penghargaan ?? 50 }} Poin</h4>
+                <p class="text-[10px] text-indigo-600 font-bold mt-0.5">Pelanggaran: {{ $siswa->poin_pelanggaran ?? 0 }} Poin</p>
             </div>
         </div>
     </div>
@@ -133,72 +136,87 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-100">
+                    <div class="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100">
                         <span class="text-slate-400 font-semibold block mb-0.5">Nama Lengkap</span>
-                        <span class="text-slate-900 font-bold text-sm">{{ $siswa->nama ?? 'Wahyu Pratama' }}</span>
+                        <span class="text-slate-900 font-bold text-sm">{{ $siswa->nama_siswa ?? $siswa->nama ?? 'Siswa' }}</span>
                     </div>
 
-                    <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-100">
+                    <div class="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100">
                         <span class="text-slate-400 font-semibold block mb-0.5">Nomor Induk Siswa (NIS)</span>
-                        <span class="text-slate-900 font-bold text-sm font-mono">{{ $siswa->no_siswa ?? $siswa->nis ?? '2401' }}</span>
+                        <span class="text-slate-900 font-bold text-sm font-mono">{{ $siswa->no_siswa ?? $siswa->nis ?? '-' }}</span>
                     </div>
 
-                    <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-100">
+                    <div class="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100">
                         <span class="text-slate-400 font-semibold block mb-0.5">Nomor Induk Siswa Nasional (NISN)</span>
                         <span class="text-slate-900 font-bold text-sm font-mono">{{ $siswa->nisn ?? '0071234567' }}</span>
                     </div>
 
-                    <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-100">
+                    <div class="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100">
                         <span class="text-slate-400 font-semibold block mb-0.5">Kelas & Rombel</span>
                         <span class="text-slate-900 font-bold text-sm">{{ $siswa->kelas?->nama_kelas ?? $siswa->kelas ?? 'XI PPLG 1' }}</span>
                     </div>
 
-                    <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 sm:col-span-2">
+                    <div class="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100 sm:col-span-2">
                         <span class="text-slate-400 font-semibold block mb-0.5">Kompetensi Keahlian (Jurusan)</span>
                         <span class="text-slate-900 font-bold text-sm">Pengembangan Perangkat Lunak dan Gim (PPLG)</span>
                     </div>
 
-                    <div class="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 sm:col-span-2">
+                    <div class="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100 sm:col-span-2">
                         <span class="text-slate-400 font-semibold block mb-0.5">Email Akun Sekolah</span>
-                        <span class="text-slate-900 font-bold text-sm font-mono">{{ $siswa->user?->email ?? $siswa->email ?? 'wahyu.pratama@smktibaliglobal.sch.id' }}</span>
+                        <span class="text-slate-900 font-bold text-sm font-mono">{{ $siswa->user?->email ?? $siswa->email ?? 'siswa@smktibaliglobal.sch.id' }}</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Card: Aturan Ketentuan Presensi Sekolah -->
-            <div class="bg-linear-to-br from-blue-900 to-indigo-900 text-white rounded-3xl p-6 shadow-soft relative overflow-hidden">
-                <div class="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
+            <!-- Card: Aturan Ketentuan Presensi Sekolah (Kontras Tinggi & Font Jelas) -->
+            <div class="rounded-3xl p-6 sm:p-7 shadow-xl relative overflow-hidden border border-slate-800 text-white"
+                 style="background: linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e1b4b 100%);">
+                <!-- Ambient glow effects -->
+                <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-blue-500/20 blur-2xl pointer-events-none"></div>
+                <div class="absolute -bottom-10 -left-10 w-40 h-40 rounded-full bg-indigo-500/20 blur-xl pointer-events-none"></div>
 
-                <div class="relative z-10 flex items-center space-x-3 mb-4">
-                    <div class="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center text-white backdrop-blur-md">
-                        <i data-lucide="clock" class="w-5 h-5"></i>
+                <div class="relative z-10 flex items-center space-x-3 mb-5">
+                    <div class="w-11 h-11 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white ring-1 ring-white/20 shadow-md">
+                        <i data-lucide="clock" class="w-5 h-5 text-sky-300"></i>
                     </div>
                     <div>
-                        <h4 class="font-black text-sm text-white">Ketentuan Jam Presensi Sekolah</h4>
-                        <p class="text-xs text-blue-200">Sesuai SOP Tata Tertib SMK TI Bali Global Badung</p>
+                        <h4 class="font-extrabold text-base text-white tracking-tight">Ketentuan Jam Presensi Sekolah</h4>
+                        <p class="text-xs text-sky-200/90 font-medium mt-0.5">Sesuai SOP Tata Tertib SMK TI Bali Global Badung</p>
                     </div>
                 </div>
 
-                <div class="relative z-10 grid grid-cols-2 gap-3 text-xs mb-4">
-                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/10">
-                        <span class="text-blue-200 font-semibold block mb-1">Presensi Datang</span>
-                        <span class="text-white font-extrabold text-sm block">06:30 - 07:05 WITA</span>
-                        <span class="text-[10px] text-blue-300">Setelah 07:05 otomatis Telat</span>
+                <div class="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-5 text-xs">
+                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-sky-200 font-semibold">Presensi Datang</span>
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        </div>
+                        <span class="text-white font-black text-base sm:text-lg block tracking-tight">06:30 – 07:05 WITA</span>
+                        <span class="text-[11px] text-amber-300 font-semibold mt-1 inline-flex items-center">
+                            <i data-lucide="alert-circle" class="w-3.5 h-3.5 mr-1 inline shrink-0"></i>
+                            Setelah 07:05 otomatis Telat
+                        </span>
                     </div>
 
-                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-3 border border-white/10">
-                        <span class="text-blue-200 font-semibold block mb-1">Presensi Pulang</span>
-                        <span class="text-white font-extrabold text-sm block">12:25 WITA</span>
-                        <span class="text-[10px] text-blue-300">Konfirmasi kepulangan harian</span>
+                    <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-sky-200 font-semibold">Presensi Pulang</span>
+                            <span class="w-2 h-2 rounded-full bg-sky-300"></span>
+                        </div>
+                        <span class="text-white font-black text-base sm:text-lg block tracking-tight">12:25 WITA</span>
+                        <span class="text-[11px] text-sky-200/90 font-medium mt-1 inline-flex items-center">
+                            <i data-lucide="check" class="w-3.5 h-3.5 mr-1 inline shrink-0 text-emerald-400"></i>
+                            Konfirmasi kepulangan harian
+                        </span>
                     </div>
                 </div>
 
-                <div class="relative z-10 pt-3 border-t border-white/15 flex items-center justify-between text-xs text-blue-200">
-                    <span class="flex items-center space-x-1.5">
+                <div class="relative z-10 pt-4 border-t border-white/15 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <span class="inline-flex items-center space-x-2 text-sky-100 font-medium bg-white/10 px-3.5 py-1.5 rounded-full border border-white/10">
                         <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400"></i>
-                        <span>Radius Geofence: 50 Meter Area Kampus</span>
+                        <span>Radius Geofence: <strong class="text-white">50 Meter</strong> Area Kampus</span>
                     </span>
-                    <a href="{{ route('riwayat') }}" class="font-bold text-white hover:underline flex items-center space-x-1">
+                    <a href="{{ route('riwayat') }}" class="font-bold text-white hover:text-sky-200 inline-flex items-center space-x-1.5 bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/20 shadow-md transition-all active:scale-95">
                         <span>Lihat Riwayat</span>
                         <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                     </a>
@@ -223,7 +241,7 @@
                         </div>
                     </div>
                     <span class="text-xs font-black text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-100">
-                        {{ $siswa->poin_bk ?? 15 }}/30 Poin
+                        {{ $siswa->poin_pelanggaran ?? 0 }}/30 Poin
                     </span>
                 </div>
 
@@ -231,10 +249,13 @@
                 <div class="space-y-2 mb-5">
                     <div class="flex justify-between text-xs font-semibold">
                         <span class="text-slate-600">Poin Pelanggaran Aktif</span>
-                        <span class="text-rose-600 font-bold">Peringatan 1 (SP-1)</span>
+                        <span class="{{ ($siswa->poin_pelanggaran ?? 0) >= 30 ? 'text-rose-600 font-bold' : (($siswa->poin_pelanggaran ?? 0) >= 15 ? 'text-amber-600 font-bold' : 'text-emerald-600 font-bold') }}">
+                            {{ ($siswa->poin_pelanggaran ?? 0) >= 30 ? 'Panggilan Orang Tua' : (($siswa->poin_pelanggaran ?? 0) >= 15 ? 'Peringatan 1 (SP-1)' : 'Tertib & Disiplin') }}
+                        </span>
                     </div>
                     <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                        <div class="bg-gradient-to-r from-amber-500 to-rose-500 h-full rounded-full" style="width: 50%"></div>
+                        <div class="bg-gradient-to-r from-amber-500 to-rose-500 h-full rounded-full transition-all duration-500"
+                             style="width: {{ min(100, max(5, round((($siswa->poin_pelanggaran ?? 0) / 30) * 100))) }}%"></div>
                     </div>
                     <p class="text-[11px] text-slate-400">Batas Surat Panggilan Orang Tua: 30 Poin</p>
                 </div>
@@ -242,12 +263,12 @@
                 <!-- Reward Poin Prestasi -->
                 <div class="p-3.5 bg-emerald-50/70 border border-emerald-100 rounded-2xl flex items-center justify-between mb-5">
                     <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-xs">
                             <i data-lucide="trophy" class="w-4 h-4"></i>
                         </div>
                         <div>
                             <p class="text-xs font-bold text-emerald-900">Poin Reward Prestasi</p>
-                            <p class="text-[11px] text-emerald-700">+{{ $siswa->poin_prestasi ?? 50 }} Poin (Juara 2 LKS Web)</p>
+                            <p class="text-[11px] text-emerald-700">+{{ $siswa->poin_penghargaan ?? 50 }} Poin (Prestasi Aktif)</p>
                         </div>
                     </div>
                     <span class="text-xs bg-emerald-200/80 text-emerald-900 font-extrabold px-2.5 py-1 rounded-full">Kompensasi</span>
@@ -275,11 +296,11 @@
                     Keluar dari akun akan menghapus sesi login di perangkat ini. Anda dapat masuk kembali menggunakan NIS atau Kartu Pelajar kapan saja.
                 </p>
 
-                <!-- Tombol Logout -->
+                <!-- Tombol Logout: Elegan & Berkelas -->
                 <button @click="confirmLogout = true" 
                         type="button"
-                        class="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700 font-bold text-xs sm:text-sm border border-rose-200 transition-all active:scale-98 cursor-pointer">
-                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                        class="w-full group flex items-center justify-center space-x-2.5 py-3.5 px-4 rounded-2xl bg-rose-50/80 hover:bg-rose-500 text-rose-600 hover:text-white font-bold text-xs sm:text-sm border border-rose-200 hover:border-rose-500 shadow-xs hover:shadow-lg hover:shadow-rose-500/25 transition-all duration-200 active:scale-98 cursor-pointer">
+                    <i data-lucide="log-out" class="w-4 h-4 transition-transform group-hover:-translate-x-1"></i>
                     <span>Keluar / Ganti Akun</span>
                 </button>
             </div>
@@ -289,34 +310,83 @@
     </div>
 
     <!-- ========================================================================= -->
-    <!-- 4. MODAL KONFIRMASI LOGOUT                                                -->
+    <!-- 4. MODAL KONFIRMASI LOGOUT (PREMIUM & MODERN GLASSMORPHISM)               -->
     <!-- ========================================================================= -->
     <div x-show="confirmLogout" 
          x-cloak 
-         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         class="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
          @keydown.escape.window="confirmLogout = false">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl border border-slate-100"
+
+        <!-- Modal Dialog Box -->
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 text-center shadow-2xl border border-slate-100 relative overflow-hidden"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-90 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-2"
              @click.away="confirmLogout = false">
-            <div class="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+
+            <!-- Decorative Top Ambient Glow -->
+            <div class="absolute -top-16 inset-x-0 h-32 bg-gradient-to-b from-rose-500/15 to-transparent pointer-events-none"></div>
+
+            <!-- Close Button (X) -->
+            <button @click="confirmLogout = false"
+                    type="button"
+                    class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Tutup">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+
+            <!-- 3D Glowing Logout Icon -->
+            <div class="relative mx-auto w-20 h-20 mb-4 flex items-center justify-center">
+                <div class="absolute inset-0 rounded-3xl bg-rose-500/25 blur-xl animate-pulse"></div>
+                <div class="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-500 text-white flex items-center justify-center shadow-xl shadow-rose-500/30 ring-4 ring-rose-50">
+                    <i data-lucide="log-out" class="w-8 h-8"></i>
+                </div>
             </div>
 
-            <h3 class="text-lg font-extrabold text-slate-900 mb-1">Konfirmasi Keluar</h3>
-            <p class="text-xs text-slate-500 mb-6 leading-relaxed">
-                Apakah Anda yakin ingin keluar dari akun siswa SMK TI Bali Global Badung?
+            <!-- Header Badge & Title -->
+            <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 font-extrabold text-[11px] mb-2 border border-rose-100">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                <span>Konfirmasi Keluar Akun</span>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 tracking-tight">Ingin Mengakhiri Sesi?</h3>
+            <p class="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-[300px] mx-auto">
+                Sesi login Anda di perangkat ini akan ditutup. Anda dapat masuk kembali menggunakan NIS atau Kartu Pelajar kapan saja.
             </p>
 
-            <div class="grid grid-cols-2 gap-3">
+            <!-- Student Preview Mini-Badge -->
+            <div class="my-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-left flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-bold text-slate-900 truncate">{{ $siswa->nama_siswa ?? $siswa->nama ?? 'Siswa' }}</p>
+                    <p class="text-[10px] text-slate-500 font-medium">NIS: {{ $siswa->no_siswa ?? $siswa->nis ?? '-' }} • {{ $siswa->kelas?->nama_kelas ?? $siswa->kelas ?? 'XI PPLG 1' }}</p>
+                </div>
+                <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">Aktif</span>
+            </div>
+
+            <!-- Action Buttons Grid -->
+            <div class="grid grid-cols-2 gap-3 pt-1">
                 <button @click="confirmLogout = false" 
                         type="button" 
-                        class="w-full py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                        class="w-full py-3 px-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-extrabold text-slate-700 shadow-xs hover:border-slate-300 transition-all cursor-pointer active:scale-98">
                     Batal
                 </button>
                 <form method="POST" action="{{ route('logout') }}" class="w-full">
                     @csrf
                     <button type="submit"
-                   class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-colors flex items-center justify-center">
-                    Ya, Keluar
+                            class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white text-xs font-extrabold shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        <span>Ya, Keluar</span>
                     </button>
                 </form>
             </div>

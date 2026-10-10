@@ -867,8 +867,47 @@ class KesiswaanController extends Controller
     public function profil()
     {
         $siswa = $this->getActiveSiswa();
+        $studentId = $siswa->id_siswa ?? $siswa->id;
+        $totalHadir = 0;
+        $persenHadir = 100;
+        $totalIzin = 0;
+
+        try {
+            if (Schema::hasTable('presensi')) {
+                $totalHadir = Presensi::where('siswa_id', $studentId)
+                    ->whereMonth('tanggal', Carbon::now()->month)
+                    ->whereIn('status', ['Hadir', 'Terlambat'])
+                    ->count();
+
+                $totalPresensi = Presensi::where('siswa_id', $studentId)
+                    ->whereMonth('tanggal', Carbon::now()->month)
+                    ->count();
+
+                if ($totalPresensi > 0) {
+                    $persenHadir = round(($totalHadir / $totalPresensi) * 100);
+                }
+            }
+
+            if (Schema::hasTable('absensi')) {
+                $absensiHadir = Absensi::where('id_siswa', $studentId)
+                    ->whereMonth('tanggal', Carbon::now()->month)
+                    ->whereIn('status', ['Hadir', 'Terlambat'])
+                    ->count();
+                if ($absensiHadir > $totalHadir) {
+                    $totalHadir = $absensiHadir;
+                }
+            }
+
+            if (Schema::hasTable('izin')) {
+                $totalIzin = Izin::where('siswa_id', $studentId)
+                    ->whereMonth('tgl_mulai', Carbon::now()->month)
+                    ->sum('durasi_hari') ?: 0;
+            }
+        } catch (Exception $e) {
+        }
+
         $viewName = view()->exists('dashboard siswa.profil') ? 'dashboard siswa.profil' : 'profil.index';
 
-        return view($viewName, compact('siswa'));
+        return view($viewName, compact('siswa', 'totalHadir', 'persenHadir', 'totalIzin'));
     }
 }

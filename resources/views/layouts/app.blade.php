@@ -289,23 +289,28 @@
                     </nav>
                     <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-6 mb-3 px-3">Akun Siswa</p>
                     <nav class="space-y-1.5">
-                        <form method="POST" action="{{ route('logout') }}">
+                        <form method="POST" action="{{ route('logout') }}" id="sidebar-logout-form">
                             @csrf
-                            <button type="submit" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-rose-600 hover:bg-rose-50">
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="log-out" class="w-4 h-4"></i>
-                                <span>Keluar / Ganti Akun</span>
-                            </div>
+                            <button type="button" 
+                                    onclick="if(window.__triggerLogoutModal) { window.__triggerLogoutModal(); } else { document.getElementById('sidebar-logout-form').submit(); }"
+                                    class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-rose-600 hover:bg-rose-50 cursor-pointer">
+                                <div class="flex items-center space-x-3">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                                    <span>Keluar / Ganti Akun</span>
+                                </div>
                             </button>
                         </form>
                     </nav>
                 </div>
 
                 <!-- School Info Card with Logo PNG -->
-                <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-3xl p-5 text-white shadow-soft">
-                    <div class="bg-white rounded-2xl p-2.5 flex items-center justify-center shadow-xs">
-                        <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 w-auto object-contain">
+                <div class="rounded-3xl p-4 text-white shadow-soft text-center"
+                     style="background: linear-gradient(135deg, #090d16 0%, #0f172a 45%, #1e1b4b 100%);">
+                    <div class="bg-white rounded-2xl p-2.5 flex items-center justify-center shadow-xs mb-2.5">
+                        <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-11 w-auto object-contain">
                     </div>
+                    <p class="text-[11px] font-black uppercase tracking-wider text-white">SMK TI BALI GLOBAL</p>
+                    <p class="text-[10px] text-sky-200/80 font-medium mt-0.5">Badung, Bali</p>
                 </div>
             </aside>
 
