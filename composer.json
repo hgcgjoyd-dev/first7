@@ -29,7 +29,11 @@
         "classmap": [
             "app/Http/ControlerAdmin/",
             "app/Http/ControlerSiswa/",
-            "app/Http/ControlerGuruBK/"
+            "app/Http/ControlerGuruBK/",
+            "app/Models/Model Admin/",
+            "app/Models/Model Guru/",
+            "app/Models/Model Guru BK/",
+            "app/Models/Model Siswa/"
         ]
     },
     "autoload-dev": {

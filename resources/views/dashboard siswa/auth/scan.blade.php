@@ -4,7 +4,270 @@
 
 @section('content')
 <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-soft text-center space-y-5"
-     x-data="{
+     x-data="cardScanner()">
+
+    <!-- Top Status Header -->
+    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full transition-colors"
+                  :class="cameraActive ? 'bg-emerald-500 animate-pulse' : (cameraError ? 'bg-rose-500' : 'bg-amber-400')">
+            </span>
+            <span class="text-xs font-bold text-slate-600"
+                  x-text="cameraActive ? 'Kamera Pemindai Siap' : (cameraError ? 'Kamera Tidak Tersedia' : 'Menyiapkan Kamera...')">
+                Menyiapkan Kamera...
+            </span>
+        </div>
+
+        <!-- Toggle Front/Back Camera -->
+        <button type="button"
+                @click="toggleFacingMode()"
+                x-show="cameraActive"
+                class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                title="Ganti Kamera Depan / Belakang">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        </button>
+    </div>
+
+    <!-- Header Title & School Brand -->
+    <div>
+        <div class="flex items-center justify-center mb-2">
+            <img src="{{ asset('images/logo-smk.png') }}"
+                 alt="Logo SMK TI Bali Global Badung"
+                 class="h-14 sm:h-16 w-auto object-contain drop-shadow-sm">
+        </div>
+
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            SCAN KARTU PELAJAR
+        </h2>
+        <p class="text-xs text-slate-500 mt-1">
+            Posisikan kartu pelajar di dalam bingkai, lalu tekan tombol pindai di bawah
+        </p>
+    </div>
+
+    <!-- Scanner Viewfinder Box -->
+    <div class="w-full aspect-square max-w-[310px] mx-auto rounded-3xl bg-slate-950 border-4 border-slate-900 relative p-3 flex items-center justify-center overflow-hidden shadow-2xl transition-all duration-300"
+         :class="scanned ? 'ring-4 ring-emerald-400' : ''">
+
+        <!-- Hidden canvas for image capture & processing -->
+        <canvas id="scannerCanvas" class="hidden"></canvas>
+
+        <!-- Real Webcam Video Stream -->
+        <video id="scannerWebcam"
+               autoplay
+               playsinline
+               muted
+               class="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300"
+               :class="{
+                   'opacity-100': cameraActive && !scanned,
+                   'opacity-0 pointer-events-none': !cameraActive || scanned
+               }"
+               style="touch-action: none;"
+               @loadedmetadata="setupFocus()">
+        </video>
+
+        <!-- Snapshot Image (Displayed upon successful scan) -->
+        <template x-if="scanned && capturedPhoto">
+            <img :src="capturedPhoto"
+                 alt="Hasil Scan Kartu"
+                 class="absolute inset-0 w-full h-full object-cover z-10">
+        </template>
+
+        <!-- Fallback View When Camera Inactive -->
+        <div x-show="!cameraActive && !scanned"
+             class="absolute inset-0 flex flex-col items-center justify-center z-[5] bg-gradient-to-b from-slate-900 to-black p-5 text-center space-y-3">
+            <div class="w-16 h-16 rounded-full border-2 border-dashed border-cyan-400/50 flex items-center justify-center text-cyan-400 bg-cyan-950/30">
+                <i data-lucide="camera" class="w-8 h-8 animate-pulse"></i>
+            </div>
+
+            <div class="space-y-1 max-w-[230px]">
+                <p class="text-xs text-white font-extrabold">
+                    Kamera Belum Terbuka
+                </p>
+                <p class="text-[11px] text-slate-400 leading-relaxed"
+                   x-text="errorMessage || 'Izinkan akses kamera browser Anda untuk memindai kartu pelajar secara langsung.'">
+                </p>
+            </div>
+
+            <button type="button"
+                    @click="startCamera()"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-500/25 active:scale-95 transition-all cursor-pointer">
+                Buka Kamera Sekarang
+            </button>
+        </div>
+
+        <!-- Corner Scanner Brackets -->
+        <div class="absolute top-3 left-3 w-8 h-8 border-t-4 border-l-4 rounded-tl-xl z-20 pointer-events-none transition-colors duration-300"
+             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
+        </div>
+        <div class="absolute top-3 right-3 w-8 h-8 border-t-4 border-r-4 rounded-tr-xl z-20 pointer-events-none transition-colors duration-300"
+             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
+        </div>
+        <div class="absolute bottom-3 left-3 w-8 h-8 border-b-4 border-l-4 rounded-bl-xl z-20 pointer-events-none transition-colors duration-300"
+             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
+        </div>
+        <div class="absolute bottom-3 right-3 w-8 h-8 border-b-4 border-r-4 rounded-br-xl z-20 pointer-events-none transition-colors duration-300"
+             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
+        </div>
+
+        <!-- Animated Laser Line -->
+        <div x-show="cameraActive && !scanned"
+             class="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-laser z-20 pointer-events-none">
+        </div>
+
+        <!-- Quick Camera Shutter Button inside Viewfinder (Bottom Center) -->
+        <div x-show="cameraActive && !scanned && !scanning"
+             class="absolute bottom-4 inset-x-0 flex justify-center z-25">
+            <button type="button"
+                    @click="triggerScan()"
+                    class="w-14 h-14 rounded-full bg-white/90 hover:bg-white text-blue-600 border-4 border-blue-500 flex items-center justify-center shadow-2xl active:scale-90 transition-transform cursor-pointer group"
+                    title="Ambil Foto & Pindai Kartu">
+                <i data-lucide="camera" class="w-6 h-6 text-blue-600 group-hover:scale-110 transition-transform"></i>
+            </button>
+        </div>
+
+        <!-- Success Overlay -->
+        <div x-show="scanned"
+             x-cloak
+             class="absolute inset-0 bg-emerald-950/85 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 z-30 p-4 animate-in fade-in zoom-in-95 duration-200 text-center">
+            <div class="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/40">
+                <i data-lucide="check" class="w-9 h-9 stroke-[3]"></i>
+            </div>
+            <div class="text-xs font-black text-emerald-200 uppercase tracking-wider">
+                KARTU TERVERIFIKASI!
+            </div>
+            <div class="text-xs font-black text-white bg-black/40 px-3.5 py-1.5 rounded-full border border-white/20">
+                <span x-text="scannedStudentName || 'Siswa Terdaftar'"></span>
+                <span x-show="scannedStudentClass" x-text="' • ' + scannedStudentClass"></span>
+            </div>
+            <div x-show="scannedStudentNis" class="text-[11px] text-emerald-300 font-mono font-bold" x-text="scannedStudentNis"></div>
+        </div>
+    </div>
+
+    <!-- Petunjuk Arahkan Kartu -->
+    <p class="text-[11px] text-slate-500 font-medium">
+        Arahkan barcode atau nama kartu tepat ke dalam bingkai pemindai kamera.
+    </p>
+
+    <!-- Status Saat Memproses Scan -->
+    <div x-show="scanning"
+         x-cloak
+         class="w-full py-2.5 px-3 text-center text-blue-700 text-xs font-bold bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center space-x-2 animate-pulse">
+        <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
+        <span x-text="scanStatusMessage || 'Memproses kartu pelajar...'"></span>
+    </div>
+
+    <!-- Pesan Error Scan -->
+    <div x-show="scanFailed"
+         x-cloak
+         class="w-full py-2.5 px-3 text-center text-rose-600 text-xs font-semibold bg-rose-50 border border-rose-200 rounded-xl leading-relaxed"
+         x-text="scanErrorMessage">
+    </div>
+
+    <!-- TOMBOL UTAMA: PINDAI KARTU SEKARANG -->
+    <button type="button"
+            @click="triggerScan()"
+            :disabled="scanning || scanned"
+            class="w-full font-black py-4 px-6 rounded-2xl shadow-xl flex items-center justify-center space-x-3 transition-all active:scale-[0.98] cursor-pointer"
+            :class="scanned
+                ? 'bg-emerald-600 text-white shadow-emerald-500/25 cursor-default'
+                : (scanning
+                    ? 'bg-blue-500 text-white cursor-wait opacity-90'
+                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/30 ring-4 ring-blue-500/20')">
+
+        <!-- Tampilan Normal -->
+        <span x-show="!scanning && !scanned" class="flex items-center space-x-2 text-sm sm:text-base tracking-wide uppercase">
+            <i data-lucide="scan" class="w-5 h-5"></i>
+            <span>PINDAI KARTU SEKARANG</span>
+        </span>
+
+        <!-- Tampilan Saat Memindai -->
+        <span x-show="scanning" x-cloak class="flex items-center space-x-2 text-sm sm:text-base">
+            <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span x-text="scanStatusMessage || 'MEMINDAI KARTU PELAJAR...'"></span>
+        </span>
+
+        <!-- Tampilan Berhasil -->
+        <span x-show="scanned" x-cloak class="flex items-center space-x-2 text-sm sm:text-base">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            <span>BERHASIL! MENGALIHKAN...</span>
+        </span>
+    </button>
+
+    <!-- Opsi Alternatif: Unggah Foto atau Ketik Nomor Manual -->
+    <div class="pt-1">
+        <div class="grid grid-cols-2 gap-2 text-xs">
+            <!-- Tombol Unggah Gambar Kartu -->
+            <label class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer text-center">
+                <i data-lucide="image" class="w-4 h-4 text-slate-500"></i>
+                <span>Unggah Foto Kartu</span>
+                <input type="file" accept="image/*" class="hidden" @change="handleFileUpload($event)">
+            </label>
+
+            <!-- Toggle Input Nomor Manual -->
+            <button type="button"
+                    @click="showManualInput = !showManualInput"
+                    class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer text-center">
+                <i data-lucide="keypad" class="w-4 h-4 text-slate-500"></i>
+                <span>Input No. Kartu</span>
+            </button>
+        </div>
+
+        <!-- Form Input Nomor Siswa / NIS Manual -->
+        <div x-show="showManualInput"
+             x-cloak
+             x-transition
+             class="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left space-y-2.5">
+            <label for="manualCardCode" class="block text-xs font-bold text-slate-700">
+                Nomor Siswa (NIS) atau Nama Kartu:
+            </label>
+            <div class="flex space-x-2">
+                <input id="manualCardCode"
+                       type="text"
+                       x-model="manualCode"
+                       @keydown.enter.prevent="submitManual()"
+                       placeholder="Contoh: 0000001 atau Andhika Maraville"
+                       class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="button"
+                        @click="submitManual()"
+                        :disabled="scanning"
+                        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-colors shrink-0 cursor-pointer">
+                    Kirim
+                </button>
+            </div>
+            <p class="text-[10px] text-slate-400">
+                Masukkan nomor siswa (NIS) atau nama siswa sesuai kartu pelajar.
+            </p>
+        </div>
+    </div>
+
+    <!-- Divider "ATAU" -->
+    <div class="flex items-center justify-center my-1">
+        <span class="text-xs font-bold text-slate-400 uppercase px-4 bg-white">
+            ATAU
+        </span>
+    </div>
+
+    <!-- Tombol Login Manual -->
+    <a href="{{ route('login') }}"
+       class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-extrabold py-3.5 rounded-2xl flex items-center justify-center space-x-2 transition-all text-xs block text-center">
+        <i data-lucide="user-check" class="w-4 h-4 inline-block mr-1"></i>
+        <span>MASUK DENGAN AKUN (NIS & PASSWORD)</span>
+    </a>
+
+</div>
+
+<!-- Tesseract OCR Library for Card Text Reading -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script>
+function cardScanner() {
+    return {
         cameraActive: false,
         cameraError: false,
         errorMessage: '',
@@ -26,7 +289,7 @@
         autoScanInterval: null,
         ocrWorker: null,
         ocrLoading: false,
-        seededStudents: {{ \Illuminate\Support\Js::from(array_values(\Database\Seeders\UserSeeder::STUDENTS)) }},
+        seededStudents: @json(array_values(\Database\Seeders\UserSeeder::STUDENTS)),
 
         init() {
             this.$nextTick(() => {
@@ -321,7 +584,6 @@
             this.scanErrorMessage = '';
             this.scanStatusMessage = 'Mengambil gambar kartu...';
 
-            // Snapshot dari frame video ke canvas
             const canvas = document.getElementById('scannerCanvas') || document.createElement('canvas');
             const w = videoEl.videoWidth || 1280;
             const h = videoEl.videoHeight || 720;
@@ -334,7 +596,6 @@
                 this.capturedPhoto = canvas.toDataURL('image/jpeg', 0.85);
             } catch (e) {}
 
-            // Preprocess canvas untuk OCR yang jauh lebih tajam
             const processedCanvas = this.preprocessCanvas(canvas);
 
             // 1. Coba Barcode/QR Detector
@@ -394,7 +655,6 @@
                 console.warn('OCR error:', ocrErr);
             }
 
-            // Jika gagal menemukan nama atau kartu yang jelas
             this.scanning = false;
             this.scanFailed = true;
             this.scanErrorMessage = 'Kartu belum terbaca jelas. Posisikan nama di kartu lebih terang & dekat, atau ketik nama kartu manual di bawah.';
@@ -554,266 +814,9 @@
                 gain.connect(ctx.destination);
                 osc.start();
                 osc.stop(ctx.currentTime + 0.18);
-            } catch(e) {}
+            } catch (e) {}
         }
-     }">
-
-    <!-- Top Status Header -->
-    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
-        <div class="flex items-center space-x-2">
-            <span class="w-2.5 h-2.5 rounded-full transition-colors"
-                  :class="cameraActive ? 'bg-emerald-500 animate-pulse' : (cameraError ? 'bg-rose-500' : 'bg-amber-400')">
-            </span>
-            <span class="text-xs font-bold text-slate-600"
-                  x-text="cameraActive ? 'Kamera Pemindai Siap' : (cameraError ? 'Kamera Tidak Tersedia' : 'Menyiapkan Kamera...')">
-                Menyiapkan Kamera...
-            </span>
-        </div>
-
-        <!-- Toggle Front/Back Camera -->
-        <button type="button"
-                @click="toggleFacingMode()"
-                x-show="cameraActive"
-                class="p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-                title="Ganti Kamera Depan / Belakang">
-            <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-        </button>
-    </div>
-
-    <!-- Header Title & School Brand -->
-    <div>
-        <div class="flex items-center justify-center mb-2">
-            <img src="{{ asset('images/logo-smk.png') }}"
-                 alt="Logo SMK TI Bali Global Badung"
-                 class="h-14 sm:h-16 w-auto object-contain drop-shadow-sm">
-        </div>
-
-        <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-            SCAN KARTU PELAJAR
-        </h2>
-        <p class="text-xs text-slate-500 mt-1">
-            Posisikan kartu pelajar di dalam bingkai, lalu tekan tombol pindai di bawah
-        </p>
-    </div>
-
-    <!-- Scanner Viewfinder Box -->
-    <div class="w-full aspect-square max-w-[310px] mx-auto rounded-3xl bg-slate-950 border-4 border-slate-900 relative p-3 flex items-center justify-center overflow-hidden shadow-2xl transition-all duration-300"
-         :class="scanned ? 'ring-4 ring-emerald-400' : ''">
-
-        <!-- Hidden canvas for image capture & processing -->
-        <canvas id="scannerCanvas" class="hidden"></canvas>
-
-        <!-- Real Webcam Video Stream -->
-        <video id="scannerWebcam"
-               autoplay
-               playsinline
-               muted
-               class="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300"
-               :class="{
-                   'opacity-100': cameraActive && !scanned,
-                   'opacity-0 pointer-events-none': !cameraActive || scanned
-               }"
-               style="touch-action: none;"
-               @loadedmetadata="setupFocus()">
-        </video>
-
-        <!-- Snapshot Image (Displayed upon successful scan) -->
-        <template x-if="scanned && capturedPhoto">
-            <img :src="capturedPhoto"
-                 alt="Hasil Scan Kartu"
-                 class="absolute inset-0 w-full h-full object-cover z-10">
-        </template>
-
-        <!-- Fallback View When Camera Inactive -->
-        <div x-show="!cameraActive && !scanned"
-             class="absolute inset-0 flex flex-col items-center justify-center z-[5] bg-gradient-to-b from-slate-900 to-black p-5 text-center space-y-3">
-            <div class="w-16 h-16 rounded-full border-2 border-dashed border-cyan-400/50 flex items-center justify-center text-cyan-400 bg-cyan-950/30">
-                <i data-lucide="camera" class="w-8 h-8 animate-pulse"></i>
-            </div>
-
-            <div class="space-y-1 max-w-[230px]">
-                <p class="text-xs text-white font-extrabold">
-                    Kamera Belum Terbuka
-                </p>
-                <p class="text-[11px] text-slate-400 leading-relaxed"
-                   x-text="errorMessage || 'Izinkan akses kamera browser Anda untuk memindai kartu pelajar secara langsung.'">
-                </p>
-            </div>
-
-            <button type="button"
-                    @click="startCamera()"
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-500/25 active:scale-95 transition-all cursor-pointer">
-                Buka Kamera Sekarang
-            </button>
-        </div>
-
-        <!-- Corner Scanner Brackets -->
-        <div class="absolute top-3 left-3 w-8 h-8 border-t-4 border-l-4 rounded-tl-xl z-20 pointer-events-none transition-colors duration-300"
-             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
-        </div>
-        <div class="absolute top-3 right-3 w-8 h-8 border-t-4 border-r-4 rounded-tr-xl z-20 pointer-events-none transition-colors duration-300"
-             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
-        </div>
-        <div class="absolute bottom-3 left-3 w-8 h-8 border-b-4 border-l-4 rounded-bl-xl z-20 pointer-events-none transition-colors duration-300"
-             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
-        </div>
-        <div class="absolute bottom-3 right-3 w-8 h-8 border-b-4 border-r-4 rounded-br-xl z-20 pointer-events-none transition-colors duration-300"
-             :class="scanned ? 'border-emerald-400' : 'border-cyan-400'">
-        </div>
-
-        <!-- Animated Laser Line -->
-        <div x-show="cameraActive && !scanned"
-             class="absolute left-4 right-4 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_15px_#22d3ee] animate-laser z-20 pointer-events-none">
-        </div>
-
-        <!-- Quick Camera Shutter Button inside Viewfinder (Bottom Center) -->
-        <div x-show="cameraActive && !scanned && !scanning"
-             class="absolute bottom-4 inset-x-0 flex justify-center z-25">
-            <button type="button"
-                    @click="triggerScan()"
-                    class="w-14 h-14 rounded-full bg-white/90 hover:bg-white text-blue-600 border-4 border-blue-500 flex items-center justify-center shadow-2xl active:scale-90 transition-transform cursor-pointer group"
-                    title="Ambil Foto & Pindai Kartu">
-                <i data-lucide="camera" class="w-6 h-6 text-blue-600 group-hover:scale-110 transition-transform"></i>
-            </button>
-        </div>
-
-        <!-- Success Overlay -->
-        <div x-show="scanned"
-             x-cloak
-             class="absolute inset-0 bg-emerald-950/85 backdrop-blur-xs flex flex-col items-center justify-center space-y-2 z-30 p-4 animate-in fade-in zoom-in-95 duration-200 text-center">
-            <div class="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/40">
-                <i data-lucide="check" class="w-9 h-9 stroke-[3]"></i>
-            </div>
-            <div class="text-xs font-black text-emerald-200 uppercase tracking-wider">
-                KARTU TERVERIFIKASI!
-            </div>
-            <div class="text-xs font-black text-white bg-black/40 px-3.5 py-1.5 rounded-full border border-white/20">
-                <span x-text="scannedStudentName || 'Siswa Terdaftar'"></span>
-                <span x-show="scannedStudentClass" x-text="' • ' + scannedStudentClass"></span>
-            </div>
-            <div x-show="scannedStudentNis" class="text-[11px] text-emerald-300 font-mono font-bold" x-text="scannedStudentNis"></div>
-        </div>
-    </div>
-
-    <!-- Petunjuk Arahkan Kartu -->
-    <p class="text-[11px] text-slate-500 font-medium">
-        Arahkan barcode atau nama kartu tepat ke dalam bingkai pemindai kamera.
-    </p>
-
-    <!-- Status Saat Memproses Scan -->
-    <div x-show="scanning"
-         x-cloak
-         class="w-full py-2.5 px-3 text-center text-blue-700 text-xs font-bold bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-center space-x-2 animate-pulse">
-        <svg class="animate-spin h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-        </svg>
-        <span x-text="scanStatusMessage || 'Memproses kartu pelajar...'"></span>
-    </div>
-
-    <!-- Pesan Error Scan -->
-    <div x-show="scanFailed"
-         x-cloak
-         class="w-full py-2.5 px-3 text-center text-rose-600 text-xs font-semibold bg-rose-50 border border-rose-200 rounded-xl leading-relaxed"
-         x-text="scanErrorMessage">
-    </div>
-
-    <!-- TOMBOL UTAMA: PINDAI KARTU SEKARANG -->
-    <button type="button"
-            @click="triggerScan()"
-            :disabled="scanning || scanned"
-            class="w-full font-black py-4 px-6 rounded-2xl shadow-xl flex items-center justify-center space-x-3 transition-all active:scale-[0.98] cursor-pointer"
-            :class="scanned
-                ? 'bg-emerald-600 text-white shadow-emerald-500/25 cursor-default'
-                : (scanning
-                    ? 'bg-blue-500 text-white cursor-wait opacity-90'
-                    : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-blue-500/30 ring-4 ring-blue-500/20')">
-
-        <!-- Tampilan Normal: Selalu tampil langsung -->
-        <span x-show="!scanning && !scanned" class="flex items-center space-x-2 text-sm sm:text-base tracking-wide uppercase">
-            <i data-lucide="scan" class="w-5 h-5"></i>
-            <span>PINDAI KARTU SEKARANG</span>
-        </span>
-
-        <!-- Tampilan Saat Memindai -->
-        <span x-show="scanning" x-cloak class="flex items-center space-x-2 text-sm sm:text-base">
-            <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-            </svg>
-            <span x-text="scanStatusMessage || 'MEMINDAI KARTU PELAJAR...'"></span>
-        </span>
-
-        <!-- Tampilan Berhasil -->
-        <span x-show="scanned" x-cloak class="flex items-center space-x-2 text-sm sm:text-base">
-            <i data-lucide="check-circle" class="w-5 h-5"></i>
-            <span>BERHASIL! MENGALIHKAN...</span>
-        </span>
-    </button>
-
-    <!-- Opsi Alternatif: Unggah Foto atau Ketik Nomor Manual -->
-    <div class="pt-1">
-        <div class="grid grid-cols-2 gap-2 text-xs">
-            <!-- Tombol Unggah Gambar Kartu -->
-            <label class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer text-center">
-                <i data-lucide="image" class="w-4 h-4 text-slate-500"></i>
-                <span>Unggah Foto Kartu</span>
-                <input type="file" accept="image/*" class="hidden" @change="handleFileUpload($event)">
-            </label>
-
-            <!-- Toggle Input Nomor Manual -->
-            <button type="button"
-                    @click="showManualInput = !showManualInput"
-                    class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition-colors cursor-pointer text-center">
-                <i data-lucide="keypad" class="w-4 h-4 text-slate-500"></i>
-                <span>Input No. Kartu</span>
-            </button>
-        </div>
-
-        <!-- Form Input Nomor Siswa / NIS Manual -->
-        <div x-show="showManualInput"
-             x-cloak
-             x-transition
-             class="mt-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left space-y-2.5">
-            <label for="manualCardCode" class="block text-xs font-bold text-slate-700">
-                Nomor Siswa (NIS) atau Nama Kartu:
-            </label>
-            <div class="flex space-x-2">
-                <input id="manualCardCode"
-                       type="text"
-                       x-model="manualCode"
-                       @keydown.enter.prevent="submitManual()"
-                       placeholder="Contoh: 102938 atau Wahyu Pratama"
-                       class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button type="button"
-                        @click="submitManual()"
-                        :disabled="scanning"
-                        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-md transition-colors shrink-0 cursor-pointer">
-                    Kirim
-                </button>
-            </div>
-            <p class="text-[10px] text-slate-400">
-                Masukkan nomor siswa tepat 7 digit atau nama lengkap sesuai kartu pelajar.
-            </p>
-        </div>
-    </div>
-
-    <!-- Divider "ATAU" -->
-    <div class="flex items-center justify-center my-1">
-        <span class="text-xs font-bold text-slate-400 uppercase px-4 bg-white">
-            ATAU
-        </span>
-    </div>
-
-    <!-- Tombol Login Manual -->
-    <a href="{{ route('login') }}"
-       class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-extrabold py-3.5 rounded-2xl flex items-center justify-center space-x-2 transition-all text-xs block text-center">
-        <i data-lucide="user-check" class="w-4 h-4 inline-block mr-1"></i>
-        <span>MASUK DENGAN AKUN (NIS & PASSWORD)</span>
-    </a>
-
-</div>
-
-<!-- Tesseract OCR Library for Card Text Reading -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    };
+}
+</script>
 @endsection
