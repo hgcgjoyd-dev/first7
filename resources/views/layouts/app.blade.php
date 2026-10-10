@@ -131,17 +131,48 @@
       }"
       x-init="initLayout()">
 
+    @php
+        $pageTitle = null;
+        if (trim($__env->yieldContent('header_title'))) {
+            $pageTitle = trim($__env->yieldContent('header_title'));
+        } else {
+            $pageTitle = match (true) {
+                request()->routeIs('dashboard', 'dashboard.*') => 'Dashboard',
+                request()->routeIs('profil', 'profil.*') => 'Profil',
+                request()->routeIs('bk', 'bk.*', 'konseling', 'konseling.*') => 'Bimbingan Konseling',
+                request()->routeIs('presensi', 'presensi.*') => 'Presensi Siswa',
+                request()->routeIs('riwayat', 'riwayat.*') => 'Riwayat Absensi',
+                request()->routeIs('piket', 'piket.*') => 'Jadwal Piket',
+                request()->routeIs('mapel', 'mapel.*') => 'Mata Pelajaran',
+                request()->routeIs('izin', 'izin.*') => 'Pengajuan Izin',
+                request()->routeIs('scan', 'scan.*') => 'Scan Kartu Pelajar',
+                default => null,
+            };
+
+            if (!$pageTitle) {
+                $rawTitle = trim($__env->yieldContent('title', 'Dashboard'));
+                $cleanTitle = trim(explode('-', $rawTitle)[0]);
+                $cleanTitle = trim(explode('•', $cleanTitle)[0]);
+                $pageTitle = $cleanTitle ?: 'Dashboard';
+            }
+        }
+    @endphp
+
     <!-- TOP GLOBAL HEADER BAR -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
 
-            <!-- Left: Brand Logo PNG (Sudah berisi tulisan SMK TI Bali Global Badung) -->
-            <a href="{{ route('dashboard') }}" class="flex items-center space-x-4 group">
-                <img src="{{ asset('images/logo-smk.png') }}" alt="Logo SMK TI Bali Global Badung" class="h-12 sm:h-16 w-auto object-contain drop-shadow-md group-hover:scale-105 transition-transform">
-                <div class="border-l-2 border-slate-200 pl-4">
-                    <p class="font-display text-2xl sm:text-3xl md:text-4xl font-bold leading-none tracking-tight text-slate-900 drop-shadow-sm">Absensi &amp; Kesiswaan</p>
-                    <p class="mt-1.5 text-[11px] font-bold uppercase tracking-[0.25em] text-slate-400 flex items-center gap-1.5">
-                        <span class="w-1.5 h-1.5 rounded-full bg-linear-to-r from-indigo-500 to-sky-400"></span>
+            <!-- Left: Brand Logo PNG & Dynamic Page Title -->
+            <a href="{{ route('dashboard') }}" class="flex items-center space-x-3.5 group">
+                <img src="{{ asset('images/logo-smk.png') }}" 
+                     alt="Logo SMK TI Bali Global Badung" 
+                     class="h-10 sm:h-11 w-auto object-contain drop-shadow-xs group-hover:scale-105 transition-transform duration-200">
+                <div class="border-l-2 border-slate-200 pl-3.5 sm:pl-4 flex flex-col justify-center">
+                    <p class="font-sans text-xl sm:text-2xl font-extrabold leading-none tracking-tight text-slate-900 group-hover:text-blue-600 transition-colors">
+                        {{ $pageTitle }}
+                    </p>
+                    <p class="mt-1 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-500"></span>
                         Sistem Informasi
                     </p>
                 </div>
