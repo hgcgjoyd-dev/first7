@@ -556,7 +556,7 @@ class KesiswaanController extends Controller
     /**
      * Update Status Piket Kelas
      */
-    public function updatePiket(Request $request, $id)
+    public function updatePiket(Request $request, int $id)
     {
         try {
             $piket = Piket::findOrFail($id);
