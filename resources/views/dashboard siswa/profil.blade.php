@@ -254,7 +254,7 @@
                             $progressPelanggaran = min(100, max(5, round(((int) ($siswa->poin_pelanggaran ?? 0) / 30) * 100)));
                         @endphp
                         <div class="bg-gradient-to-r from-amber-500 to-rose-500 h-full rounded-full transition-all duration-500"
-                             style="width: {{ $progressPelanggaran }}%;"></div>
+                             @style(['width: ' . $progressPelanggaran . '%'])></div>
                     </div>
                     <p class="text-[11px] text-slate-400">Batas Surat Panggilan Orang Tua: 30 Poin</p>
                 </div>
