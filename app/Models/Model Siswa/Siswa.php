@@ -39,6 +39,16 @@ class Siswa extends Model
         ];
     }
 
+    public function getNisAttribute(): ?string
+    {
+        return $this->no_siswa;
+    }
+
+    public function getNamaAttribute(): ?string
+    {
+        return $this->nama_siswa;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');

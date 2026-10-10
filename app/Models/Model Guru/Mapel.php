@@ -20,4 +20,3 @@ class Mapel extends Model
         'status',
     ];
 }
-

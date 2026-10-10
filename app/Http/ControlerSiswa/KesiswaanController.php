@@ -204,7 +204,7 @@ class KesiswaanController extends Controller
         }
 
         $digitsOnly = preg_replace('/\D/', '', $code);
-        if (! empty($digitsOnly) && strlen($digitsOnly) >= 5) {
+        if (! empty($digitsOnly) && strlen($digitsOnly) >= 4) {
             $siswa = Siswa::with(['user', 'kelas'])->where('no_siswa', $digitsOnly)->first();
             if ($siswa) {
                 return $siswa;
@@ -276,13 +276,97 @@ class KesiswaanController extends Controller
     }
 
     /**
-     * Proses Scan Kartu Pelajar — fokus pada deteksi nama kartu & pencocokan dengan data seeders
+     * Mengekstrak NIS dari teks kartu (khususnya pola 4 karakter / angka di bawah nama).
+     */
+    protected function extractCardNis(string $rawText, ?string $studentName = null): ?string
+    {
+        if (empty($rawText)) {
+            return null;
+        }
+
+        // 1. Pola eksplisit: "NIS : [4 digit/huruf]" atau 3-7 karakter
+        $explicitRegexes = [
+            '/(?:nis|n\.i\.s|nomor\s*siswa|no\.?\s*siswa|no\.?\s*induk)\s*[:.\-]?\s*([a-zA-Z0-9]{4})\b/i',
+            '/(?:nis|n\.i\.s|nomor\s*siswa|no\.?\s*siswa|no\.?\s*induk)\s*[:.\-]?\s*([a-zA-Z0-9]{3,7})\b/i',
+        ];
+
+        foreach ($explicitRegexes as $rx) {
+            if (preg_match($rx, $rawText, $matches)) {
+                return trim($matches[1]);
+            }
+        }
+
+        // 2. Baris tepat di bawah nama siswa
+        $lines = array_values(array_filter(array_map('trim', explode("\n", $rawText)), fn ($l) => strlen($l) > 0));
+
+        $nameIndex = -1;
+        if ($studentName) {
+            $sNorm = mb_strtolower($studentName);
+            $candWords = array_values(array_filter(explode(' ', $sNorm), fn ($w) => strlen($w) >= 3));
+            foreach ($lines as $i => $line) {
+                $lNorm = mb_strtolower($line);
+                if (str_contains($lNorm, $sNorm) || str_contains($sNorm, $lNorm)) {
+                    $nameIndex = $i;
+                    break;
+                }
+                $matchedWordCount = 0;
+                foreach ($candWords as $cw) {
+                    if (str_contains($lNorm, $cw)) {
+                        $matchedWordCount++;
+                    }
+                }
+                if ($matchedWordCount >= min(2, count($candWords))) {
+                    $nameIndex = $i;
+                    break;
+                }
+            }
+        }
+
+        if ($nameIndex !== -1) {
+            $maxLine = min(count($lines) - 1, $nameIndex + 3);
+            for ($j = $nameIndex + 1; $j <= $maxLine; $j++) {
+                $line = $lines[$j];
+
+                // Prioritaskan 4 digit angka di baris bawah nama (misal: 2401)
+                if (preg_match('/\b(\d{4})\b/', $line, $m)) {
+                    $cand = trim($m[1]);
+                    $val = (int) $cand;
+                    if ($val < 2020 || $val > 2030) {
+                        return $cand;
+                    }
+                }
+
+                // Cek pola NIS eksplisit atau 4 karakter alfanumerik (bukan kata umum)
+                if (preg_match('/(?:nis|n\.i\.s|nomor\s*siswa|no\.?\s*siswa|no\.?\s*induk|no\.?)?\s*[:.\-]?\s*([a-zA-Z0-9]{4})\b/i', $line, $m)) {
+                    $cand = trim($m[1]);
+                    if (! preg_match('/^(smk|bali|pplg|rpl|foto|kota|desa|wali|guru|kela|reka|yasa|tekn)$/i', $cand)) {
+                        return $cand;
+                    }
+                }
+            }
+        }
+
+        // 3. Angka 4 digit di dalam kartu (bukan tahun kalender 2020-2030)
+        if (preg_match_all('/\b\d{4}\b/', $rawText, $allMatches)) {
+            foreach ($allMatches[0] as $num) {
+                if ((int) $num < 2020 || (int) $num > 2030) {
+                    return $num;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Proses Scan Kartu Pelajar — fokus pada deteksi nama kartu, pencocokan data seeders, dan sinkronisasi NIS
      */
     public function postScan(Request $request)
     {
         $validated = $request->validate([
             'code' => ['required', 'string', 'max:1000'],
             'raw_text' => ['nullable', 'string', 'max:5000'],
+            'detected_nis' => ['nullable', 'string', 'max:20'],
         ]);
 
         $code = trim($validated['code']);
@@ -299,6 +383,26 @@ class KesiswaanController extends Controller
             }
 
             return back()->with('error', 'Nama atau nomor kartu tidak terdeteksi di data siswa.');
+        }
+
+        // Sinkronisasi NIS siswa sesuai nomor yang tertera di kartu (misal: 4 digit/karakter di bawah nama)
+        $detectedNis = ! empty($validated['detected_nis'])
+            ? trim($validated['detected_nis'])
+            : $this->extractCardNis($rawText ?? $code, $siswa->nama_siswa);
+
+        if (! empty($detectedNis) && strlen($detectedNis) <= 7 && $siswa->no_siswa !== $detectedNis) {
+            $conflict = Siswa::where('no_siswa', $detectedNis)
+                ->where('id_siswa', '!=', $siswa->id_siswa)
+                ->first();
+
+            if ($conflict) {
+                $conflict->no_siswa = sprintf('%07d', $conflict->id_siswa);
+                $conflict->save();
+            }
+
+            $siswa->no_siswa = $detectedNis;
+            $siswa->save();
+            $siswa->refresh();
         }
 
         // Pastikan akun user siswa aktif & terhubung

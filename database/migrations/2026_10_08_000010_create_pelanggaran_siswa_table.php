@@ -32,4 +32,3 @@ return new class extends Migration
         Schema::dropIfExists('pelanggaran_siswa');
     }
 };
-

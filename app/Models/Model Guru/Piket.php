@@ -18,4 +18,3 @@ class Piket extends Model
         'status',
     ];
 }
-

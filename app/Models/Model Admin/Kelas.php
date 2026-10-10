@@ -37,4 +37,9 @@ class Kelas extends Model
     {
         return $this->hasMany(JadwalPelajaran::class, 'id_kelas', 'id_kelas');
     }
+
+    public function __toString(): string
+    {
+        return (string) ($this->nama_kelas ?? '');
+    }
 }

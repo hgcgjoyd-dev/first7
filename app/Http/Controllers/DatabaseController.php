@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\User;
 
 class DatabaseController extends Controller
 {
@@ -23,11 +23,11 @@ class DatabaseController extends Controller
         $message = '';
         $defaultDriver = config('database.default');
         $details = [
-            'driver'   => $defaultDriver,
+            'driver' => $defaultDriver,
             'database' => config("database.connections.{$defaultDriver}.database"),
-            'host'     => config("database.connections.{$defaultDriver}.host", 'localhost'),
-            'port'     => config("database.connections.{$defaultDriver}.port", '3306'),
-            'tables'   => [],
+            'host' => config("database.connections.{$defaultDriver}.host", 'localhost'),
+            'port' => config("database.connections.{$defaultDriver}.port", '3306'),
+            'tables' => [],
         ];
 
         try {
@@ -40,7 +40,7 @@ class DatabaseController extends Controller
             if ($defaultDriver === 'mysql') {
                 $tables = DB::select('SHOW TABLES');
                 $dbName = $details['database'];
-                $columnName = "Tables_in_" . $dbName;
+                $columnName = 'Tables_in_'.$dbName;
                 foreach ($tables as $t) {
                     $details['tables'][] = $t->$columnName ?? (string) array_values((array) $t)[0];
                 }
@@ -59,7 +59,7 @@ class DatabaseController extends Controller
             return response()->json([
                 'success' => $status,
                 'message' => $message,
-                'data'    => $details,
+                'data' => $details,
             ], $status ? 200 : 500);
         }
 
@@ -76,15 +76,14 @@ class DatabaseController extends Controller
 
             return response()->json([
                 'success' => true,
-                'total'   => $users->count(),
-                'data'    => $users,
+                'total' => $users->count(),
+                'data' => $users,
             ]);
         } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal mengambil data: ' . $e->getMessage(),
+                'message' => 'Gagal mengambil data: '.$e->getMessage(),
             ], 500);
         }
     }
 }
-

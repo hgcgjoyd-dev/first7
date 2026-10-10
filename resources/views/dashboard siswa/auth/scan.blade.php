@@ -569,6 +569,86 @@ function cardScanner() {
             return null;
         },
 
+        extractCardNis(rawText, studentName = null) {
+            if (!rawText) return null;
+
+            // 1. Pola eksplisit NIS : [4 karakter / angka] atau 3-7 karakter
+            const explicitRegexes = [
+                /(?:nis|n\.i\.s|nomor\s*siswa|no\.?\s*siswa|no\.?\s*induk)\s*[:.\-]?\s*([a-zA-Z0-9]{4})\b/i,
+                /(?:nis|n\.i\.s|nomor\s*siswa|no\.?\s*siswa|no\.?\s*induk)\s*[:.\-]?\s*([a-zA-Z0-9]{3,7})\b/i,
+            ];
+
+            for (const rx of explicitRegexes) {
+                const m = rawText.match(rx);
+                if (m && m[1]) {
+                    return m[1].trim();
+                }
+            }
+
+            // 2. Baris tepat di bawah nama siswa
+            const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            let nameIndex = -1;
+
+            if (studentName) {
+                const sNorm = studentName.toLowerCase();
+                const candWords = sNorm.split(' ').filter(w => w.length >= 3);
+                for (let i = 0; i < lines.length; i++) {
+                    const lNorm = lines[i].toLowerCase();
+                    if (lNorm.includes(sNorm) || sNorm.includes(lNorm)) {
+                        nameIndex = i;
+                        break;
+                    }
+                    let matchedWordCount = 0;
+                    for (const cw of candWords) {
+                        if (lNorm.includes(cw)) matchedWordCount++;
+                    }
+                    if (matchedWordCount >= Math.min(2, candWords.length)) {
+                        nameIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (nameIndex !== -1) {
+                const maxLine = Math.min(lines.length - 1, nameIndex + 3);
+                for (let j = nameIndex + 1; j <= maxLine; j++) {
+                    const line = lines[j];
+
+                    // Prioritaskan angka 4 digit di baris bawah nama (misal: 2401)
+                    const digitMatch = line.match(/\b(\d{4})\b/);
+                    if (digitMatch && digitMatch[1]) {
+                        const cand = digitMatch[1].trim();
+                        const val = parseInt(cand, 10);
+                        if (val < 2020 || val > 2030) {
+                            return cand;
+                        }
+                    }
+
+                    // Cek pola NIS eksplisit atau 4 karakter alfanumerik (bukan kata umum)
+                    const nisMatch = line.match(/(?:nis|n\.i\.s|nomor\s*siswa|no\.?\s*siswa|no\.?\s*induk|no\.?)?\s*[:.\-]?\s*([a-zA-Z0-9]{4})\b/i);
+                    if (nisMatch && nisMatch[1]) {
+                        const cand = nisMatch[1].trim();
+                        if (!/^(smk|bali|pplg|rpl|foto|kota|desa|wali|guru|kela|reka|yasa|tekn)$/i.test(cand)) {
+                            return cand;
+                        }
+                    }
+                }
+            }
+
+            // 3. Angka 4 digit di dalam kartu (bukan tahun kalender 2020-2030)
+            const fourDigitMatches = rawText.match(/\b\d{4}\b/g);
+            if (fourDigitMatches) {
+                for (const num of fourDigitMatches) {
+                    const val = parseInt(num, 10);
+                    if (val < 2020 || val > 2030) {
+                        return num;
+                    }
+                }
+            }
+
+            return null;
+        },
+
         async triggerScan() {
             if (this.scanning || this.scanned) return;
 
@@ -615,8 +695,8 @@ function cardScanner() {
                 }
             }
 
-            // 2. OCR Tesseract — Fokus Deteksi Nama Kartu Pelajar Cocokkan Data Seeders
-            this.scanStatusMessage = 'Membaca nama di kartu pelajar...';
+            // 2. OCR Tesseract — Fokus Deteksi Nama Kartu Pelajar & Sinkronisasi NIS
+            this.scanStatusMessage = 'Membaca nama & NIS kartu pelajar...';
             try {
                 if (!this.ocrWorker && window.Tesseract) {
                     this.scanStatusMessage = 'Menyiapkan modul pembaca kartu...';
@@ -626,28 +706,31 @@ function cardScanner() {
                 }
 
                 if (this.ocrWorker) {
-                    this.scanStatusMessage = 'Mengenali teks nama kartu pelajar...';
+                    this.scanStatusMessage = 'Mengenali teks nama & NIS kartu...';
                     const { data: { text } } = await this.ocrWorker.recognize(processedCanvas);
                     const rawText = text ? text.trim() : '';
 
-                    // 1) PRIORITAS UTAMA: Cocokkan nama dengan data seeder siswa
+                    // 1) PRIORITAS UTAMA: Cocokkan nama dengan data seeder siswa + baca NIS (4 karakter di bawah nama)
                     const match = this.matchStudentName(rawText);
+                    const cardNis = this.extractCardNis(rawText, match ? match.name : null);
+
                     if (match && match.name) {
-                        this.scanStatusMessage = `Nama terdeteksi: ${match.name}! Memverifikasi...`;
-                        await this.processCode(match.name, rawText);
+                        const statusNis = cardNis ? ` (NIS: ${cardNis})` : '';
+                        this.scanStatusMessage = `Nama terdeteksi: ${match.name}${statusNis}! Memverifikasi...`;
+                        await this.processCode(match.name, rawText, cardNis);
                         return;
                     }
 
-                    // 2) Jika tidak cocok nama seeder, coba cek digit NIS 7-digit
-                    const numMatch = rawText.match(/\b\d{7}\b/) || rawText.match(/\b\d{5,10}\b/);
+                    // 2) Jika tidak cocok nama seeder, coba cek digit NIS 4 digit atau 7 digit
+                    const numMatch = cardNis || (rawText.match(/\b\d{4}\b/) || rawText.match(/\b\d{7}\b/) || rawText.match(/\b\d{5,10}\b/))?.[0];
                     if (numMatch) {
-                        await this.processCode(numMatch[0], rawText);
+                        await this.processCode(numMatch, rawText, numMatch);
                         return;
                     }
 
                     // 3) Kirim teks OCR yang terbaca ke backend untuk pencocokan multi-tier
                     if (rawText.length >= 3) {
-                        await this.processCode(rawText, rawText);
+                        await this.processCode(rawText, rawText, cardNis);
                         return;
                     }
                 }
@@ -660,7 +743,7 @@ function cardScanner() {
             this.scanErrorMessage = 'Kartu belum terbaca jelas. Posisikan nama di kartu lebih terang & dekat, atau ketik nama kartu manual di bawah.';
         },
 
-        async processCode(code, rawText = '') {
+        async processCode(code, rawText = '', detectedNis = '') {
             if (!code || this.scanned) return;
 
             this.scanning = true;
@@ -679,7 +762,8 @@ function cardScanner() {
                     },
                     body: JSON.stringify({
                         code: code.trim(),
-                        raw_text: (rawText || '').trim()
+                        raw_text: (rawText || '').trim(),
+                        detected_nis: (detectedNis || '').trim()
                     })
                 });
 
@@ -720,8 +804,9 @@ function cardScanner() {
                 return;
             }
             const match = this.matchStudentName(input);
+            const cardNis = this.extractCardNis(input, match ? match.name : null);
             const finalCode = match ? match.name : input;
-            this.processCode(finalCode, input);
+            this.processCode(finalCode, input, cardNis);
         },
 
         handleFileUpload(event) {
@@ -767,22 +852,24 @@ function cardScanner() {
                             const { data: { text } } = await this.ocrWorker.recognize(processedCanvas);
                             const cleaned = text ? text.trim() : '';
 
-                            // 1) Prioritas Nama Seeder
+                            // 1) Prioritas Nama Seeder & Ekstraksi NIS
                             const match = this.matchStudentName(cleaned);
+                            const cardNis = this.extractCardNis(cleaned, match ? match.name : null);
+
                             if (match && match.name) {
-                                await this.processCode(match.name, cleaned);
+                                await this.processCode(match.name, cleaned, cardNis);
                                 return;
                             }
 
-                            // 2) Nomor NIS
-                            const num = cleaned.match(/\b\d{7}\b/) || cleaned.match(/\b\d{5,10}\b/);
+                            // 2) Nomor NIS (4 digit atau lebih)
+                            const num = cardNis || (cleaned.match(/\b\d{4}\b/) || cleaned.match(/\b\d{7}\b/) || cleaned.match(/\b\d{5,10}\b/))?.[0];
                             if (num) {
-                                await this.processCode(num[0], cleaned);
+                                await this.processCode(num, cleaned, num);
                                 return;
                             }
 
                             if (cleaned.length >= 3) {
-                                await this.processCode(cleaned, cleaned);
+                                await this.processCode(cleaned, cleaned, cardNis);
                                 return;
                             }
                         }

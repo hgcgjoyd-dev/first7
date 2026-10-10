@@ -25,4 +25,3 @@ class Bk extends Model
         return $this->belongsTo(Siswa::class, 'siswa_id');
     }
 }
-
