@@ -54,7 +54,7 @@
                 </h1>
                 <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 font-extrabold text-[11px] sm:text-xs shadow-sm mt-2">
                     <span class="w-2 h-2 rounded-full bg-rose-600"></span>
-                    <span>Kelas {{ $siswa->kelas?->nama_kelas ?? $siswa->kelas ?? 'XI PPLG 1' }} • NIS: {{ $siswa->no_siswa ?? $siswa->nis ?? '-' }}</span>
+                    <span>Kelas {{ $siswa->kelas?->nama_kelas ?? 'XI PPLG 1' }} • NIS: {{ $siswa->no_siswa ?? $siswa->nis ?? '-' }}</span>
                 </div>
             </div>
 
@@ -149,7 +149,7 @@
 
                     <div class="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100">
                         <span class="text-slate-400 font-semibold block mb-0.5">Kelas & Rombel</span>
-                        <span class="text-slate-900 font-bold text-sm">{{ $siswa->kelas?->nama_kelas ?? $siswa->kelas ?? 'XI PPLG 1' }}</span>
+                        <span class="text-slate-900 font-bold text-sm">{{ $siswa->kelas?->nama_kelas ?? 'XI PPLG 1' }}</span>
                     </div>
 
                     <div class="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100 sm:col-span-2">

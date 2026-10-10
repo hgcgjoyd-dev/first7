@@ -54,7 +54,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login')->with('status', 'Anda telah keluar.');
+        return redirect()->route('landing')->with('status', 'Anda telah keluar.');
     }
 
     private function hasValidProfile(User $user): bool
