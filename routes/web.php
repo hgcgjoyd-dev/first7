@@ -28,6 +28,15 @@ Route::post('/logout', [AuthController::class, 'destroy'])
 Route::get('/scan', [KesiswaanController::class, 'scan'])->name('scan');
 Route::post('/scan', [KesiswaanController::class, 'postScan'])->name('scan.post');
 
+// Dashboard Guru Mapel (Dapat diakses langsung untuk preview & responsif)
+Route::get('/dashboardguru', function () {
+    return view('dashboard guru.dashboardguru');
+})->name('guru.dashboard');
+
+Route::get('/dashboard-guru', function () {
+    return view('dashboard guru.dashboardguru');
+})->name('dashboard.guru.direct');
+
 Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/dashboard/siswa', [DashboardController::class, 'siswa'])
@@ -73,8 +82,6 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         ->name('cek-db');
 
     Route::middleware('role:guru')->group(function (): void {
-        Route::redirect('/dashboardguru', '/dashboard/guru')->name('guru.dashboard');
-        Route::redirect('/dashboard-guru', '/dashboard/guru')->name('dashboard.guru.legacy');
         Route::redirect('/guru', '/dashboard/guru');
     });
 

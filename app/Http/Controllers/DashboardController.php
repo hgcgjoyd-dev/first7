@@ -58,14 +58,21 @@ class DashboardController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 403);
 
-        $guru = $user->guru()->with('kelasWali')->firstOrFail();
+        $guru = $user->guru()->with('kelasWali')->first();
+
+        if (view()->exists('dashboard guru.dashboardguru')) {
+            return view('dashboard guru.dashboardguru', [
+                'guru' => $guru,
+                'user' => $user,
+            ]);
+        }
 
         return view('dashboard.role', [
             'roleLabel' => 'Guru',
-            'name' => $guru->nama_guru,
+            'name' => $guru?->nama_guru ?? $user->nama,
             'profileDetails' => [
-                'Nomor guru' => $guru->no_guru,
-                'Kelas wali' => $guru->kelasWali?->nama_kelas ?? 'Belum ditetapkan',
+                'Nomor guru' => $guru?->no_guru ?? '-',
+                'Kelas wali' => $guru?->kelasWali?->nama_kelas ?? 'Belum ditetapkan',
             ],
             'metrics' => [],
             'students' => collect(),
