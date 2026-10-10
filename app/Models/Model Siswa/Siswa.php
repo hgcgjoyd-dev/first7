@@ -39,6 +39,11 @@ class Siswa extends Model
         ];
     }
 
+    public function getIdAttribute(): int|string|null
+    {
+        return $this->id_siswa;
+    }
+
     public function getNisAttribute(): ?string
     {
         return $this->no_siswa;

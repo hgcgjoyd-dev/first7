@@ -2,12 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Absensi;
 use App\Models\Guru;
+use App\Models\Izin;
+use App\Models\Mapel;
 use App\Models\PelanggaranSiswa;
+use App\Models\Piket;
+use App\Models\Presensi;
 use App\Models\Siswa;
 use App\Models\User;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -35,6 +43,85 @@ class DashboardController extends Controller
                 'profileDetails' => ['Profil siswa' => 'Belum dilengkapi'],
                 'metrics' => [],
                 'students' => collect(),
+            ]);
+        }
+
+        $today = Carbon::today()->toDateString();
+        $studentId = $siswa->id_siswa ?? $siswa->id;
+
+        $presensiHariIni = null;
+        $totalHadirBulanIni = 0;
+        $totalIzinBulanIni = 0;
+        $persenHadir = 100;
+        $tugasAktif = 0;
+        $piketHariIni = null;
+
+        try {
+            if (Schema::hasTable('presensi')) {
+                $presensiHariIni = Presensi::where('siswa_id', $studentId)
+                    ->whereDate('tanggal', $today)
+                    ->first();
+
+                $totalHadirBulanIni = Presensi::where('siswa_id', $studentId)
+                    ->whereMonth('tanggal', Carbon::now()->month)
+                    ->whereIn('status', ['Hadir', 'Terlambat'])
+                    ->count();
+
+                $totalPresensi = Presensi::where('siswa_id', $studentId)
+                    ->whereMonth('tanggal', Carbon::now()->month)
+                    ->count();
+
+                if ($totalPresensi > 0) {
+                    $persenHadir = round(($totalHadirBulanIni / $totalPresensi) * 100);
+                }
+            }
+
+            if (! $presensiHariIni && Schema::hasTable('absensi')) {
+                $presensiHariIni = Absensi::where('id_siswa', $studentId)
+                    ->whereDate('tanggal', $today)
+                    ->first();
+            }
+
+            if (Schema::hasTable('absensi')) {
+                $totalHadirAbsensi = Absensi::where('id_siswa', $studentId)
+                    ->whereMonth('tanggal', Carbon::now()->month)
+                    ->whereIn('status', ['Hadir', 'Terlambat'])
+                    ->count();
+                if ($totalHadirAbsensi > $totalHadirBulanIni) {
+                    $totalHadirBulanIni = $totalHadirAbsensi;
+                }
+            }
+
+            if (Schema::hasTable('izin')) {
+                $totalIzinBulanIni = Izin::where('siswa_id', $studentId)
+                    ->whereMonth('tgl_mulai', Carbon::now()->month)
+                    ->sum('durasi_hari') ?: 0;
+            }
+
+            if (Schema::hasTable('mapel')) {
+                $tugasAktif = Mapel::where('status', 'Aktif')->count();
+            }
+
+            if (Schema::hasTable('piket')) {
+                $indonesianDays = [
+                    'Sunday' => 'Minggu', 'Monday' => 'Senin', 'Tuesday' => 'Selasa',
+                    'Wednesday' => 'Rabu', 'Thursday' => 'Kamis', 'Friday' => 'Jumat', 'Saturday' => 'Sabtu',
+                ];
+                $currentDayName = $indonesianDays[Carbon::now()->format('l')] ?? 'Senin';
+                $piketHariIni = Piket::where('hari', $currentDayName)->first();
+            }
+        } catch (Exception $e) {
+        }
+
+        if (view()->exists('dashboard siswa.dashboard')) {
+            return view('dashboard siswa.dashboard', [
+                'siswa' => $siswa,
+                'presensiHariIni' => $presensiHariIni,
+                'totalHadir' => $totalHadirBulanIni,
+                'persenHadir' => $persenHadir,
+                'totalIzinBulanIni' => $totalIzinBulanIni,
+                'tugasAktif' => $tugasAktif,
+                'piketHariIni' => $piketHariIni,
             ]);
         }
 

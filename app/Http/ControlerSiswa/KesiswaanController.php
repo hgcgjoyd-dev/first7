@@ -478,36 +478,53 @@ class KesiswaanController extends Controller
     {
         $siswa = $this->getActiveSiswa();
         $today = Carbon::today()->toDateString();
+        $studentId = $siswa->id_siswa ?? $siswa->id;
 
         $presensiHariIni = null;
         $totalHadirBulanIni = 0;
         $totalIzinBulanIni = 0;
-        $persenHadir = 95;
+        $persenHadir = 100;
         $tugasAktif = 0;
         $piketHariIni = null;
 
         try {
             if (Schema::hasTable('presensi')) {
-                $presensiHariIni = Presensi::where('siswa_id', $siswa->id)
+                $presensiHariIni = Presensi::where('siswa_id', $studentId)
                     ->whereDate('tanggal', $today)
                     ->first();
 
-                $totalHadir = Presensi::where('siswa_id', $siswa->id)
+                $totalHadirBulanIni = Presensi::where('siswa_id', $studentId)
                     ->whereMonth('tanggal', Carbon::now()->month)
                     ->whereIn('status', ['Hadir', 'Terlambat'])
                     ->count();
 
-                $totalPresensi = Presensi::where('siswa_id', $siswa->id)
+                $totalPresensi = Presensi::where('siswa_id', $studentId)
                     ->whereMonth('tanggal', Carbon::now()->month)
                     ->count();
 
                 if ($totalPresensi > 0) {
-                    $persenHadir = round(($totalHadir / $totalPresensi) * 100);
+                    $persenHadir = round(($totalHadirBulanIni / $totalPresensi) * 100);
+                }
+            }
+
+            if (! $presensiHariIni && Schema::hasTable('absensi')) {
+                $presensiHariIni = Absensi::where('id_siswa', $studentId)
+                    ->whereDate('tanggal', $today)
+                    ->first();
+            }
+
+            if (Schema::hasTable('absensi')) {
+                $totalHadirAbsensi = Absensi::where('id_siswa', $studentId)
+                    ->whereMonth('tanggal', Carbon::now()->month)
+                    ->whereIn('status', ['Hadir', 'Terlambat'])
+                    ->count();
+                if ($totalHadirAbsensi > $totalHadirBulanIni) {
+                    $totalHadirBulanIni = $totalHadirAbsensi;
                 }
             }
 
             if (Schema::hasTable('izin')) {
-                $totalIzinBulanIni = Izin::where('siswa_id', $siswa->id)
+                $totalIzinBulanIni = Izin::where('siswa_id', $studentId)
                     ->whereMonth('tgl_mulai', Carbon::now()->month)
                     ->sum('durasi_hari') ?: 0;
             }
@@ -529,14 +546,15 @@ class KesiswaanController extends Controller
 
         $viewName = view()->exists('dashboard siswa.dashboard') ? 'dashboard siswa.dashboard' : 'dashboard';
 
-        return view($viewName, compact(
-            'siswa',
-            'presensiHariIni',
-            'persenHadir',
-            'totalIzinBulanIni',
-            'tugasAktif',
-            'piketHariIni'
-        ));
+        return view($viewName, [
+            'siswa' => $siswa,
+            'presensiHariIni' => $presensiHariIni,
+            'totalHadir' => $totalHadirBulanIni,
+            'persenHadir' => $persenHadir,
+            'totalIzinBulanIni' => $totalIzinBulanIni,
+            'tugasAktif' => $tugasAktif,
+            'piketHariIni' => $piketHariIni,
+        ]);
     }
 
     /**

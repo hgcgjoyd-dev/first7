@@ -16,7 +16,7 @@
 
 <div class="space-y-6" x-data="{
     statusAbsen: '{{ $initialStatus }}', // 'belum', 'tepat', 'telat'
-    baseHadir: {{ ($totalHadir ?? 0) > 0 ? $totalHadir : 14 }},
+    baseHadir: {{ (int) ($totalHadir ?? 0) }},
     liveClock: '',
 
     get totalHadirLive() {
@@ -36,8 +36,9 @@
             this.statusAbsen = '{{ $initialStatus }}';
         } else {
             const todayStr = new Date().toISOString().slice(0, 10);
-            const savedDate = localStorage.getItem('presensi_date_today');
-            const savedStatus = localStorage.getItem('presensi_status_today');
+            const studentId = '{{ $siswa->id_siswa ?? $siswa->id ?? auth()->id() ?? "guest" }}';
+            const savedDate = localStorage.getItem('presensi_date_' + studentId);
+            const savedStatus = localStorage.getItem('presensi_status_' + studentId);
             if (savedDate === todayStr && (savedStatus === 'tepat' || savedStatus === 'telat')) {
                 this.statusAbsen = savedStatus;
             } else {
@@ -139,7 +140,7 @@
 
         <div class="relative z-10">
             <p class="text-sm sm:text-base font-semibold text-blue-100" x-text="getGreeting()">Selamat Pagi,</p>
-            <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-0.5">{{ $siswa->nama ?? 'Wahyu Pratama' }}</h1>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight mt-0.5">{{ $siswa->nama_siswa ?? $siswa->nama ?? 'Siswa' }}</h1>
             
             <div class="flex flex-wrap items-center gap-2 mt-4">
                 <!-- Status Absen Badge (Otomatis & Tidak Dapat Diubah Manual) -->
@@ -169,7 +170,7 @@
                 <!-- Class Pill -->
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white backdrop-blur-md">
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5"></span>
-                    Kelas {{ $siswa->kelas ?? 'XI PPLG 1' }} • NIS: {{ $siswa->nis ?? '2026042' }}
+                    Kelas {{ $siswa->kelas?->nama_kelas ?? $siswa->kelas ?? 'XI PPLG 1' }} • NIS: {{ $siswa->no_siswa ?? $siswa->nis ?? '-' }}
                 </span>
             </div>
         </div>
@@ -200,7 +201,7 @@
                     <i data-lucide="check-circle-2" class="w-6 h-6"></i>
                 </div>
                 <span class="font-bold text-xs sm:text-sm text-slate-800 group-hover:text-emerald-600 transition-colors text-center">Hadir</span>
-                <span class="text-[10px] text-emerald-600 font-bold mt-0.5" x-text="totalHadirLive + ' Kali'">{{ ($totalHadir ?? 0) > 0 ? $totalHadir : 14 }} Kali</span>
+                <span class="text-[10px] text-emerald-600 font-bold mt-0.5" x-text="totalHadirLive + ' Kali'">{{ (int) ($totalHadir ?? 0) }} Kali</span>
             </a>
 
             <!-- 3. Tugas -> /mapel -->
@@ -218,7 +219,7 @@
                     <i data-lucide="users" class="w-6 h-6"></i>
                 </div>
                 <span class="font-bold text-xs sm:text-sm text-slate-800 group-hover:text-violet-600 transition-colors text-center">Konseling & BK</span>
-                <span class="text-[10px] text-violet-600 font-bold mt-0.5">15 Poin</span>
+                <span class="text-[10px] text-violet-600 font-bold mt-0.5">{{ $siswa->poin_pelanggaran ?? 0 }} Poin</span>
             </a>
         </div>
 
@@ -232,7 +233,7 @@
                     </div>
                     <div>
                         <p class="text-xs text-blue-900/80 font-semibold">Total Kehadiran Siswa</p>
-                        <p class="text-lg font-black text-blue-900" x-text="'Hadir: ' + totalHadirLive + ' Kali'">Hadir: {{ ($totalHadir ?? 0) > 0 ? $totalHadir : 14 }} Kali</p>
+                        <p class="text-lg font-black text-blue-900" x-text="'Hadir: ' + totalHadirLive + ' Kali'">Hadir: {{ (int) ($totalHadir ?? 0) }} Kali</p>
                     </div>
                 </div>
                 <span class="text-xs bg-blue-200/60 text-blue-800 px-3 py-1 rounded-full font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">Lihat Kalender →</span>
@@ -323,7 +324,7 @@
                     <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
                         <div class="bg-emerald-500 h-full w-1/2 rounded-full"></div>
                     </div>
-                    <p class="text-[11px] text-slate-500 pt-1">⭐ Koordinator: <span class="font-semibold text-slate-700">Wahyu Pratama (Anda)</span></p>
+                    <p class="text-[11px] text-slate-500 pt-1">⭐ Koordinator: <span class="font-semibold text-slate-700">{{ $siswa->nama_siswa ?? $siswa->nama ?? 'Siswa' }} (Anda)</span></p>
                 </div>
             </div>
 
