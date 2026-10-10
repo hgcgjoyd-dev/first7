@@ -99,7 +99,10 @@
 </head>
 
 <body class="bg-[#f4f7fb] text-slate-800 font-sans antialiased min-h-screen selection:bg-blue-600 selection:text-white"
+      :class="{ 'overflow-hidden': confirmLogout }"
+      @open-logout.window="confirmLogout = true"
       x-data="{ 
+          confirmLogout: false,
           currentTimeWita: '',
           currentClockLive: '',
           currentShortClock: '',
@@ -108,6 +111,7 @@
               this.updateTime();
               setInterval(() => this.updateTime(), 1000);
               this.$nextTick(() => lucide.createIcons());
+              window.__triggerLogoutModal = () => { this.confirmLogout = true; };
           },
           updateTime() {
               const now = new Date();
@@ -289,17 +293,14 @@
                     </nav>
                     <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-6 mb-3 px-3">Akun Siswa</p>
                     <nav class="space-y-1.5">
-                        <form method="POST" action="{{ route('logout') }}" id="sidebar-logout-form">
-                            @csrf
-                            <button type="button" 
-                                    onclick="if(window.__triggerLogoutModal) { window.__triggerLogoutModal(); } else { document.getElementById('sidebar-logout-form').submit(); }"
-                                    class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-rose-600 hover:bg-rose-50 cursor-pointer">
-                                <div class="flex items-center space-x-3">
-                                    <i data-lucide="log-out" class="w-4 h-4"></i>
-                                    <span>Keluar / Ganti Akun</span>
-                                </div>
-                            </button>
-                        </form>
+                        <button type="button" 
+                                @click="confirmLogout = true"
+                                class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all text-rose-600 hover:bg-rose-50 cursor-pointer">
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="log-out" class="w-4 h-4"></i>
+                                <span>Keluar / Ganti Akun</span>
+                            </div>
+                        </button>
                     </nav>
                 </div>
 
@@ -363,6 +364,91 @@
             }
         });
     </script>
+
+    <!-- ========================================================================= -->
+    <!-- GLOBAL MODAL KONFIRMASI LOGOUT (100% FULLSCREEN GLASSMORPHISM BACKDROP)   -->
+    <!-- ========================================================================= -->
+    <div x-show="confirmLogout" 
+         x-cloak 
+         class="fixed inset-0 overflow-y-auto bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+         style="z-index: 999999; margin: 0;"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         @keydown.escape.window="confirmLogout = false">
+
+        <!-- Modal Dialog Box -->
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 text-center shadow-2xl border border-slate-100 relative overflow-hidden my-auto"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-90 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-2"
+             @click.away="confirmLogout = false">
+
+            <!-- Decorative Top Ambient Glow -->
+            <div class="absolute -top-16 inset-x-0 h-32 bg-gradient-to-b from-rose-500/15 to-transparent pointer-events-none"></div>
+
+            <!-- Close Button (X) -->
+            <button @click="confirmLogout = false"
+                    type="button"
+                    class="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
+                    title="Tutup">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+
+            <!-- 3D Glowing Logout Icon -->
+            <div class="relative mx-auto w-20 h-20 mb-4 flex items-center justify-center">
+                <div class="absolute inset-0 rounded-3xl bg-rose-500/25 blur-xl animate-pulse"></div>
+                <div class="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-500 text-white flex items-center justify-center shadow-xl shadow-rose-500/30 ring-4 ring-rose-50">
+                    <i data-lucide="log-out" class="w-8 h-8"></i>
+                </div>
+            </div>
+
+            <!-- Header Badge & Title -->
+            <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 font-extrabold text-[11px] mb-2 border border-rose-100">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse"></span>
+                <span>Konfirmasi Keluar Akun</span>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 tracking-tight">Ingin Mengakhiri Sesi?</h3>
+            <p class="text-xs text-slate-500 mt-1.5 leading-relaxed max-w-[300px] mx-auto">
+                Sesi login Anda di perangkat ini akan ditutup. Anda dapat masuk kembali menggunakan NIS atau Kartu Pelajar kapan saja.
+            </p>
+
+            <!-- Student Preview Mini-Badge -->
+            <div class="my-5 p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-left flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-xs shrink-0">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="text-xs font-bold text-slate-900 truncate">{{ auth()->user()?->nama ?? auth()->user()?->name ?? 'Siswa' }}</p>
+                    <p class="text-[10px] text-slate-500 font-medium">NIS: {{ auth()->user()?->siswa?->no_siswa ?? auth()->user()?->no_siswa ?? '-' }} • {{ auth()->user()?->siswa?->kelas?->nama_kelas ?? 'Siswa Aktif' }}</p>
+                </div>
+                <span class="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">Aktif</span>
+            </div>
+
+            <!-- Action Buttons Grid -->
+            <div class="grid grid-cols-2 gap-3 pt-1">
+                <button @click="confirmLogout = false" 
+                        type="button" 
+                        class="w-full py-3 px-4 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-extrabold text-slate-700 shadow-xs hover:border-slate-300 transition-all cursor-pointer active:scale-98">
+                    Batal
+                </button>
+                <form method="POST" action="{{ route('logout') }}" class="w-full">
+                    @csrf
+                    <button type="submit"
+                            class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white text-xs font-extrabold shadow-lg shadow-rose-600/30 transition-all flex items-center justify-center space-x-1.5 cursor-pointer active:scale-98">
+                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        <span>Ya, Keluar</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     @stack('scripts')
 </body>
