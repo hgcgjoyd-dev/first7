@@ -100,11 +100,14 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function admin(): View
+    public function admin(Request $request): View
     {
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+
         return view('dashboard.role', [
             'roleLabel' => 'Admin',
-            'name' => auth()->user()->nama,
+            'name' => $user->nama,
             'profileDetails' => [],
             'metrics' => [
                 'Akun' => User::count(),
